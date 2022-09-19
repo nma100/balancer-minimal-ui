@@ -1,0 +1,59 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/bootstrap";
+
+
+$sidebar-pt: 100px;
+
+html { overflow-y: scroll; }
+
+#brand-text {
+    font-family: 'Ubuntu'; 
+    padding-bottom: 5px;
+}
+
+#sidebar-container {
+    position: fixed; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    padding: #{$sidebar-pt} 0 0;
+    
+    > #sidebar-inner {
+        height: calc(100vh - #{$sidebar-pt});
+        > .nav-pills {
+            --bs-nav-pills-link-active-color: #{$dark}; 
+            --bs-nav-pills-link-active-bg: #{$light}; 
+            --bs-nav-link-color: #{$light}; 
+            --bs-nav-link-hover-color: #{$gray-400};
+        }
+    }
+}
+
+#main-col { 
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    #select-chain { width: 8rem; }    
+}
+
+/* PORTFOLIO */
+
+$veBAL-color: $teal;
+
+#invest-info {
+    > .title { line-height: 4rem; }
+    > .total { line-height: 3.5rem; }
+    > .veBAL { line-height: 3.5rem;  color: $veBAL-color; }
+}
+
+#pools-nav-tabs {
+    --bs-nav-tabs-link-active-color: #{$light}; 
+    --bs-nav-tabs-link-active-bg: #{$dark};  
+    --bs-nav-tabs-border-color: #{$gray-600}; 
+    --bs-nav-tabs-link-active-border-color: #{$gray-800}; 
+    --bs-nav-link-color: #{$light}; 
+    --bs-nav-link-hover-color: #{$gray-400};
+}
+
+#veBAL-tab { --bs-nav-link-color: #{$veBAL-color}; }
+
