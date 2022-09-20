@@ -1,6 +1,6 @@
 import React from 'react';
 
-class NoPage extends React.Component {
+class Error404 extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -17,4 +17,4 @@ class NoPage extends React.Component {
   }
 }
 
-export default NoPage;
+export default Error404;

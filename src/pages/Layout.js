@@ -1,21 +1,94 @@
 import React from 'react';
 import { Outlet, NavLink } from "react-router-dom";
+import { ethers } from 'ethers';
+import { truncateAddress, toHex } from "../pages-utils";
+import { web3Modal, ERROR_UNKNOWN_NETWORK } from '../web3-connect';
+import { networkParams } from "../networks";
 
 class Layout extends React.Component {
 
     constructor(props) {
-      super(props);
-      this.state = {
-        count: 0
-      };
+        super(props);
+        this.state = { provider: null, library: null, chainId: null, account: null };
+        // This binding is necessary to make `this` work in the callback
+        this.connectWallet = this.connectWallet.bind(this);
+        this.disconnect = this.disconnect.bind(this);
+        this.changeNetwork = this.changeNetwork.bind(this);
     }
-  
+
+    componentDidMount() {
+        console.log('Component did mount');
+    }
+
+    componentDidUpdate() {
+        console.log('Component did update');
+        const provider = this.state.provider;
+        if (provider) {
+            console.log('Subscribe providers');
+
+            provider.on('accountsChanged', accounts => {
+                console.log('accountsChanged event', accounts);
+            });
+            
+            provider.on('chainChanged', chainId => {
+                console.log('chainChanged event', chainId);
+            });
+        }
+    }
+
+    componentWillUnmount() {
+        console.log('Component will unmount');
+    }
+
+    resetState() {
+        this.setState({ provider: null, library: null, chainId: null, account: null });
+    }
+
+    async connectWallet() {
+        try {
+            const provider  = await web3Modal.connect();
+            const library = new ethers.providers.Web3Provider(provider);
+            const accounts = await library.listAccounts();
+            const network = await library.getNetwork();
+            console.log('Accounts', accounts);
+            console.log('Network', network);
+            let state = { provider: provider, library: library, chainId: network.chainId };
+            if (accounts) { state.account = accounts[0]; }
+            this.setState(state);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async changeNetwork(e) {
+        const networkId = e.target.value;
+        console.log('Change Network', networkId);
+        try {
+            await this.state.library?.provider.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: toHex(networkId) }]
+            });
+        } catch (switchError) {
+            if (switchError.code === ERROR_UNKNOWN_NETWORK) {
+                await this.state.library?.provider.request({
+                    method: "wallet_addEthereumChain",
+                    params: [networkParams[toHex(networkId)]]
+                });
+            }
+        }
+    }
+
+    async disconnect() {
+        await web3Modal.clearCachedProvider();
+        this.resetState();
+    }
+
     render() {
         return (
             <>
             <nav className="navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25">
                 <div className="container-fluid">
-                    <a className="navbar-brand d-flex align-items-center" href="#">
+                    <a className="navbar-brand d-flex align-items-center" href="/">
                         <img src="/image/logo-dark.svg" className="me-2" alt="" width="40" height="40" /> <span className="fs-3 fw-semibold pb-1 me-3">Balancer</span> <div id="brand-text" className="navbar-text d-none d-lg-block fs-4">Minimal</div>
                     </a>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,8 +107,11 @@ class Layout extends React.Component {
                             </li>
                         </ul>
                         <div className="ms-auto d-none d-lg-block">
-                            <button className="btn btn-outline-light me-2" type="button"><i className="bi bi-wallet me-1"></i> Connect wallet</button>
-                            <button className="btn btn-outline-light" type="button"><i className="bi bi-moon-fill"></i></button>
+                            {this.state.account
+                                ? <><button className="btn btn-outline-light text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn btn-outline-light me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
+                                : <button className="btn btn-outline-light me-2" type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
+                            }
+                            <button className="btn btn-outline-light" type="button"><i className="bi bi-sun"></i></button>
                         </div>
                     </div>
                 </div>
@@ -45,10 +121,12 @@ class Layout extends React.Component {
                 <div className="row">
                     <div id="sidebar-container" className="col-lg-2 d-none d-lg-block bg-dark shadow">
                         <div  id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
-                            <select className="form-select" aria-label="">
+                            <select className="form-select" onChange={this.changeNetwork}>
+                                <option value="5">Goerli</option>
                                 <option value="1">Ethereum</option>
-                                <option value="2">Polygon</option>
-                                <option value="3">Arbitrum</option>
+                                <option value="137">Polygon</option>
+                                <option value="42161">Arbitrum</option>
+                                <option value="42220">Celo</option>
                             </select>
                             <hr className="text-light text-opacity-75" />
                             <ul className="nav nav-pills flex-column mb-auto">
@@ -59,7 +137,7 @@ class Layout extends React.Component {
                                 </li>
                                 <li className="nav-item">
                                     <NavLink to="/trade"  className="nav-link">
-                                        <i className="bi bi-arrow-down-up  me-1"></i> Trade
+                                        <i className="bi bi-arrow-down-up me-1"></i> Trade
                                     </NavLink>
                                 </li>
                                 <li className="nav-item">
@@ -81,11 +159,15 @@ class Layout extends React.Component {
                     <div id="main-col" className="col-12 col-lg-10 ms-lg-auto px-4 px-lg-5">
                         <div className="d-flex d-lg-none mt-2 mb-4">
                             <select id="select-chain" className="form-select me-auto" aria-label="Select blockchain">
+                                <option value="5">Goerli</option>
                                 <option value="1">Ethereum</option>
-                                <option value="2">Polygon</option>
-                                <option value="3">Arbitrum</option>
-                            </select>   
-                            <button className="btn btn-dark text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> 0x9AE4...B425</button>
+                                <option value="137">Polygon</option>
+                                <option value="42161">Arbitrum</option>
+                            </select>  
+                            {this.state.account
+                                ? <><button className="btn btn-dark text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn-dark me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
+                                : <button className="btn btn-dark text-nowrap me-2" type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
+                            } 
                             <button className="btn btn-dark" type="button"><i className="bi bi-sun"></i></button>
                         </div>
                         <Outlet />

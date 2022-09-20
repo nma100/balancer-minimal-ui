@@ -5,7 +5,7 @@ import Layout from "./pages/Layout";
 import Portfolio from "./pages/Portfolio";
 import Trade from "./pages/Trade";
 import Invest from "./pages/Invest";
-import NoPage from "./pages/NoPage";
+import Error404 from "./pages/Error404";
 import * as Bootstrap from 'bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
@@ -17,7 +17,7 @@ export default function App() {
           <Route index element={<Portfolio />} />
           <Route path="trade" element={<Trade />} />
           <Route path="invest" element={<Invest />} />
-          <Route path="*" element={<NoPage />} />
+          <Route path="*" element={<Error404 />} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -30,3 +30,5 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+console.log('Bootstrap JS', Bootstrap);
