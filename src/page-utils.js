@@ -5,7 +5,7 @@ export const truncateAddress = (address) => {
       /^(0x[a-zA-Z0-9]{2})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/
     );
     if (!match) return address;
-    return `${match[1]}…${match[2]}`;
+    return `${match[1]}....${match[2]}`;
   };
   
 export const toHex = (num) => {

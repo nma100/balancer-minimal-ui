@@ -1,86 +1,56 @@
 import React from 'react';
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from 'ethers';
-import { truncateAddress, toHex } from "../pages-utils";
-import { web3Modal, ERROR_UNKNOWN_NETWORK } from '../web3-connect';
-import { networkParams } from "../networks";
+import { truncateAddress } from "../page-utils";
+import { web3Modal, switchChain } from '../web3-connect';
+import { ETHEREUM_ID, GOERLI_ID, NETWORKS } from "../networks";
 
 class Layout extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = { provider: null, library: null, chainId: null, account: null };
-        // This binding is necessary to make `this` work in the callback
+        this.state = this.initState();
         this.connectWallet = this.connectWallet.bind(this);
         this.disconnect = this.disconnect.bind(this);
         this.changeNetwork = this.changeNetwork.bind(this);
     }
 
-    componentDidMount() {
-        console.log('Component did mount');
-    }
-
-    componentDidUpdate() {
-        console.log('Component did update');
-        const provider = this.state.provider;
-        if (provider) {
-            console.log('Subscribe providers');
-
-            provider.on('accountsChanged', accounts => {
-                console.log('accountsChanged event', accounts);
-            });
-            
-            provider.on('chainChanged', chainId => {
-                console.log('chainChanged event', chainId);
-            });
-        }
-    }
-
-    componentWillUnmount() {
-        console.log('Component will unmount');
-    }
-
-    resetState() {
-        this.setState({ provider: null, library: null, chainId: null, account: null });
-    }
-
     async connectWallet() {
-        try {
-            const provider  = await web3Modal.connect();
-            const library = new ethers.providers.Web3Provider(provider);
-            const accounts = await library.listAccounts();
-            const network = await library.getNetwork();
-            console.log('Accounts', accounts);
-            console.log('Network', network);
-            let state = { provider: provider, library: library, chainId: network.chainId };
-            if (accounts) { state.account = accounts[0]; }
-            this.setState(state);
-        } catch (error) {
-            console.error(error);
+        const provider  = await web3Modal.connect();
+        const library = new ethers.providers.Web3Provider(provider);
+        const accounts = await library.listAccounts();
+        const network = await library.getNetwork();
+        let chainId = network.chainId.toString();
+        if (!NETWORKS[chainId]) {
+            chainId = this.defaultChainId();
+            await switchChain(chainId, library);
         }
-    }
-
-    async changeNetwork(e) {
-        const networkId = e.target.value;
-        console.log('Change Network', networkId);
-        try {
-            await this.state.library?.provider.request({
-                method: "wallet_switchEthereumChain",
-                params: [{ chainId: toHex(networkId) }]
-            });
-        } catch (switchError) {
-            if (switchError.code === ERROR_UNKNOWN_NETWORK) {
-                await this.state.library?.provider.request({
-                    method: "wallet_addEthereumChain",
-                    params: [networkParams[toHex(networkId)]]
-                });
-            }
-        }
+        let state = { 
+            provider: provider, library: library, 
+            chainId: chainId, account: accounts[0] 
+        };
+        this.setState(state);
     }
 
     async disconnect() {
         await web3Modal.clearCachedProvider();
-        this.resetState();
+        let state = this.initState();
+        this.setState(state);
+    }
+
+    async changeNetwork(e) {
+        if (!this.state.account) return;
+        const chainId = e.target.value;
+        await switchChain(chainId, this.state.library);
+        this.setState({ chainId: chainId });
+    }
+
+    defaultChainId() {
+        return process.env.NODE_ENV === 'development' ? GOERLI_ID : ETHEREUM_ID;
+    }
+
+    initState() {
+        return { provider: null, library: null, chainId: this.defaultChainId(), account: null };
     }
 
     render() {
@@ -121,12 +91,12 @@ class Layout extends React.Component {
                 <div className="row">
                     <div id="sidebar-container" className="col-lg-2 d-none d-lg-block bg-dark shadow">
                         <div  id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
-                            <select className="form-select" onChange={this.changeNetwork}>
-                                <option value="5">Goerli</option>
-                                <option value="1">Ethereum</option>
-                                <option value="137">Polygon</option>
-                                <option value="42161">Arbitrum</option>
-                                <option value="42220">Celo</option>
+                            <select className="form-select" onChange={this.changeNetwork} value={this.state.chainId}>
+                                {Object.keys(NETWORKS).map(chainId =>
+                                    <option key={chainId} value={chainId}>
+                                        {NETWORKS[chainId].name}
+                                    </option>
+                                )}
                             </select>
                             <hr className="text-light text-opacity-75" />
                             <ul className="nav nav-pills flex-column mb-auto">
@@ -158,11 +128,12 @@ class Layout extends React.Component {
                     </div>
                     <div id="main-col" className="col-12 col-lg-10 ms-lg-auto px-4 px-lg-5">
                         <div className="d-flex d-lg-none mt-2 mb-4">
-                            <select id="select-chain" className="form-select me-auto" aria-label="Select blockchain">
-                                <option value="5">Goerli</option>
-                                <option value="1">Ethereum</option>
-                                <option value="137">Polygon</option>
-                                <option value="42161">Arbitrum</option>
+                            <select id="select-chain" className="form-select me-auto" onChange={this.changeNetwork} value={this.state.chainId}>
+                                {Object.keys(NETWORKS).map(chainId =>
+                                    <option key={chainId} value={chainId}>
+                                        {NETWORKS[chainId].name}
+                                    </option>
+                                )}
                             </select>  
                             {this.state.account
                                 ? <><button className="btn btn-dark text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn-dark me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
@@ -171,20 +142,7 @@ class Layout extends React.Component {
                             <button className="btn btn-dark" type="button"><i className="bi bi-sun"></i></button>
                         </div>
                         <Outlet />
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-                    </div>
+                     </div>
                 </div>
             </div>
             </>
