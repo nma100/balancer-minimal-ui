@@ -6,6 +6,7 @@ import Portfolio from "./pages/Portfolio";
 import Trade from "./pages/Trade";
 import Invest from "./pages/Invest";
 import Error404 from "./pages/Error404";
+// eslint-disable-next-line
 import * as Bootstrap from 'bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
@@ -30,5 +31,3 @@ root.render(
     <App />
   </React.StrictMode>
 );
-
-console.log('Bootstrap JS', Bootstrap);

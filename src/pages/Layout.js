@@ -3,7 +3,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from 'ethers';
 import { truncateAddress } from "../page-utils";
 import { web3Modal, switchChain } from '../web3-connect';
-import { ETHEREUM_ID, GOERLI_ID, NETWORKS } from "../networks";
+import { NETWORKS, checkChain, defaultChainId } from "../networks";
 
 class Layout extends React.Component {
 
@@ -13,19 +13,17 @@ class Layout extends React.Component {
         this.connectWallet = this.connectWallet.bind(this);
         this.disconnect = this.disconnect.bind(this);
         this.changeNetwork = this.changeNetwork.bind(this);
+        this.onNetworkChanged = this.onNetworkChanged.bind(this);
     }
 
     async connectWallet() {
-        const provider  = await web3Modal.connect();
+        const provider = await web3Modal.connect();
         const library = new ethers.providers.Web3Provider(provider);
         const accounts = await library.listAccounts();
         const network = await library.getNetwork();
-        let chainId = network.chainId.toString();
-        if (!NETWORKS[chainId]) {
-            chainId = this.defaultChainId();
-            await switchChain(chainId, library);
-        }
-        let state = { 
+        const chainId = await checkChain(network.chainId, library);
+        provider.on("chainChanged", this.onNetworkChanged);
+        const state = { 
             provider: provider, library: library, 
             chainId: chainId, account: accounts[0] 
         };
@@ -33,8 +31,9 @@ class Layout extends React.Component {
     }
 
     async disconnect() {
+        this.state.provider.removeListener("chainChanged", this.onNetworkChanged);
         await web3Modal.clearCachedProvider();
-        let state = this.initState();
+        const state = this.initState();
         this.setState(state);
     }
 
@@ -45,12 +44,13 @@ class Layout extends React.Component {
         this.setState({ chainId: chainId });
     }
 
-    defaultChainId() {
-        return process.env.NODE_ENV === 'development' ? GOERLI_ID : ETHEREUM_ID;
+    async onNetworkChanged(hexChainId) {
+        const chainId = await checkChain(Number(hexChainId), this.state.library);
+        this.setState({chainId: chainId});
     }
 
     initState() {
-        return { provider: null, library: null, chainId: this.defaultChainId(), account: null };
+        return { provider: null, library: null, account: null, chainId: defaultChainId() };
     }
 
     render() {

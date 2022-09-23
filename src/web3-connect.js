@@ -13,7 +13,6 @@ export const web3Modal = new Web3Modal({
     providerOptions 
 });
 
-  
 export const toHex = (num) => {
     const val = Number(num);
     return "0x" + val.toString(16);
