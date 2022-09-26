@@ -14,6 +14,7 @@ class Layout extends React.Component {
         this.disconnect = this.disconnect.bind(this);
         this.changeNetwork = this.changeNetwork.bind(this);
         this.onNetworkChanged = this.onNetworkChanged.bind(this);
+        this.onAccountChanged = this.onAccountChanged.bind(this);
     }
 
     async connectWallet() {
@@ -23,6 +24,7 @@ class Layout extends React.Component {
         const network = await library.getNetwork();
         const chainId = await checkChain(network.chainId, library);
         provider.on("chainChanged", this.onNetworkChanged);
+        provider.on("accountsChanged", this.onAccountChanged);
         const state = { 
             provider: provider, library: library, 
             chainId: chainId, account: accounts[0] 
@@ -47,6 +49,10 @@ class Layout extends React.Component {
     async onNetworkChanged(hexChainId) {
         const chainId = await checkChain(Number(hexChainId), this.state.library);
         this.setState({chainId: chainId});
+    }
+
+    onAccountChanged(accounts) {
+        this.setState({account: accounts[0]});
     }
 
     initState() {
