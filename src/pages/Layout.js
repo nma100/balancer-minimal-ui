@@ -5,6 +5,8 @@ import { truncateAddress } from "../page-utils";
 import { web3Modal, switchChain } from '../web3-connect';
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 
+export const OutletContext = React.createContext();
+
 class Layout extends React.Component {
 
     constructor(props) {
@@ -56,10 +58,11 @@ class Layout extends React.Component {
     }
 
     initState() {
-        return { provider: null, library: null, account: null, chainId: defaultChainId() };
+        return { provider: undefined, library: undefined, account: undefined, chainId: defaultChainId() };
     }
 
     render() {
+        console.log("Context", this.context);
         return (
             <>
             <nav className="navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25">
@@ -147,7 +150,9 @@ class Layout extends React.Component {
                             } 
                             <button className="btn btn-dark" type="button"><i className="bi bi-sun"></i></button>
                         </div>
-                        <Outlet />
+                        <OutletContext.Provider value={this.state}>
+                            <Outlet />
+                        </OutletContext.Provider>
                      </div>
                 </div>
             </div>

@@ -46,14 +46,5 @@ $veBAL-color: $teal;
     > .veBAL { line-height: 3.5rem;  color: $veBAL-color; }
 }
 
-#pools-nav-tabs {
-    --bs-nav-tabs-link-active-color: #{$light}; 
-    --bs-nav-tabs-link-active-bg: #{$dark};  
-    --bs-nav-tabs-border-color: #{$gray-600}; 
-    --bs-nav-tabs-link-active-border-color: #{$gray-800}; 
-    --bs-nav-link-color: #{$light}; 
-    --bs-nav-link-hover-color: #{$gray-400};
-}
-
-#veBAL-tab { --bs-nav-link-color: #{$veBAL-color}; }
+#veBAL-liquidity > .pool-title { color: $veBAL-color; }
 
