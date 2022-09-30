@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from 'ethers';
-import { truncateAddress } from "../utils/page-utils";
+import { truncateAddress } from "../utils/page";
 import { web3Modal, switchChain } from '../web3-connect';
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 

@@ -1,7 +1,8 @@
 import React from "react";
 import { OutletContext } from "./Layout";
 import { BalancerSDK } from '@balancer-labs/sdk';
-import { getBptBalanceFiatValue } from "../utils/pool-utils";
+import { getBptBalanceFiatValue } from "../utils/pools";
+import { POOLS } from "../constants/pools";
 
 class Portfolio extends React.Component {
 
@@ -21,15 +22,41 @@ class Portfolio extends React.Component {
     console.log("componentDidUpdate", this.state);
     if (this.context.account) {
       this.loadStakedPools();
+      this.loadUnstakedPools();
     }
   }
 
-  async loadStakedPools() {
-    console.log("loadStakedPools");
+  initSdk() {
     const sdk = new BalancerSDK({ 
       network: Number(this.context.chainId),
       rpcUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`});
     console.log('sdk', this.context.account.toLowerCase(), sdk);  
+    return sdk;
+  }
+
+  async loadUnstakedPools() {
+    console.log("loadUnstakedPools");
+    const sdk = this.initSdk();
+
+    const { data } = sdk;
+
+    const poolShares = await data.poolShares.findByUser(this.context.account.toLowerCase());
+    console.log("poolShares", poolShares);
+
+    const poolSharesIds = poolShares.map(poolShare => poolShare.poolId.id);
+    console.log("poolSharesIds", poolSharesIds);
+
+    const pools = await data.pools.where(pool => poolSharesIds.includes(pool.id) && 
+                                                 !POOLS(this.context.chainId).ExcludedPoolTypes.includes(pool.poolType));
+    console.log("Unstaked Pools", pools);
+    // TODO : Phantom pools
+
+    
+  }
+
+  async loadStakedPools() {
+    console.log("loadStakedPools");
+    const sdk = this.initSdk();
 
     const { data } = sdk;
 
@@ -51,8 +78,9 @@ class Portfolio extends React.Component {
         bpt: stakedBpt.balance
       };
     });
+    // TODO : pool boosts
     console.log('stakedPools + shares', stakedPools);
-
+    return stakedPools;
   }
 
   render() {
@@ -68,7 +96,7 @@ class Portfolio extends React.Component {
             <div className="veBAL fs-3">---- in veBAL</div>
           </div>
 
-          <h2 className="mb-4 pt-2">My investments</h2>
+          <h2 className="mb-4 pt-1 pt-xxl-2">My investments</h2>
           
           <div id="unstaked-pools" className="mb-5">
             <h4 className="mb-3">Unstaked pools</h4>

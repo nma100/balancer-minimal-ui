@@ -1,4 +1,4 @@
-import { bnum, ZERO } from "./bnum-utils";
+import { bnum, ZERO } from "./bnum";
 
 export function getBptPrice(pool) {
   if (!pool) return ZERO;
