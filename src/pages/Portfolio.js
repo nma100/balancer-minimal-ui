@@ -1,29 +1,65 @@
 import React from "react";
 import { OutletContext } from "./Layout";
+import { BalancerSDK } from '@balancer-labs/sdk';
+import { getBptBalanceFiatValue } from "../utils/pool-utils";
 
 class Portfolio extends React.Component {
 
   static contextType = OutletContext;
 
   constructor(props) {
-    console.log("Portfolio", "constructor", props);
-
+    console.log("constructor", props);
     super(props);
     this.state = { count: 0 };
   }
 
   componentDidMount() {
-    console.log("Portfolio", "componentDidMount", this.state);
+    console.log("componentDidMount", this.state);
   }
 
   componentDidUpdate() {
-    console.log("Portfolio", "componentDidUpdate", this.state);
+    console.log("componentDidUpdate", this.state);
+    if (this.context.account) {
+      this.loadStakedPools();
+    }
+  }
+
+  async loadStakedPools() {
+    console.log("loadStakedPools");
+    const sdk = new BalancerSDK({ 
+      network: Number(this.context.chainId),
+      rpcUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`});
+    console.log('sdk', this.context.account.toLowerCase(), sdk);  
+
+    const { data } = sdk;
+
+    const userGaugeShares = await data.gaugeShares.query({ where: { user: this.context.account.toLowerCase(), balance_gt: '0' } });
+    console.log('userGaugeShares', userGaugeShares);
+
+    const stakedPoolIds =  userGaugeShares.map(share => share.gauge.poolId)
+    console.log('stakedPoolIds', stakedPoolIds);
+
+    let stakedPools = await data.pools.where(pool => stakedPoolIds.includes(pool.id));
+    console.log('stakedPools', stakedPools);
+
+    stakedPools = stakedPools.map(pool => {
+      const stakedBpt = userGaugeShares.find(gs => gs.gauge.poolId === pool.id);
+      console.log('stakedBpt', stakedBpt.balance);  
+      return {
+        ...pool,
+        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
+        bpt: stakedBpt.balance
+      };
+    });
+    console.log('stakedPools + shares', stakedPools);
+
   }
 
   render() {
+    console.log("state", this.state);
+    console.log("context", this.context);
+    console.log("process.env", process.env);
     const logoSize = { width: "1.2rem", height: "1.2rem" };
-    console.log("Portfolio", "render", this.state);
-    console.log("Portfolio", "context", this.context);
     return (
       <>
           <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
@@ -48,34 +84,40 @@ class Portfolio extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="d-none d-md-table-cell px-3">
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                    </td>
-                    <td>
-                      <span className="bg-light bg-opacity-10 px-2 py-1 me-1 rounded-pill">USDT</span>
-                      <span className="bg-light bg-opacity-10 px-2 py-1 me-1 rounded-pill">DAI</span>
-                      <span className="bg-light bg-opacity-10 px-2 py-1 rounded-pill">USDC</span>
-                    </td>
-                    <td>$4,089</td>
-                    <td className="text-end text-nowrap"> &lt; 0.01% <i className="bi bi-info-circle text-white text-opacity-50" style={{fontSize: '90%'}}></i></td>
-                    <td className="text-center text-white text-opacity-50 small">N/A</td>
-                  </tr>
-                  <tr>
-                    <td className="d-none d-md-table-cell px-3">
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                    </td>
-                    <td>
-                      <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
-                      <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">USDC</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
-                    </td>
-                    <td>$454</td>
-                    <td className="text-end text-nowrap">65.73% - 164.23% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
-                    <td className="text-center"><button type="button" className="btn btn-outline-light btn-sm">Stake</button></td>
-                  </tr>
+                    {this.context.account
+                        ? 
+                          <>
+                          <tr>
+                            <td className="d-none d-md-table-cell px-3">
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                            </td>
+                            <td>
+                              <span className="bg-light bg-opacity-10 px-2 py-1 me-1 rounded-pill">USDT</span>
+                              <span className="bg-light bg-opacity-10 px-2 py-1 me-1 rounded-pill">DAI</span>
+                              <span className="bg-light bg-opacity-10 px-2 py-1 rounded-pill">USDC</span>
+                            </td>
+                            <td>$4,089</td>
+                            <td className="text-end text-nowrap"> &lt; 0.01% <i className="bi bi-info-circle text-white text-opacity-50" style={{fontSize: '90%'}}></i></td>
+                            <td className="text-center text-white text-opacity-50 small">N/A</td>
+                          </tr>
+                          <tr>
+                            <td className="d-none d-md-table-cell px-3">
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                            </td>
+                            <td>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">USDC</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
+                            </td>
+                            <td>$454</td>
+                            <td className="text-end text-nowrap">65.73% - 164.23% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
+                            <td className="text-center"><button type="button" className="btn btn-outline-light btn-sm">Stake</button></td>
+                          </tr>
+                          </>
+                        : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
+                    }
                 </tbody>
               </table>
             </div>  
@@ -95,19 +137,25 @@ class Portfolio extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="d-none d-md-table-cell px-3">
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                      <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                    </td>
-                    <td>
-                      <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WBTC</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
-                      <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
-                    </td>
-                    <td>$1837</td>
-                    <td className="text-center text-nowrap">1.021x</td>
-                    <td className="text-center text-nowrap">162.91% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
-                  </tr>
+                    {this.context.account
+                        ? 
+                          <>
+                          <tr>
+                            <td className="d-none d-md-table-cell px-3">
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                            </td>
+                            <td>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WBTC</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>50%</div></div>
+                            </td>
+                            <td>$1837</td>
+                            <td className="text-center text-nowrap">1.021x</td>
+                            <td className="text-center text-nowrap">162.91% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
+                          </tr>
+                          </>
+                        : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
+                    }
                 </tbody>
               </table>
             </div>
@@ -127,19 +175,25 @@ class Portfolio extends React.Component {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td className="d-none d-md-table-cell px-3">
-                        <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xba100000625a3754423978a60c9317c58a424e3D/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                        <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                      </td>
-                      <td>
-                        <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">BAL</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>80%</div></div>
-                        <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>20%</div></div>
-                      </td>
-                      <td>$2540</td>
-                      <td className="text-center text-nowrap">5.83% - 472.58% <i className="bi bi-stars text-primary" style={{fontSize: '90%'}}></i></td>
-                      <td className="text-center text-nowrap">27 Jul 2023</td>
-                    </tr>
+                    {this.context.account
+                        ? 
+                          <>
+                          <tr>
+                            <td className="d-none d-md-table-cell px-3">
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xba100000625a3754423978a60c9317c58a424e3D/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
+                            </td>
+                            <td>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">BAL</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>80%</div></div>
+                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>20%</div></div>
+                            </td>
+                            <td>$2540</td>
+                            <td className="text-center text-nowrap">5.83% - 472.58% <i className="bi bi-stars text-primary" style={{fontSize: '90%'}}></i></td>
+                            <td className="text-center text-nowrap">27 Jul 2023</td>
+                          </tr>
+                          </>
+                        : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
+                    }
                   </tbody>
                 </table>
               </div>

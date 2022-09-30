@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from 'ethers';
-import { truncateAddress } from "../page-utils";
+import { truncateAddress } from "../utils/page-utils";
 import { web3Modal, switchChain } from '../web3-connect';
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 
@@ -62,7 +62,6 @@ class Layout extends React.Component {
     }
 
     render() {
-        console.log("Context", this.context);
         return (
             <>
             <nav className="navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25">
