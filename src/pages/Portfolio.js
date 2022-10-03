@@ -3,6 +3,7 @@ import { OutletContext } from "./Layout";
 import { BalancerSDK } from '@balancer-labs/sdk';
 import { getBptBalanceFiatValue } from "../utils/pools";
 import { POOLS } from "../constants/pools";
+import { bnum } from "../utils/bnum";
 
 class Portfolio extends React.Component {
 
@@ -18,11 +19,19 @@ class Portfolio extends React.Component {
     console.log("componentDidMount", this.state);
   }
 
-  componentDidUpdate() {
+  async componentDidUpdate() {
     console.log("componentDidUpdate", this.state);
+
     if (this.context.account) {
-      this.loadStakedPools();
-      this.loadUnstakedPools();
+      const stakedData = await this.loadStakedPools();
+      console.log('stakedData', stakedData);
+
+      const unstakedData = await this.loadUnstakedPools();
+      console.log('unstakedData', unstakedData);
+
+      const totalInvestedLabel = unstakedData.totalUnstakedAmount
+          .plus(stakedData.totalStakedAmount);
+      console.log('totalInvestedLabel', totalInvestedLabel.toString());
     }
   }
 
@@ -40,18 +49,37 @@ class Portfolio extends React.Component {
 
     const { data } = sdk;
 
-    const poolShares = await data.poolShares.findByUser(this.context.account.toLowerCase());
-    console.log("poolShares", poolShares);
+    const poolShares = await data.poolShares.query({ where: { userAddress: this.context.account.toLowerCase(),  balance_gt: "0" }});
+    //console.log("poolShares", poolShares);
 
-    const poolSharesIds = poolShares.map(poolShare => poolShare.poolId.id);
-    console.log("poolSharesIds", poolSharesIds);
+    const poolSharesIds = poolShares.map(poolShare => poolShare.poolId);
+    //console.log("poolSharesIds", poolSharesIds);
 
     const pools = await data.pools.where(pool => poolSharesIds.includes(pool.id) && 
-                                                 !POOLS(this.context.chainId).ExcludedPoolTypes.includes(pool.poolType));
-    console.log("Unstaked Pools", pools);
+         !POOLS(this.context.chainId).ExcludedPoolTypes.includes(pool.poolType));
+
     // TODO : Phantom pools
 
+    // TODO : Pool decorated. 
+
+    const unstakedPools = pools.map(pool => {
+      const stakedBpt = poolShares.find(ps => ps.poolId === pool.id); 
+      return {
+        ...pool,
+        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
+        bpt: stakedBpt.balance
+    }});
+
+    const totalUnstakedAmount = unstakedPools
+      .map(pool => pool.shares)
+      .reduce((total, shares) => total.plus(shares), bnum(0));
+
+    // TODO Filter migratables pools
     
+    //console.log("Unstaked pools", unstakedPools);
+    //console.log("Total unstaked amount", totalUnstakedAmount);
+
+    return { ...unstakedPools, totalUnstakedAmount }
   }
 
   async loadStakedPools() {
@@ -60,18 +88,18 @@ class Portfolio extends React.Component {
 
     const { data } = sdk;
 
-    const userGaugeShares = await data.gaugeShares.query({ where: { user: this.context.account.toLowerCase(), balance_gt: '0' } });
-    console.log('userGaugeShares', userGaugeShares);
+    const gaugeShares = await data.gaugeShares.query({ where: { user: this.context.account.toLowerCase(), balance_gt: "0" } });
+    //console.log('gaugeShares', gaugeShares);
 
-    const stakedPoolIds =  userGaugeShares.map(share => share.gauge.poolId)
-    console.log('stakedPoolIds', stakedPoolIds);
+    const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
+    //console.log('stakedPoolIds', stakedPoolIds);
 
     let stakedPools = await data.pools.where(pool => stakedPoolIds.includes(pool.id));
-    console.log('stakedPools', stakedPools);
+    //console.log('stakedPools', stakedPools);
 
     stakedPools = stakedPools.map(pool => {
-      const stakedBpt = userGaugeShares.find(gs => gs.gauge.poolId === pool.id);
-      console.log('stakedBpt', stakedBpt.balance);  
+      const stakedBpt = gaugeShares.find(gs => gs.gauge.poolId === pool.id);
+      //console.log('stakedBpt', stakedBpt.balance);  
       return {
         ...pool,
         shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
@@ -79,8 +107,14 @@ class Portfolio extends React.Component {
       };
     });
     // TODO : pool boosts
-    console.log('stakedPools + shares', stakedPools);
-    return stakedPools;
+    
+    //console.log("Staked pools", stakedPools);
+
+    const totalStakedAmount = stakedPools
+      .map(pool => pool.shares)
+      .reduce((total, shares) => total.plus(shares), bnum(0));
+
+    return { ...stakedPools, totalStakedAmount }
   }
 
   render() {
