@@ -639,6 +639,6 @@ export const POOLS_MAP = {
 export function POOLS(networkId) { 
   const id = Number(networkId);
   return POOLS_MAP[id]
-  ? POOLS_MAP[id]
-  : POOLS_GENERIC;
+    ? POOLS_MAP[id]
+    : POOLS_GENERIC;
 }

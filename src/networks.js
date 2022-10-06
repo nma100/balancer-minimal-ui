@@ -21,7 +21,7 @@ export class Chain {
   }
 }
 
-export const ETHEREUM_ID = '1', POLYGON_ID = '137', ARBITRUM_ID = '42161', GOERLI_ID = '5';
+export const ETHEREUM_ID = '1', POLYGON_ID = '137', ARBITRUM_ID = '42161', GOERLI_ID = '5', KOVAN_ID = '42';
 
 export const NETWORKS = {
   [ETHEREUM_ID] : new Chain(ETHEREUM_ID, 'Ethereum', 18, 'https://etherscan.io', '/address/{0}', '/tx/{0}'),
@@ -42,3 +42,7 @@ export async function checkChain(chainId, library) {
 export function defaultChainId() {
   return process.env.NODE_ENV === 'production' ? ETHEREUM_ID : GOERLI_ID;
 }
+
+export const isEthMainnet = (networkId) => ETHEREUM_ID === networkId;
+export const isEthTestnet = (networkId) => GOERLI_ID === networkId || KOVAN_ID === networkId;
+export const isEthNetwork = (networkId) => isEthMainnet(networkId) || isEthTestnet(networkId);

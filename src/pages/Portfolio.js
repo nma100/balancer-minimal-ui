@@ -4,6 +4,8 @@ import { BalancerSDK } from '@balancer-labs/sdk';
 import { getBptBalanceFiatValue } from "../utils/pools";
 import { POOLS } from "../constants/pools";
 import { bnum } from "../utils/bnum";
+import { isEthNetwork } from "../networks";
+import { getInfuraUrl } from "../utils/infura";
 
 class Portfolio extends React.Component {
 
@@ -23,24 +25,53 @@ class Portfolio extends React.Component {
     console.log("componentDidUpdate", this.state);
 
     if (this.context.account) {
-      const stakedData = await this.loadStakedPools();
-      console.log('stakedData', stakedData);
+      const staked = await this.loadStakedPools();
+      console.log('staked', staked);
 
-      const unstakedData = await this.loadUnstakedPools();
-      console.log('unstakedData', unstakedData);
+      const unstaked = await this.loadUnstakedPools();
+      console.log('unstaked', unstaked);
 
-      const totalInvestedLabel = unstakedData.totalUnstakedAmount
-          .plus(stakedData.totalStakedAmount);
-      console.log('totalInvestedLabel', totalInvestedLabel.toString());
+      const veBal = await this.loadVeBalPool();
+      console.log('veBal', veBal);
+
+      const totalInvested = unstaked.totalFiatAmount
+          .plus(staked.totalFiatAmount)
+          .plus(veBal.shares);
+      console.log('totalInvestedLabel', totalInvested.toString());
     }
   }
 
   initSdk() {
     const sdk = new BalancerSDK({ 
       network: Number(this.context.chainId),
-      rpcUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`});
-    console.log('sdk', this.context.account.toLowerCase(), sdk);  
+      rpcUrl: getInfuraUrl(this.context.chainId)
+    });
     return sdk;
+  }
+
+  async loadVeBalPool() {
+    console.log("loadVeBalPool");
+
+    if (!isEthNetwork(this.context.chainId)) return undefined;
+
+    const sdk = this.initSdk();
+
+    const { data, balancerContracts } = sdk;
+
+    const lockPoolId = POOLS(this.context.chainId).IdsMap.veBAL;
+    const lockPool = await data.pools.find(lockPoolId);
+    const userLockInfo = await balancerContracts.veBal.getLockInfo(this.context.account);
+
+    return {
+      ...lockPool,
+      shares: userLockInfo?.hasExistingLock 
+        ? getBptBalanceFiatValue(lockPool, userLockInfo.lockedAmount)
+        : '0',
+      lockedEndDate: userLockInfo?.hasExistingLock && !userLockInfo?.isExpired
+        ? userLockInfo?.lockedEndDate
+        : undefined
+     };
+
   }
 
   async loadUnstakedPools() {
@@ -50,10 +81,8 @@ class Portfolio extends React.Component {
     const { data } = sdk;
 
     const poolShares = await data.poolShares.query({ where: { userAddress: this.context.account.toLowerCase(),  balance_gt: "0" }});
-    //console.log("poolShares", poolShares);
 
     const poolSharesIds = poolShares.map(poolShare => poolShare.poolId);
-    //console.log("poolSharesIds", poolSharesIds);
 
     const pools = await data.pools.where(pool => poolSharesIds.includes(pool.id) && 
          !POOLS(this.context.chainId).ExcludedPoolTypes.includes(pool.poolType));
@@ -75,31 +104,22 @@ class Portfolio extends React.Component {
       .reduce((total, shares) => total.plus(shares), bnum(0));
 
     // TODO Filter migratables pools
-    
-    //console.log("Unstaked pools", unstakedPools);
-    //console.log("Total unstaked amount", totalUnstakedAmount);
 
-    return { ...unstakedPools, totalUnstakedAmount }
+    return { ...unstakedPools, totalFiatAmount: totalUnstakedAmount }
   }
 
   async loadStakedPools() {
-    console.log("loadStakedPools");
+
     const sdk = this.initSdk();
 
     const { data } = sdk;
 
     const gaugeShares = await data.gaugeShares.query({ where: { user: this.context.account.toLowerCase(), balance_gt: "0" } });
-    //console.log('gaugeShares', gaugeShares);
-
     const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
-    //console.log('stakedPoolIds', stakedPoolIds);
-
     let stakedPools = await data.pools.where(pool => stakedPoolIds.includes(pool.id));
-    //console.log('stakedPools', stakedPools);
 
     stakedPools = stakedPools.map(pool => {
       const stakedBpt = gaugeShares.find(gs => gs.gauge.poolId === pool.id);
-      //console.log('stakedBpt', stakedBpt.balance);  
       return {
         ...pool,
         shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
@@ -108,13 +128,11 @@ class Portfolio extends React.Component {
     });
     // TODO : pool boosts
     
-    //console.log("Staked pools", stakedPools);
-
     const totalStakedAmount = stakedPools
       .map(pool => pool.shares)
       .reduce((total, shares) => total.plus(shares), bnum(0));
 
-    return { ...stakedPools, totalStakedAmount }
+    return { ...stakedPools, totalFiatAmount: totalStakedAmount }
   }
 
   render() {
