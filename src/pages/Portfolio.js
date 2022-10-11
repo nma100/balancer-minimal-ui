@@ -1,11 +1,11 @@
 import React from "react";
 import { OutletContext } from "./Layout";
-import { BalancerSDK } from '@balancer-labs/sdk';
+import { BalancerSDK, POOLS } from '@balancer-labs/sdk';
 import { getBptBalanceFiatValue } from "../utils/pools";
-import { POOLS } from "../constants/pools";
 import { bnum } from "../utils/bnum";
 import { isEthNetwork } from "../networks";
 import { getInfuraUrl } from "../utils/infura";
+import { CryptoIcon } from "../components/CryptoIcon";
 
 class Portfolio extends React.Component {
 
@@ -14,14 +14,17 @@ class Portfolio extends React.Component {
   constructor(props) {
     console.log("constructor", props);
     super(props);
-    this.state = { count: 0 };
+    this.state = { icon: '' };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
+
     console.log("componentDidMount", this.state);
+
   }
 
   async componentDidUpdate() {
+ 
     console.log("componentDidUpdate", this.state);
 
     if (this.context.account) {
@@ -76,6 +79,7 @@ class Portfolio extends React.Component {
 
   async loadUnstakedPools() {
     console.log("loadUnstakedPools");
+
     const sdk = this.initSdk();
 
     const { data } = sdk;
@@ -139,7 +143,10 @@ class Portfolio extends React.Component {
     console.log("state", this.state);
     console.log("context", this.context);
     console.log("process.env", process.env);
+
+
     const logoSize = { width: "1.2rem", height: "1.2rem" };
+  
     return (
       <>
           <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
@@ -147,9 +154,16 @@ class Portfolio extends React.Component {
             <div className="total fs-2 text-light text-opacity-75 fw-bold">----</div> 
             <div className="veBAL fs-3">---- in veBAL</div>
           </div>
+          
+          <CryptoIcon name="BTC" />
+          <CryptoIcon name="ATOM" />
+          <CryptoIcon name="usdt" />
+          <CryptoIcon name="bal" />
+          <CryptoIcon name="etH" />
+          <CryptoIcon name="???" />
 
           <h2 className="mb-4 pt-1 pt-xxl-2">My investments</h2>
-          
+
           <div id="unstaked-pools" className="mb-5">
             <h4 className="mb-3">Unstaked pools</h4>
             <div className="table-responsive">
