@@ -21,13 +21,14 @@ export class Chain {
   }
 }
 
-export const ETHEREUM_ID = '1', POLYGON_ID = '137', ARBITRUM_ID = '42161', GOERLI_ID = '5', KOVAN_ID = '42';
+export const ETHEREUM_ID = '1', POLYGON_ID = '137', ARBITRUM_ID = '42161', GOERLI_ID = '5', SEPOLIA_ID = '11155111';
 
 export const NETWORKS = {
   [ETHEREUM_ID] : new Chain(ETHEREUM_ID, 'Ethereum', 18, 'https://etherscan.io', '/address/{0}', '/tx/{0}'),
   [POLYGON_ID]  : new Chain(POLYGON_ID, 'Polygon', 18, 'https://polygonscan.com', '/address/{0}', '/tx/{0}'),
   [ARBITRUM_ID] : new Chain(ARBITRUM_ID, 'Arbitrum', 18, 'https://arbiscan.com', '/address/{0}', '/tx/{0}'),
-  [GOERLI_ID]   : new Chain(GOERLI_ID, 'Goerli', 18, 'https://goerli.etherscan.io', '/address/{0}', '/tx/{0}')
+  [GOERLI_ID]   : new Chain(GOERLI_ID, 'Goerli', 18, 'https://goerli.etherscan.io', '/address/{0}', '/tx/{0}'),
+  [SEPOLIA_ID]  : new Chain(SEPOLIA_ID, 'Sepolia', 18, 'https://sepolia.etherscan.io', '/address/{0}', '/tx/{0}')
 }
 
 export async function checkChain(chainId, library) {
@@ -44,5 +45,5 @@ export function defaultChainId() {
 }
 
 export const isEthMainnet = (networkId) => ETHEREUM_ID === networkId;
-export const isEthTestnet = (networkId) => GOERLI_ID === networkId || KOVAN_ID === networkId;
+export const isEthTestnet = (networkId) => GOERLI_ID === networkId || SEPOLIA_ID === networkId;
 export const isEthNetwork = (networkId) => isEthMainnet(networkId) || isEthTestnet(networkId);

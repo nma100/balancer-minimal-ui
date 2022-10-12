@@ -1,9 +1,7 @@
 import React from "react";
+import { BalancerSDK, getBptBalanceFiatValue, 
+  POOLS, bnum } from '@balancer-labs/sdk';
 import { OutletContext } from "./Layout";
-import { BalancerSDK } from '@balancer-labs/sdk';
-import { getBptBalanceFiatValue } from "../utils/pools";
-import { POOLS } from "../constants/pools";
-import { bnum } from "../utils/bnum";
 import { isEthNetwork } from "../networks";
 import { getInfuraUrl } from "../utils/infura";
 

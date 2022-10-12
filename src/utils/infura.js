@@ -1,19 +1,21 @@
 import { ETHEREUM_ID, GOERLI_ID } from "../networks";
 
+const { REACT_APP_INFURA_KEY } = process.env;
+
 export function getInfuraUrl(chainId) {
 
-  let url;
+  let subdomain;
 
   switch (chainId) {
       case ETHEREUM_ID:
-        url = 'https://mainnet.infura.io/v3/';
+        subdomain = 'mainnet';
         break;
       case GOERLI_ID:
-        url = 'https://goerli.infura.io/v3/';
+        subdomain = 'goerli';
         break;
       default:
         throw Error(`Unsupported network ${chainId}`);
-    }
+  }
 
-  return `${url}${process.env.REACT_APP_INFURA_KEY}`;
+  return `https://${subdomain}.infura.io/v3/${REACT_APP_INFURA_KEY}`;
 }
