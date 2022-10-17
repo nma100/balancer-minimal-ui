@@ -11,6 +11,7 @@
     "bignumber.js": "^9.1.0",
     "bootstrap": "^5.2.1",
     "bootstrap-icons": "^1.9.1",
+    "chai": "^4.3.6",
     "cryptocurrency-icons": "^0.18.1",
     "ethers": "^5.7.1",
     "node-sass": "^7.0.3",
@@ -24,7 +25,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --watchAll=false",
     "eject": "react-scripts eject",
     "css-compile": "node-sass --include-path node_modules --output-style compressed public -o public"
   },

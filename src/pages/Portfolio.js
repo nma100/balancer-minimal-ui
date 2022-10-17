@@ -1,10 +1,8 @@
 import React from "react";
-import { BalancerSDK, getBptBalanceFiatValue, 
-  POOLS, bnum } from '@balancer-labs/sdk';
 import { OutletContext } from "./Layout";
 import { isEthNetwork } from "../networks";
-import { getInfuraUrl } from "../utils/infura";
 import { CryptoIcon } from "../components/CryptoIcon";
+import { bnumToStr } from "../utils/bnum"
 
 class Portfolio extends React.Component {
 
@@ -13,153 +11,34 @@ class Portfolio extends React.Component {
   constructor(props) {
     console.log("constructor", props);
     super(props);
-    this.state = { icon: '' };
+    this.state = {};
   }
 
   async componentDidMount() {
-
     console.log("componentDidMount", this.state);
-
   }
 
   async componentDidUpdate() {
- 
     console.log("componentDidUpdate", this.state);
-
-    if (this.context.account) {
-      const staked = await this.loadStakedPools();
-      console.log('staked', staked);
-
-      const unstaked = await this.loadUnstakedPools();
-      console.log('unstaked', unstaked);
-
-      const veBal = await this.loadVeBalPool();
-      console.log('veBal', veBal);
-
-      const totalInvested = unstaked.totalFiatAmount
-          .plus(staked.totalFiatAmount)
-          .plus(veBal.shares);
-      console.log('totalInvestedLabel', totalInvested.toString());
-    }
   }
 
-  initSdk() {
-    const sdk = new BalancerSDK({ 
-      network: Number(this.context.chainId),
-      rpcUrl: getInfuraUrl(this.context.chainId)
-    });
-    return sdk;
-  }
-
-  async loadVeBalPool() {
-    console.log("loadVeBalPool");
-
-    if (!isEthNetwork(this.context.chainId)) return undefined;
-
-    const sdk = this.initSdk();
-
-    const { data, balancerContracts } = sdk;
-
-    const lockPoolId = POOLS(this.context.chainId).IdsMap.veBAL;
-    const lockPool = await data.pools.find(lockPoolId);
-    const userLockInfo = await balancerContracts.veBal.getLockInfo(this.context.account);
-
-    return {
-      ...lockPool,
-      shares: userLockInfo?.hasExistingLock 
-        ? getBptBalanceFiatValue(lockPool, userLockInfo.lockedAmount)
-        : '0',
-      lockedEndDate: userLockInfo?.hasExistingLock && !userLockInfo?.isExpired
-        ? userLockInfo?.lockedEndDate
-        : undefined
-     };
-
-  }
-
-  async loadUnstakedPools() {
-    console.log("loadUnstakedPools");
-
-    const sdk = this.initSdk();
-
-    const { data } = sdk;
-
-    const poolShares = await data.poolShares.query({ where: { userAddress: this.context.account.toLowerCase(),  balance_gt: "0" }});
-
-    const poolSharesIds = poolShares.map(poolShare => poolShare.poolId);
-
-    const pools = await data.pools.where(pool => poolSharesIds.includes(pool.id) && 
-         !POOLS(this.context.chainId).ExcludedPoolTypes.includes(pool.poolType));
-
-    // TODO : Phantom pools
-
-    // TODO : Pool decorated. 
-
-    const unstakedPools = pools.map(pool => {
-      const stakedBpt = poolShares.find(ps => ps.poolId === pool.id); 
-      return {
-        ...pool,
-        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
-        bpt: stakedBpt.balance
-    }});
-
-    const totalUnstakedAmount = unstakedPools
-      .map(pool => pool.shares)
-      .reduce((total, shares) => total.plus(shares), bnum(0));
-
-    // TODO Filter migratables pools
-
-    return { ...unstakedPools, totalFiatAmount: totalUnstakedAmount }
-  }
-
-  async loadStakedPools() {
-
-    const sdk = this.initSdk();
-
-    const { data } = sdk;
-
-    const gaugeShares = await data.gaugeShares.query({ where: { user: this.context.account.toLowerCase(), balance_gt: "0" } });
-    const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
-    let stakedPools = await data.pools.where(pool => stakedPoolIds.includes(pool.id));
-
-    stakedPools = stakedPools.map(pool => {
-      const stakedBpt = gaugeShares.find(gs => gs.gauge.poolId === pool.id);
-      return {
-        ...pool,
-        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
-        bpt: stakedBpt.balance
-      };
-    });
-    // TODO : pool boosts
-    
-    const totalStakedAmount = stakedPools
-      .map(pool => pool.shares)
-      .reduce((total, shares) => total.plus(shares), bnum(0));
-
-    return { ...stakedPools, totalFiatAmount: totalStakedAmount }
+  isEthereum() {
+    return this.context.account && isEthNetwork(this.context.chainId);
   }
 
   render() {
-    console.log("state", this.state);
-    console.log("context", this.context);
-    console.log("process.env", process.env);
-
-
-    const logoSize = { width: "1.2rem", height: "1.2rem" };
-  
+    console.log("render", this.context);
+    const { account, portfolio } = this.context;
+    const LOGO_SIZE = { width: "1.2rem", height: "1.2rem" };
     return (
       <>
           <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
             <div className="title fs-1">My Balancer investments</div>
-            <div className="total fs-2 text-light text-opacity-75 fw-bold">----</div> 
-            <div className="veBAL fs-3">---- in veBAL</div>
+            <div className="total fs-2 text-light text-opacity-75 fw-bold">
+              { bnumToStr(portfolio?.totalInvest) }
+            </div> 
+            { this.isEthereum() && <div className="veBAL fs-3">---- in veBAL</div> }
           </div>
-          
-          <CryptoIcon name="BTC" />
-          <CryptoIcon name="ATOM" />
-          <CryptoIcon name="usdt" />
-          <CryptoIcon name="bal" />
-          <CryptoIcon name="etH" />
-          <CryptoIcon name="???" />
 
           <h2 className="mb-4 pt-1 pt-xxl-2">My investments</h2>
 
@@ -177,9 +56,26 @@ class Portfolio extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                    {this.context.account
-                        ? 
+                    {account ? 
                           <>
+                          {portfolio?.unstakedPools.pools.map(pool =>
+                            <tr key={pool.id}>
+                              <td className="d-none d-md-table-cell px-3">
+                                {pool.tokens.map(token =>
+                                  <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
+                                )}
+                              </td>
+                              <td>
+                                {pool.tokens.map(token =>
+                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
+                                )}
+                              </td>
+                              <td>${bnumToStr(pool.shares)}</td>
+                              <td className="text-end text-nowrap">---</td>
+                              <td className="text-center">---</td>
+                            </tr>
+                          )}
+                          {/*
                           <tr>
                             <td className="d-none d-md-table-cell px-3">
                               <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
@@ -208,6 +104,7 @@ class Portfolio extends React.Component {
                             <td className="text-end text-nowrap">65.73% - 164.23% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
                             <td className="text-center"><button type="button" className="btn btn-outline-light btn-sm">Stake</button></td>
                           </tr>
+                          */}
                           </>
                         : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
                     }
@@ -230,9 +127,26 @@ class Portfolio extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                    {this.context.account
-                        ? 
+                    {account ? 
                           <>
+                          {portfolio?.stakedPools.pools.map(pool =>
+                            <tr key={pool.id}>
+                              <td className="d-none d-md-table-cell px-3">
+                                {pool.tokens.map(token =>
+                                  <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>   
+                                )}
+                              </td>
+                              <td>
+                                {pool.tokens.map(token =>
+                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
+                                )}
+                              </td>
+                              <td>${bnumToStr(pool.shares)}</td>
+                              <td className="text-center text-nowrap">---</td>
+                              <td className="text-center text-nowrap">---</td>
+                            </tr>
+                          )}
+                          {/*
                           <tr>
                             <td className="d-none d-md-table-cell px-3">
                               <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
@@ -246,6 +160,7 @@ class Portfolio extends React.Component {
                             <td className="text-center text-nowrap">1.021x</td>
                             <td className="text-center text-nowrap">162.91% <i className="bi bi-stars text-warning" style={{fontSize: '90%'}}></i></td>
                           </tr>
+                          */}
                           </>
                         : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
                     }
@@ -254,6 +169,7 @@ class Portfolio extends React.Component {
             </div>
           </div>{/* Staked pools */}
 
+          { this.isEthereum() && 
           <div id="veBAL-liquidity">
               <h4 className="pool-title mb-3">veBAL protocol liquidity</h4>
               <div className="table-responsive">
@@ -268,29 +184,24 @@ class Portfolio extends React.Component {
                     </tr>
                   </thead>
                   <tbody>
-                    {this.context.account
-                        ? 
-                          <>
-                          <tr>
-                            <td className="d-none d-md-table-cell px-3">
-                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xba100000625a3754423978a60c9317c58a424e3D/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                              <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={logoSize} alt="Asset icon" />
-                            </td>
-                            <td>
-                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">BAL</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>80%</div></div>
-                              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>20%</div></div>
-                            </td>
-                            <td>$2540</td>
-                            <td className="text-center text-nowrap">5.83% - 472.58% <i className="bi bi-stars text-primary" style={{fontSize: '90%'}}></i></td>
-                            <td className="text-center text-nowrap">27 Jul 2023</td>
-                          </tr>
-                          </>
-                        : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
-                    }
+                      <tr>
+                        <td className="d-none d-md-table-cell px-3">
+                          <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xba100000625a3754423978a60c9317c58a424e3D/logo.png" className="me-1" style={LOGO_SIZE} alt="Asset icon" />
+                          <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={LOGO_SIZE} alt="Asset icon" />
+                        </td>
+                        <td>
+                          <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">BAL</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>80%</div></div>
+                          <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">WETH</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>20%</div></div>
+                        </td>
+                        <td>$2540</td>
+                        <td className="text-center text-nowrap">5.83% - 472.58% <i className="bi bi-stars text-primary" style={{fontSize: '90%'}}></i></td>
+                        <td className="text-center text-nowrap">27 Jul 2023</td>
+                      </tr>
                   </tbody>
                 </table>
               </div>
-          </div>{/* veBAL Liquidity */}
+          </div>
+          }
       </> 
     );
   }

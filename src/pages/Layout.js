@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { truncateAddress } from "../utils/page";
 import { web3Modal, switchChain } from '../web3-connect';
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
+import { PortfolioHelper } from '../protocol/portfolio-helper';
 
 export const OutletContext = React.createContext();
 
@@ -25,18 +26,18 @@ class Layout extends React.Component {
         const accounts = await library.listAccounts();
         const network = await library.getNetwork();
         const chainId = await checkChain(network.chainId, library);
+        const portfolio = await this.loadPortfolio(chainId, accounts[0]);
         provider.on("chainChanged", this.onNetworkChanged);
         provider.on("accountsChanged", this.onAccountChanged);
         const state = { 
-            provider: provider, library: library, 
-            chainId: chainId, account: accounts[0] 
+            provider: provider, library: library, chainId: chainId, 
+            account: accounts[0], portfolio: portfolio
         };
         this.setState(state);
     }
 
     async disconnect() {
-        this.state.provider.removeListener("chainChanged", this.onNetworkChanged);
-        await web3Modal.clearCachedProvider();
+        web3Modal.clearCachedProvider();
         const state = this.initState();
         this.setState(state);
     }
@@ -45,20 +46,39 @@ class Layout extends React.Component {
         if (!this.state.account) return;
         const chainId = e.target.value;
         await switchChain(chainId, this.state.library);
-        this.setState({ chainId: chainId });
+        const portfolio = await this.loadPortfolio(chainId, this.state.account);
+        this.setState({ chainId: chainId, portfolio: portfolio });
     }
 
     async onNetworkChanged(hexChainId) {
         const chainId = await checkChain(Number(hexChainId), this.state.library);
-        this.setState({chainId: chainId});
+        const portfolio = await this.loadPortfolio(chainId, this.state.account);
+        this.setState({chainId: chainId, portfolio: portfolio});
     }
 
-    onAccountChanged(accounts) {
-        this.setState({account: accounts[0]});
+    async onAccountChanged(accounts) {
+        const portfolio = await this.loadPortfolio(this.state.chainId, accounts[0]);
+        this.setState({account: accounts[0], portfolio: portfolio});
+    }
+
+    async loadPortfolio(chainId, account) {
+        const helper = new PortfolioHelper(chainId);
+        return {
+            stakedPools: await helper.loadStakedPools(account),
+            unstakedPools: await helper.loadUnstakedPools(account),
+            veBalPool: await helper.loadVeBalPool(account),
+            totalInvest: await helper.totalInvestments(account)
+        }
     }
 
     initState() {
-        return { provider: undefined, library: undefined, account: undefined, chainId: defaultChainId() };
+        return { 
+            chainId: defaultChainId(),
+            provider: undefined, 
+            library: undefined, 
+            account: undefined, 
+            portfolio: undefined
+         };
     }
 
     render() {

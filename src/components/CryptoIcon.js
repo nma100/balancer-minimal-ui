@@ -33,8 +33,6 @@ export class CryptoIcon extends React.Component {
 
     render() {
         const { icon, name } = this.state;
-        return (
-            <img src={icon} alt={name} />
-        );
+        return <img src={icon} alt={name} />;
     }
 }
