@@ -29,15 +29,14 @@ class Portfolio extends React.Component {
   render() {
     console.log("render", this.context);
     const { account, portfolio } = this.context;
-    const LOGO_SIZE = { width: "1.2rem", height: "1.2rem" };
     return (
       <>
           <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
             <div className="title fs-1">My Balancer investments</div>
             <div className="total fs-2 text-light text-opacity-75 fw-bold">
-              { bnumToStr(portfolio?.totalInvest) }
+            { portfolio && <>${bnumToStr(portfolio.totalInvest)}</> }
             </div> 
-            { this.isEthereum() && <div className="veBAL fs-3">---- in veBAL</div> }
+            { portfolio && this.isEthereum() && <div className="veBAL fs-3">${ bnumToStr(portfolio.veBalPool.shares) } in veBAL</div> }
           </div>
 
           <h2 className="mb-4 pt-1 pt-xxl-2">My investments</h2>
@@ -58,7 +57,7 @@ class Portfolio extends React.Component {
                 <tbody>
                     {account ? 
                           <>
-                          {portfolio?.unstakedPools.pools.map(pool =>
+                          {portfolio.unstakedPools.pools.map(pool =>
                             <tr key={pool.id}>
                               <td className="d-none d-md-table-cell px-3">
                                 {pool.tokens.map(token =>
@@ -67,7 +66,7 @@ class Portfolio extends React.Component {
                               </td>
                               <td>
                                 {pool.tokens.map(token =>
-                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
+                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
                                 )}
                               </td>
                               <td>${bnumToStr(pool.shares)}</td>
@@ -129,7 +128,7 @@ class Portfolio extends React.Component {
                 <tbody>
                     {account ? 
                           <>
-                          {portfolio?.stakedPools.pools.map(pool =>
+                          {portfolio.stakedPools.pools.map(pool =>
                             <tr key={pool.id}>
                               <td className="d-none d-md-table-cell px-3">
                                 {pool.tokens.map(token =>
@@ -138,7 +137,7 @@ class Portfolio extends React.Component {
                               </td>
                               <td>
                                 {pool.tokens.map(token =>
-                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-1 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
+                                  <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
                                 )}
                               </td>
                               <td>${bnumToStr(pool.shares)}</td>
@@ -186,6 +185,21 @@ class Portfolio extends React.Component {
                   <tbody>
                       <tr>
                         <td className="d-none d-md-table-cell px-3">
+                          {portfolio.veBalPool.tokens.map(token =>
+                            <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>   
+                          )}
+                        </td>
+                        <td>
+                          {portfolio.veBalPool.tokens.map(token =>
+                            <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{fontSize: '70%'}}>{token.weight?.substring(0,4)}%</div></div>
+                          )}
+                        </td>
+                        <td>${bnumToStr(portfolio.veBalPool.shares)}</td>
+                        <td className="text-center text-nowrap">---</td>
+                        <td className="text-center text-nowrap">---</td>
+                      </tr>
+                      {/*<tr>
+                        <td className="d-none d-md-table-cell px-3">
                           <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xba100000625a3754423978a60c9317c58a424e3D/logo.png" className="me-1" style={LOGO_SIZE} alt="Asset icon" />
                           <img src="https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png" className="me-1" style={LOGO_SIZE} alt="Asset icon" />
                         </td>
@@ -196,7 +210,7 @@ class Portfolio extends React.Component {
                         <td>$2540</td>
                         <td className="text-center text-nowrap">5.83% - 472.58% <i className="bi bi-stars text-primary" style={{fontSize: '90%'}}></i></td>
                         <td className="text-center text-nowrap">27 Jul 2023</td>
-                      </tr>
+                      </tr>*/}
                   </tbody>
                 </table>
               </div>

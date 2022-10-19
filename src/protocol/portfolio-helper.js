@@ -16,11 +16,13 @@ export class PortfolioHelper {
 
   async loadStakedPools(account) {
 
-    const { data } = this.sdk;
-
-    const gaugeShares = await data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
+    const gaugeShares = await this.sdk.data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
     const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
-    let stakedPools = await data.pools.where(pool => stakedPoolIds.includes(pool.id));
+    let stakedPools = await this.sdk.pools.where(pool => stakedPoolIds.includes(pool.id));
+        
+    for(let i = 0; i < stakedPools.length; i++) {
+      stakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(stakedPools[i]);
+    }
 
     stakedPools = stakedPools.map(pool => {
       const stakedBpt = gaugeShares.find(gs => gs.gauge.poolId === pool.id);
@@ -39,23 +41,21 @@ export class PortfolioHelper {
     return { pools: [...stakedPools], totalFiatAmount: totalStakedAmount }
   }
 
-
   async loadUnstakedPools(account) {
 
-    const { data } = this.sdk;
-
-    const poolShares = await data.poolShares.query({ where: { userAddress: account.toLowerCase(), balance_gt: "0" } });
-
+    const poolShares = await this.sdk.data.poolShares.query({ where: { userAddress: account.toLowerCase(), balance_gt: "0" } });
     const poolSharesIds = poolShares.map(poolShare => poolShare.poolId);
-
-    const pools = await data.pools.where(pool => poolSharesIds.includes(pool.id) &&
+    let unstakedPools = await this.sdk.pools.where(pool => poolSharesIds.includes(pool.id) &&
       !POOLS(this.chainId).ExcludedPoolTypes.includes(pool.poolType));
 
     // TODO : Phantom pools
+    // TODO : Pool decorated.
+    
+    for(let i = 0; i < unstakedPools.length; i++) {
+      unstakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(unstakedPools[i]);
+    }
 
-    // TODO : Pool decorated. 
-
-    const unstakedPools = pools.map(pool => {
+    unstakedPools = unstakedPools.map(pool => {
       const stakedBpt = poolShares.find(ps => ps.poolId === pool.id);
       return {
         ...pool,
@@ -81,6 +81,8 @@ export class PortfolioHelper {
 
     const lockPoolId = POOLS(this.chainId).IdsMap.veBAL;
     const lockPool = await data.pools.find(lockPoolId);
+    lockPool.totalLiquidity = await this.sdk.pools.liquidity(lockPool);
+
     const userLockInfo = await balancerContracts.veBal.getLockInfo(account);
 
     return {
