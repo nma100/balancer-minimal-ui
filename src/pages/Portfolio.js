@@ -18,17 +18,15 @@ class Portfolio extends React.Component {
     console.log("componentDidMount", this.state);
   }
 
-  async componentDidUpdate() {
+  async componentDidUpdate(prevProps, prevState) {
     console.log("componentDidUpdate", this.state);
-  }
-
-  isEthereum() {
-    return this.context.account && isEthNetwork(this.context.chainId);
   }
 
   render() {
     console.log("render", this.context);
-    const { account, portfolio } = this.context;
+    const { account, chainId, portfolio } = this.context;
+    const isEthereum = () => account && isEthNetwork(chainId);
+
     return (
       <>
           <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
@@ -36,7 +34,7 @@ class Portfolio extends React.Component {
             <div className="total fs-2 text-light text-opacity-75 fw-bold">
             { portfolio && <>${bnumToStr(portfolio.totalInvest)}</> }
             </div> 
-            { portfolio && this.isEthereum() && <div className="veBAL fs-3">${ bnumToStr(portfolio.veBalPool.shares) } in veBAL</div> }
+            { portfolio && isEthereum() && <div className="veBAL fs-3">${ bnumToStr(portfolio.veBalPool.shares) } in veBAL</div> }
           </div>
 
           <h2 className="mb-4 pt-1 pt-xxl-2">My investments</h2>
@@ -168,7 +166,7 @@ class Portfolio extends React.Component {
             </div>
           </div>{/* Staked pools */}
 
-          { this.isEthereum() && 
+          { isEthereum() && 
           <div id="veBAL-liquidity">
               <h4 className="pool-title mb-3">veBAL protocol liquidity</h4>
               <div className="table-responsive">

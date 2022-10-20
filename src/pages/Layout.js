@@ -63,13 +63,21 @@ class Layout extends React.Component {
 
     async loadPortfolio(chainId, account) {
         const helper = new PortfolioHelper(chainId);
+        const [staked, unstaked, veBal ] = await Promise.all([
+            helper.loadStakedPools(account), 
+            helper.loadUnstakedPools(account), 
+            helper.loadVeBalPool(account)
+        ]);
+        console.log('Portfolio loaded');
+        const total = helper.total(unstaked, staked, veBal);
         return {
-            stakedPools: await helper.loadStakedPools(account),
-            unstakedPools: await helper.loadUnstakedPools(account),
-            veBalPool: await helper.loadVeBalPool(account),
-            totalInvest: await helper.totalInvestments(account)
+            stakedPools: staked,
+            unstakedPools: unstaked,
+            veBalPool: veBal,
+            totalInvest: total
         }
     }
+
 
     initState() {
         return { 

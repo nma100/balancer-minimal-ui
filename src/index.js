@@ -1,9 +1,10 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Route, RouterProvider,
-  createBrowserRouter, 
-  createRoutesFromElements  
+import {
+  Route, RouterProvider,
+  createBrowserRouter,
+  createRoutesFromElements,
 } from "react-router-dom";
 import Layout from "./pages/Layout";
 import Portfolio from "./pages/Portfolio";
@@ -17,7 +18,14 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
-      <Route index element={<Portfolio />} />
+      <Route index
+        element={<Portfolio />}
+        loader={
+          ({ request }) => { 
+            console.log('Portfolio loader !');
+          }
+        }
+        />
       <Route path="trade" element={<Trade />} />
       <Route path="invest" element={<Invest />} />
       <Route path="*" element={<Error404 />} />

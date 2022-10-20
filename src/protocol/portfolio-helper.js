@@ -22,6 +22,7 @@ export class PortfolioHelper {
         
     for(let i = 0; i < stakedPools.length; i++) {
       stakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(stakedPools[i]);
+      //stakedPools[i].apr = await this.sdk.pools.apr(stakedPools[i]);
     }
 
     stakedPools = stakedPools.map(pool => {
@@ -53,6 +54,7 @@ export class PortfolioHelper {
     
     for(let i = 0; i < unstakedPools.length; i++) {
       unstakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(unstakedPools[i]);
+      //unstakedPools[i].apr = await this.sdk.pools.apr(unstakedPools[i]);
     }
 
     unstakedPools = unstakedPools.map(pool => {
@@ -82,6 +84,7 @@ export class PortfolioHelper {
     const lockPoolId = POOLS(this.chainId).IdsMap.veBAL;
     const lockPool = await data.pools.find(lockPoolId);
     lockPool.totalLiquidity = await this.sdk.pools.liquidity(lockPool);
+    //lockPool.apr = await this.sdk.pools.apr(lockPool);
 
     const userLockInfo = await balancerContracts.veBal.getLockInfo(account);
 
@@ -99,10 +102,13 @@ export class PortfolioHelper {
     const unstaked = await this.loadUnstakedPools(account);
     const staked = await this.loadStakedPools(account);
     const veBal = await this.loadVeBalPool(account);
+    return this.total(unstaked, staked, veBal);
+  }
 
+  total(unstaked, staked, veBal) {
     return unstaked.totalFiatAmount
       .plus(staked.totalFiatAmount)
-      .plus(veBal?.shares || 0);
+      .plus(veBal?.shares || ZERO);
   }
 
 }
