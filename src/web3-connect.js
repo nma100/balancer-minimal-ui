@@ -4,7 +4,7 @@ import Web3Modal from "web3modal";
 const providerOptions = {
     walletconnect: {
         package: WalletConnect, 
-        options: { infuraId: process.env.REACT_APP_INFURA_KEY }
+        options: { infuraId: process.env.REACT_APP_INFURA }
     }
 };
 

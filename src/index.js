@@ -18,14 +18,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
-      <Route index
-        element={<Portfolio />}
-        loader={
-          ({ request }) => { 
-            console.log('Portfolio loader !');
-          }
-        }
-        />
+      <Route index element={<Portfolio />} />
       <Route path="trade" element={<Trade />} />
       <Route path="invest" element={<Invest />} />
       <Route path="*" element={<Error404 />} />

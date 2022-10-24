@@ -4,7 +4,7 @@ import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
 import { ZERO } from "../utils/bnum";
 
-export class PortfolioHelper {
+export class BalancerHelper {
 
   constructor(chainId) {
     this.chainId = chainId;
@@ -14,15 +14,18 @@ export class PortfolioHelper {
     });
   }
 
+  async loadApr(pool) {
+    return await this.sdk.pools.apr(pool);
+  }
+
   async loadStakedPools(account) {
 
     const gaugeShares = await this.sdk.data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
     const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
     let stakedPools = await this.sdk.pools.where(pool => stakedPoolIds.includes(pool.id));
-        
-    for(let i = 0; i < stakedPools.length; i++) {
+
+    for (let i = 0; i < stakedPools.length; i++) {
       stakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(stakedPools[i]);
-      //stakedPools[i].apr = await this.sdk.pools.apr(stakedPools[i]);
     }
 
     stakedPools = stakedPools.map(pool => {
@@ -35,11 +38,7 @@ export class PortfolioHelper {
     });
     // TODO : pool boosts
 
-    const totalStakedAmount = stakedPools
-      .map(pool => pool.shares)
-      .reduce((total, shares) => total.plus(shares), ZERO);
-
-    return { pools: [...stakedPools], totalFiatAmount: totalStakedAmount }
+    return stakedPools;
   }
 
   async loadUnstakedPools(account) {
@@ -49,12 +48,11 @@ export class PortfolioHelper {
     let unstakedPools = await this.sdk.pools.where(pool => poolSharesIds.includes(pool.id) &&
       !POOLS(this.chainId).ExcludedPoolTypes.includes(pool.poolType));
 
-    // TODO : Phantom pools
+    // TODO : Phantom poo
     // TODO : Pool decorated.
-    
-    for(let i = 0; i < unstakedPools.length; i++) {
+
+    for (let i = 0; i < unstakedPools.length; i++) {
       unstakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(unstakedPools[i]);
-      //unstakedPools[i].apr = await this.sdk.pools.apr(unstakedPools[i]);
     }
 
     unstakedPools = unstakedPools.map(pool => {
@@ -65,14 +63,9 @@ export class PortfolioHelper {
         bpt: stakedBpt.balance
       }
     });
-
-    const totalUnstakedAmount = unstakedPools
-      .map(pool => pool.shares)
-      .reduce((total, shares) => total.plus(shares), ZERO);
-
     // TODO Filter migratables pools
 
-    return { pools: [...unstakedPools], totalFiatAmount: totalUnstakedAmount }
+    return unstakedPools;
   }
 
   async loadVeBalPool(account) {
@@ -84,7 +77,6 @@ export class PortfolioHelper {
     const lockPoolId = POOLS(this.chainId).IdsMap.veBAL;
     const lockPool = await data.pools.find(lockPoolId);
     lockPool.totalLiquidity = await this.sdk.pools.liquidity(lockPool);
-    //lockPool.apr = await this.sdk.pools.apr(lockPool);
 
     const userLockInfo = await balancerContracts.veBal.getLockInfo(account);
 
@@ -92,23 +84,16 @@ export class PortfolioHelper {
       ...lockPool,
       shares: userLockInfo?.hasExistingLock
         ? getBptBalanceFiatValue(lockPool, userLockInfo.lockedAmount) : ZERO,
-      lockedEndDate: userLockInfo?.hasExistingLock && !userLockInfo?.isExpired
-        ? userLockInfo?.lockedEndDate
+      lockedEndDate: userLockInfo?.hasExistingLock && !userLockInfo.isExpired
+        ? userLockInfo.lockedEndDate
         : undefined
     };
   }
 
-  async totalInvestments(account) {
-    const unstaked = await this.loadUnstakedPools(account);
-    const staked = await this.loadStakedPools(account);
-    const veBal = await this.loadVeBalPool(account);
-    return this.total(unstaked, staked, veBal);
-  }
-
-  total(unstaked, staked, veBal) {
-    return unstaked.totalFiatAmount
-      .plus(staked.totalFiatAmount)
-      .plus(veBal?.shares || ZERO);
+  poolsTotal(pools) {
+    return pools
+      .map(pool => pool.shares)
+      .reduce((total, shares) => total.plus(shares), ZERO);
   }
 
 }

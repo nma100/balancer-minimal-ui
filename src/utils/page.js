@@ -1,4 +1,3 @@
-
 export const truncateAddress = (address) => {
     if (!address) return "No Account";
     const match = address.match(

@@ -1,12 +1,16 @@
 import { ETHEREUM_ID, POLYGON_ID, ARBITRUM_ID, GOERLI_ID } from "../networks";
 
-const { REACT_APP_INFURA, REACT_APP_ALCHEMY_POLYGON, REACT_APP_ALCHEMY_ARBITRUM } = process.env;
+const {
+  REACT_APP_INFURA,
+  REACT_APP_ALCHEMY_POLYGON,
+  REACT_APP_ALCHEMY_ARBITRUM
+} = process.env;
 
 export function getRpcUrl(chainId) {
   try {
     return getInfuraUrl(chainId);
   } catch (error) {
-    return getAlchemyUrl(chainId); 
+    return getAlchemyUrl(chainId);
   }
 }
 

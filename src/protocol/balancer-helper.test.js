@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { POLYGON_ID } from '../networks';
 import { bnumToStr } from '../utils/bnum';
-import { PortfolioHelper } from './portfolio-helper';
+import { PortfolioHelper } from './balancer-helper';
 
 const USER = "0x...";
 const TIMEOUT = 100000;
