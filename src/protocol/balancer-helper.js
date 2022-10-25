@@ -2,15 +2,17 @@ import { BalancerSDK, POOLS } from "@balancer-labs/sdk";
 import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
-import { ZERO } from "../utils/bnum";
+import { bnum, bnumToStr, ZERO } from "../utils/bnum";
 
 export class BalancerHelper {
 
   constructor(chainId) {
     this.chainId = chainId;
+    console.log('BalancerHelper', Number(chainId), getRpcUrl(chainId));
     this.sdk = new BalancerSDK({
       network: Number(chainId),
       rpcUrl: getRpcUrl(chainId)
+      //rpcUrl: 'https://goerli.infura.io/v3/'
     });
   }
 
@@ -18,9 +20,14 @@ export class BalancerHelper {
     return await this.sdk.pools.apr(pool);
   }
 
+  async loadGaugeShares(account) {
+    return await this.sdk.data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
+
+  }
+
   async loadStakedPools(account) {
 
-    const gaugeShares = await this.sdk.data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
+    const gaugeShares = await this.loadGaugeShares(account);
     const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
     let stakedPools = await this.sdk.pools.where(pool => stakedPoolIds.includes(pool.id));
 
@@ -94,6 +101,72 @@ export class BalancerHelper {
     return pools
       .map(pool => pool.shares)
       .reduce((total, shares) => total.plus(shares), ZERO);
+  }
+
+  async userBoosts(account) {
+
+    const { veBal, veBalProxy } = this.sdk.balancerContracts;
+    const { liquidityGauges } = this.sdk.data;
+
+    const gaugeShares = await this.loadGaugeShares(account);
+
+    const veBALInfo = await veBal.getLockInfo(account);
+    const veBALBalance = await veBalProxy.getAdjustedBalance(account);
+
+    const gaugeAddresses = gaugeShares.map(gaugeShare => gaugeShare.gauge.id);
+    const workingSupplies = await liquidityGauges.multicall.getWorkingSupplies(gaugeAddresses);
+
+
+    const boosts = gaugeShares.map(gaugeShare => {
+      const gaugeAddress = gaugeShare.gauge.id;
+      const gaugeWorkingSupply = bnum(workingSupplies[gaugeAddress]);
+      const gaugeBalance = bnum(gaugeShare.balance);
+
+      console.log("veBALInfo", veBALInfo);
+
+      console.log("gaugeBalance", bnumToStr(gaugeBalance));
+      console.log("veBALBalance", bnumToStr(bnum(veBALBalance)));
+      console.log("veBALTotalSupply", bnumToStr(bnum(veBALInfo.totalSupply)));
+      console.log("gaugeShare.gauge.totalSupply", bnumToStr(bnum(gaugeShare.gauge.totalSupply)));
+      console.log("gaugeShare", gaugeShare);
+
+      const adjustedGaugeBalance = bnum(0.4)
+        .times(gaugeBalance)
+        .plus(
+          bnum(0.6).times(
+            bnum(veBALBalance)
+              .div(veBALInfo.totalSupply)
+              .times(gaugeShare.gauge.totalSupply)
+          )
+        );
+
+      console.log("adjustedGaugeBalance", bnumToStr(adjustedGaugeBalance));
+
+      // choose the minimum of either gauge balance or the adjusted gauge balance
+      const workingBalance = gaugeBalance.lt(adjustedGaugeBalance)
+        ? gaugeBalance
+        : adjustedGaugeBalance;
+
+      const zeroBoostWorkingBalance = bnum(0.4).times(gaugeBalance);
+      const zeroBoostWorkingSupply = gaugeWorkingSupply
+        .minus(workingBalance)
+        .plus(zeroBoostWorkingBalance);
+
+      const boostedFraction = workingBalance.div(gaugeWorkingSupply);
+      const unboostedFraction = zeroBoostWorkingBalance.div(
+        zeroBoostWorkingSupply
+      );
+
+      const boost = boostedFraction.div(unboostedFraction);
+      console.log("Boost", bnumToStr(boost, 5));
+
+      return [gaugeShare.gauge.poolId, boost];
+    });
+
+    //console.log("userBoosts", gaugeShares, veBALInfo, veBALBalance, gaugeAddresses, workingSupplies, boosts);
+    console.log("Return", Object.fromEntries(boosts));
+
+    return Object.fromEntries(boosts);
   }
 
 }

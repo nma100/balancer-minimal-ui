@@ -41,7 +41,7 @@ class Portfolio extends React.Component {
     return (
       <>
         <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
-          <div className="title fs-1">My Balancer investments</div>
+          <div className="title fs-1 py-2">My Balancer investments</div>
           {portfolio &&
           <div className="total fs-4">
             <span className="me-5"><span className="text-light text-opacity-75">Total :</span> ${bnumToStr(totalAmount)}</span>
@@ -94,11 +94,11 @@ class Portfolio extends React.Component {
                                 </td>
                                 <td>${bnumToStr(pool.shares)}</td>
                                 <td className="text-end text-nowrap">
-                                  <Suspense fallback={<div>Loading...</div>}>
-                                    <PoolApr pool={pool} balancer={this.context.balancer} />
+                                  <Suspense>
+                                    <PoolApr pool={pool} context={this.context} />
                                   </Suspense>
                                 </td>
-                                <td className="text-center">---</td>
+                                <td className="text-center">—</td>
                               </tr>
                             )}
                           </>
@@ -154,14 +154,14 @@ class Portfolio extends React.Component {
                                 <td>${bnumToStr(pool.shares)}</td>
                                 {isEthereum() &&
                                 <td className="text-center text-nowrap">
-                                  <Suspense fallback={<div>Loading...</div>}>
-                                    <PoolBoost pool={pool} balancer={this.context.balancer} />
+                                  <Suspense>
+                                    <PoolBoost pool={pool} context={this.context} />
                                   </Suspense>
                                 </td>
                                 }
                                 <td className="text-center text-nowrap">                                  
-                                  <Suspense fallback={<div>Loading...</div>}>
-                                    <PoolApr pool={pool} balancer={this.context.balancer} />
+                                  <Suspense>
+                                    <PoolApr pool={pool} context={this.context} />
                                   </Suspense>
                                 </td>
                               </tr>
@@ -205,8 +205,8 @@ class Portfolio extends React.Component {
                     </td>
                     <td>${bnumToStr(veBalPool.shares)}</td>
                     <td className="text-center text-nowrap">
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <PoolApr pool={veBalPool} balancer={this.context.balancer} />
+                      <Suspense>
+                        <PoolApr pool={veBalPool} context={this.context} />
                       </Suspense>
                     </td>
                     <td className="text-center text-nowrap">

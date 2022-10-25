@@ -10,7 +10,7 @@ export default class PoolApr extends React.Component {
 
     async componentDidMount() {
         console.log("componentDidMount apr", this.state);
-        const apr = await this.props.balancer.loadApr(this.props.pool);
+        const apr = await this.props.context.balancer.loadApr(this.props.pool);
         console.log("apr", apr);
         this.setState({ apr: (parseFloat(apr.min) / 100) })
     }
@@ -20,7 +20,7 @@ export default class PoolApr extends React.Component {
         return <>
             {this.state.apr !== undefined
                 ? <>{this.state.apr}%</>
-                : <>---</>
+                : <>—</>
             }
         </>;
     }

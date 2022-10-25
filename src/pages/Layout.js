@@ -6,6 +6,8 @@ import { web3Modal, switchChain } from '../web3-connect';
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 import { BalancerHelper } from '../protocol/balancer-helper';
 import { ZERO } from '../utils/bnum';
+import BalancerUrls from '../constants/balancer-urls.json';
+
 
 export const OutletContext = React.createContext();
 
@@ -209,21 +211,21 @@ class Layout extends React.Component {
 
                                 <hr className="text-light text-opacity-75" />
                                 <div className="d-flex justify-content-around fs-5">
-                                    <a href="/" className="link-light"><i className="bi bi-github"></i></a>
-                                    <a href="/" className="link-light"><i className="bi bi-discord"></i></a>
-                                    <a href="/" className="link-light"><i className="bi bi-twitter"></i></a>
-                                    <a href="/" className="link-light"><i className="bi bi-envelope-fill"></i></a>
+                                    <a href={BalancerUrls.github} className="link-light"><i className="bi bi-github"></i></a>
+                                    <a href={BalancerUrls.discord} className="link-light"><i className="bi bi-discord"></i></a>
+                                    <a href={BalancerUrls.twitter} className="link-light"><i className="bi bi-twitter"></i></a>
+                                    <a href={BalancerUrls.email} className="link-light"><i className="bi bi-envelope-fill"></i></a>
                                 </div>
                             </div>
                         </div>
                         <div id="main-col" className="col-12 col-lg-10 ms-lg-auto px-4 px-lg-5">
                             <div className="d-flex d-lg-none mt-2 mb-4">
                                 <select id="select-chain" className="form-select me-auto" onChange={this.changeNetwork} value={this.state.chainId}>
-                                    {Object.keys(NETWORKS).map(chainId =>
+                                    { Object.keys(NETWORKS).map(chainId =>
                                         <option key={chainId} value={chainId}>
                                             {NETWORKS[chainId].name}
                                         </option>
-                                    )}
+                                    ) }
                                 </select>
                                 {this.state.account
                                     ? <><button className="btn btn-dark text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn-dark me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
