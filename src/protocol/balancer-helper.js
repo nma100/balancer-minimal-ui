@@ -2,13 +2,12 @@ import { BalancerSDK, POOLS } from "@balancer-labs/sdk";
 import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
-import { bnum, bnumToStr, ZERO } from "../utils/bnum";
+import { bnum, ZERO } from "../utils/bnum";
 
 export class BalancerHelper {
 
   constructor(chainId) {
     this.chainId = chainId;
-    console.log('BalancerHelper', Number(chainId), getRpcUrl(chainId));
     this.sdk = new BalancerSDK({
       network: Number(chainId),
       rpcUrl: getRpcUrl(chainId)
@@ -81,7 +80,7 @@ export class BalancerHelper {
 
     const { data, balancerContracts } = this.sdk;
 
-    const lockPoolId = POOLS(this.chainId).IdsMap.veBAL;
+    const lockPoolId = this.veBalPoolId();
     const lockPool = await data.pools.find(lockPoolId);
     lockPool.totalLiquidity = await this.sdk.pools.liquidity(lockPool);
 
@@ -96,6 +95,10 @@ export class BalancerHelper {
         : undefined
     };
   }
+
+  veBalPoolId() {
+    return POOLS(this.chainId).IdsMap.veBAL
+  } 
 
   poolsTotal(pools) {
     return pools
@@ -122,14 +125,6 @@ export class BalancerHelper {
       const gaugeWorkingSupply = bnum(workingSupplies[gaugeAddress]);
       const gaugeBalance = bnum(gaugeShare.balance);
 
-      console.log("veBALInfo", veBALInfo);
-
-      console.log("gaugeBalance", bnumToStr(gaugeBalance));
-      console.log("veBALBalance", bnumToStr(bnum(veBALBalance)));
-      console.log("veBALTotalSupply", bnumToStr(bnum(veBALInfo.totalSupply)));
-      console.log("gaugeShare.gauge.totalSupply", bnumToStr(bnum(gaugeShare.gauge.totalSupply)));
-      console.log("gaugeShare", gaugeShare);
-
       const adjustedGaugeBalance = bnum(0.4)
         .times(gaugeBalance)
         .plus(
@@ -140,7 +135,6 @@ export class BalancerHelper {
           )
         );
 
-      console.log("adjustedGaugeBalance", bnumToStr(adjustedGaugeBalance));
 
       // choose the minimum of either gauge balance or the adjusted gauge balance
       const workingBalance = gaugeBalance.lt(adjustedGaugeBalance)
@@ -158,13 +152,9 @@ export class BalancerHelper {
       );
 
       const boost = boostedFraction.div(unboostedFraction);
-      console.log("Boost", bnumToStr(boost, 5));
 
       return [gaugeShare.gauge.poolId, boost];
     });
-
-    //console.log("userBoosts", gaugeShares, veBALInfo, veBALBalance, gaugeAddresses, workingSupplies, boosts);
-    console.log("Return", Object.fromEntries(boosts));
 
     return Object.fromEntries(boosts);
   }

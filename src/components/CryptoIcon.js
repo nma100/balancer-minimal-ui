@@ -3,7 +3,7 @@ import CryptoIcons from 'cryptocurrency-icons/manifest.json';
 
 const DEFAULT = 'generic';
 
-export class CryptoIcon extends React.Component {
+export default class CryptoIcon extends React.Component {
 
     constructor(props) {
         super(props);

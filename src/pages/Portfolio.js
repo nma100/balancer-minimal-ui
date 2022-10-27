@@ -1,9 +1,13 @@
 import React, { Suspense } from "react";
 import { OutletContext } from "./Layout";
 import { isEthNetwork } from "../networks";
-import { CryptoIcon } from "../components/CryptoIcon";
+import CryptoIcon from "../components/CryptoIcon";
+
 import { bnum, bnumToStr } from "../utils/bnum"
 import { format } from "date-fns";
+import PoolTokens from "../components/PoolTokens";
+
+const SPINNER_SIZE = { width: '2rem', height: '2rem' };
 
 const PoolApr = React.lazy(() => import("../components/PoolApr"));
 const PoolBoost = React.lazy(() => import("../components/PoolBoost"));
@@ -13,44 +17,40 @@ class Portfolio extends React.Component {
   static contextType = OutletContext;
 
   constructor(props) {
-    console.log("constructor pf", props);
     super(props);
     this.state = {};
   }
 
   componentDidMount() {
-    console.log("componentDidMount pf", this.state);
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("componentDidUpdate pf", this.state);
   }
 
   render() {
-    console.log("render pf", this.context);
-    
+
     const isEthereum = () => account && isEthNetwork(chainId);
-    
-    const { 
-      account, chainId, portfolio, stakedPools, unstakedPools, 
-      veBalPool, stakedAmount, unstakedAmount, veBalAmount 
+
+    const {
+      account, chainId, portfolio, stakedPools, unstakedPools,
+      veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
-    
-    const totalAmount = bnum(stakedAmount).plus(bnum(unstakedAmount)).plus(bnum(veBalAmount));
+
+    const totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
 
     return (
       <>
         <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
           <div className="title fs-1 py-2">My Balancer investments</div>
           {portfolio &&
-          <div className="total fs-4">
-            <span className="me-5"><span className="text-light text-opacity-75">Total :</span> ${bnumToStr(totalAmount)}</span>
-            {isEthereum() &&
-              <span className="me-5"><span className="text-light text-opacity-75">veBAL :</span> ${bnumToStr(veBalAmount)}</span>
-            }
-            <span className="me-5"><span className="text-light text-opacity-75">Staked :</span> ${bnumToStr(stakedAmount)}</span>
-            <span><span className="text-light text-opacity-75">Unstaked :</span> ${bnumToStr(unstakedAmount)}</span>
-          </div>
+            <div className="total fs-4">
+              <span className="me-5"><span className="text-light text-opacity-75">Total :</span> ${bnumToStr(totalAmount)}</span>
+              {isEthereum() &&
+                <span className="me-5"><span className="text-light text-opacity-75">veBAL :</span> ${bnumToStr(veBalAmount)}</span>
+              }
+              <span className="me-5"><span className="text-light text-opacity-75">Staked :</span> ${bnumToStr(stakedAmount)}</span>
+              <span><span className="text-light text-opacity-75">Unstaked :</span> ${bnumToStr(unstakedAmount)}</span>
+            </div>
           }
         </div>
 
@@ -73,7 +73,13 @@ class Portfolio extends React.Component {
                 {portfolio ?
                   <>
                     {unstakedPools === undefined ?
-                      <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Loading data</td></tr>
+                      <tr>
+                        <td className="text-center p-3 fs-4 text-white text-opacity-75" colSpan="5">Loading data
+                          <div className="spinner-border text-white text-opacity-75 ms-2" role="status" style={SPINNER_SIZE} >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </td>
+                      </tr>
                       :
                       <>
                         {unstakedPools.length === 0 ?
@@ -87,11 +93,7 @@ class Portfolio extends React.Component {
                                     <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
                                   )}
                                 </td>
-                                <td>
-                                  {pool.tokens.map(token =>
-                                    <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{ fontSize: '70%' }}>{token.weight?.substring(0, 4)}%</div></div>
-                                  )}
-                                </td>
+                                <td><PoolTokens pool={pool} /></td>
                                 <td>${bnumToStr(pool.shares)}</td>
                                 <td className="text-end text-nowrap">
                                   <Suspense>
@@ -123,8 +125,8 @@ class Portfolio extends React.Component {
                   <th scope="col">Composition</th>
                   <th scope="col"><div className="text-nowrap">My balance</div></th>
                   {isEthereum() &&
-                  <th scope="col"><div className="text-center text-nowrap">My boost</div></th>
-                  }  
+                    <th scope="col"><div className="text-center text-nowrap">My boost</div></th>
+                  }
                   <th scope="col"><div className="text-center text-nowrap">My APR</div></th>
                 </tr>
               </thead>
@@ -132,9 +134,14 @@ class Portfolio extends React.Component {
                 {portfolio ?
                   <>
                     {unstakedPools === undefined ?
-                      <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Loading data</td></tr>
-                      :
-                      <>
+                      <tr>
+                        <td className="text-center p-3 fs-4 text-white text-opacity-75" colSpan="5">Loading data
+                          <div className="spinner-border text-white text-opacity-75 ms-2" role="status" style={SPINNER_SIZE} >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </td>
+                      </tr>
+                      : <>
                         {stakedPools.length === 0 ?
                           <><tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">You have no staked investments</td></tr></>
                           :
@@ -146,20 +153,16 @@ class Portfolio extends React.Component {
                                     <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
                                   )}
                                 </td>
-                                <td>
-                                  {pool.tokens.map(token =>
-                                    <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{ fontSize: '70%' }}>{token.weight?.substring(0, 4)}%</div></div>
-                                  )}
-                                </td>
+                                <td><PoolTokens pool={pool} /></td>
                                 <td>${bnumToStr(pool.shares)}</td>
                                 {isEthereum() &&
-                                <td className="text-center text-nowrap">
-                                  <Suspense>
-                                    <PoolBoost pool={pool} context={this.context} />
-                                  </Suspense>
-                                </td>
+                                  <td className="text-center text-nowrap">
+                                    <Suspense>
+                                      <PoolBoost pool={pool} context={this.context} />
+                                    </Suspense>
+                                  </td>
                                 }
-                                <td className="text-center text-nowrap">                                  
+                                <td className="text-center">
                                   <Suspense>
                                     <PoolApr pool={pool} context={this.context} />
                                   </Suspense>
@@ -198,11 +201,7 @@ class Portfolio extends React.Component {
                         <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
                       )}
                     </td>
-                    <td>
-                      {veBalPool.tokens.map(token =>
-                        <div key={token.id} className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded"><div className="me-1">{token.symbol}</div><div className="text-light text-opacity-75" style={{ fontSize: '70%' }}>{token.weight?.substring(0, 4)}%</div></div>
-                      )}
-                    </td>
+                    <td><PoolTokens pool={veBalPool} /></td>
                     <td>${bnumToStr(veBalPool.shares)}</td>
                     <td className="text-center text-nowrap">
                       <Suspense>
@@ -210,7 +209,7 @@ class Portfolio extends React.Component {
                       </Suspense>
                     </td>
                     <td className="text-center text-nowrap">
-                     { veBalPool.lockedEndDate ? format(veBalPool.lockedEndDate, 'd MMM yyyy') : '—' }
+                      {veBalPool.lockedEndDate ? format(veBalPool.lockedEndDate, 'd MMM yyyy') : '—'}
                     </td>
                   </tr>
                 </tbody>

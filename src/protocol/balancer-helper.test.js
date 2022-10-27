@@ -43,7 +43,6 @@ it('Total investments', async () => {
     const investments = await balancer.totalInvestments(USER);
 
     assert.isNotNull(investments);
-    console.log('result', bnumToStr(investments));
 }, TIMEOUT);
 
 it('User boosts', async () => {
@@ -51,7 +50,6 @@ it('User boosts', async () => {
     const boosts = await balancer.userBoosts(USER);
 
     assert.isNotNull(boosts);
-    console.log('result', boosts);
 }, TIMEOUT);
 
 // npm run test .\src\protocol\balancer-helper.test.js 

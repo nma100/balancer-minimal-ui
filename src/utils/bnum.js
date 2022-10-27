@@ -9,6 +9,11 @@ export function bnum(val) {
 }
 
 export function bnumToStr(val, precision = 2) {
-    const _val = BigNumber.isBigNumber(val) ? val : ZERO;
+    let _val;
+    if (BigNumber.isBigNumber(val) && !val.isNaN() && val.isFinite()) {
+        _val = val;
+    } else {
+        _val = ZERO;
+    }
     return _val.toFixed(precision)
 }
