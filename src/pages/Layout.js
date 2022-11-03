@@ -7,6 +7,7 @@ import { NETWORKS, checkChain, defaultChainId } from "../networks";
 import { BalancerHelper } from '../protocol/balancer-helper';
 import { ZERO } from '../utils/bnum';
 import BalancerUrls from '../constants/balancer-urls.json';
+import { getBptBalanceFiatValue } from "../utils/pool";
 
 
 export const OutletContext = React.createContext();
@@ -21,14 +22,14 @@ class Layout extends React.Component {
         this.changeNetwork = this.changeNetwork.bind(this);
         this.onNetworkChanged = this.onNetworkChanged.bind(this);
         this.onAccountChanged = this.onAccountChanged.bind(this);
-        /*
-        [
-            this.connectWallet,
-            this.disconnect,
-            this.changeNetwork,
-            this.onNetworkChanged,
-            this.onAccountChanged,
-        ].forEach(method => method = method.bind(this));*/
+        this.switchTheme = this.switchTheme.bind(this);
+
+        let currentTheme = localStorage.getItem("current-theme");
+        if (!currentTheme) {
+            currentTheme = 'dark';
+            localStorage.setItem("current-theme", currentTheme);
+        }
+        this.state = { theme: currentTheme };
     }
 
     async connectWallet() {
@@ -60,15 +61,9 @@ class Layout extends React.Component {
 
     async changeNetwork(e) {
         if (!this.state.account) return;
-        const { web3Provider, account } = this.state;
         const chainId = e.target.value;
+        const web3Provider = this.state.web3Provider;
         await switchChain(chainId, web3Provider);
-        const balancer = new BalancerHelper(chainId);
-        this.setState({
-            chainId: chainId,
-            balancer: balancer
-        });
-        this.loadPortfolio(balancer, account);
     }
 
     async onNetworkChanged(hexChainId) {
@@ -87,7 +82,15 @@ class Layout extends React.Component {
         this.loadPortfolio(this.state.balancer, accounts[0]);
     }
 
+    switchTheme() {
+        const theme = localStorage.getItem("current-theme");
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        localStorage.setItem("current-theme", newTheme);
+        this.setState({ theme: newTheme });
+    }
+
     loadPortfolio(balancer, account) {
+
         this.setState({ portfolio: true, ...this.initPools() });
 
         balancer.loadStakedPools(account)
@@ -95,7 +98,11 @@ class Layout extends React.Component {
                 this.setState({ stakedPools: pools });
                 return pools;
             })
-            .then(pools => {
+            .then(async pools => {
+                for (let i = 0; i < pools.length; i++) {
+                    pools[i].totalLiquidity = await balancer.loadLiquidity(pools[i]);
+                    pools[i].shares = getBptBalanceFiatValue(pools[i], pools[i].bpt);
+                }
                 this.setState({
                     stakedAmount: balancer.poolsTotal(pools)
                 });
@@ -106,7 +113,11 @@ class Layout extends React.Component {
                 this.setState({ unstakedPools: pools });
                 return pools;
             })
-            .then(pools => {
+            .then(async pools => {
+                for (let i = 0; i < pools.length; i++) {
+                    pools[i].totalLiquidity = await balancer.loadLiquidity(pools[i]);
+                    pools[i].shares = getBptBalanceFiatValue(pools[i], pools[i].bpt);
+                }
                 this.setState({
                     unstakedAmount: balancer.poolsTotal(pools)
                 });
@@ -146,12 +157,29 @@ class Layout extends React.Component {
     }
 
     render() {
+        const { theme } = this.state;
+
+        const logo = `logo-${theme}.svg`;
+
+        const isDark = (theme === 'dark');
+
+        const bodyClass = isDark ? 'bg-dark text-light bg-opacity-75' : 'bg-light text-dark';
+        const btnClass = isDark ? 'btn btn-dark' : 'btn btn-light shadow-sm';
+        const btnClassOutline = isDark ? 'btn btn-outline-light' : 'btn btn-light shadow-sm';
+        const hrClass = isDark ? 'text-light text-opacity-75' : '';
+        const themeIcoClass = isDark ? 'bi bi-sun' : 'bi bi-moon';
+        const navbarClass = isDark 
+        ? 'navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25'
+        : 'navbar sticky-top navbar-expand-lg bg-white bg-gradient shadow py-3';
+
+        document.querySelector('body').className = bodyClass;
+
         return (
             <>
-                <nav className="navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25">
+                <nav className={navbarClass}>
                     <div className="container-fluid">
                         <a className="navbar-brand d-flex align-items-center" href="/">
-                            <img src="/image/logo-dark.svg" className="me-2" alt="" width="40" height="40" /> <span className="fs-3 fw-semibold pb-1 me-3">Balancer</span> <div id="brand-text" className="navbar-text d-none d-lg-block fs-4">Minimal</div>
+                            <img src={`/image/${logo}`} className="me-2" alt="" width="40" height="40" /> <span className="fs-3 fw-semibold pb-1 me-3">Balancer</span> <div id="brand-text" className="navbar-text d-none d-lg-block fs-4">Minimal</div>
                         </a>
                         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span className="navbar-toggler-icon"></span>
@@ -170,10 +198,10 @@ class Layout extends React.Component {
                             </ul>
                             <div className="ms-auto d-none d-lg-block">
                                 {this.state.account
-                                    ? <><button className="btn btn-outline-light text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn btn-outline-light me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
-                                    : <button className="btn btn-outline-light me-2" type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
+                                    ? <><button className={`${btnClassOutline} text-nowrap me-2`} type="button"><i className={`bi bi-wallet me-1`}></i> {truncateAddress(this.state.account)}</button><button className={`${btnClassOutline} me-2`} type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
+                                    : <button className={`${btnClassOutline} me-2`} type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
                                 }
-                                <button className="btn btn-outline-light" type="button"><i className="bi bi-sun"></i></button>
+                                <button className={btnClassOutline} onClick={this.switchTheme} type="button"><i className={themeIcoClass}></i></button>
                             </div>
                         </div>
                     </div>
@@ -181,7 +209,7 @@ class Layout extends React.Component {
 
                 <div className="container-fluid">
                     <div className="row">
-                        <div id="sidebar-container" className="col-lg-2 d-none d-lg-block bg-dark shadow">
+                        <div id={isDark ? 'sidebar-container' : 'sidebar-container-light'} className={`col-lg-2 d-none d-lg-block bg-${isDark ? 'dark' : 'white'} shadow`}>
                             <div id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
                                 <select className="form-select" onChange={this.changeNetwork} value={this.state.chainId}>
                                     {Object.keys(NETWORKS).map(chainId =>
@@ -190,7 +218,7 @@ class Layout extends React.Component {
                                         </option>
                                     )}
                                 </select>
-                                <hr className="text-light text-opacity-75" />
+                                <hr className={hrClass} />
                                 <ul className="nav nav-pills flex-column mb-auto">
                                     <li className="nav-item">
                                         <NavLink to="/" className="nav-link" end>
@@ -209,29 +237,29 @@ class Layout extends React.Component {
                                     </li>
                                 </ul>
 
-                                <hr className="text-light text-opacity-75" />
+                                <hr className={hrClass} />
                                 <div className="d-flex justify-content-around fs-5">
-                                    <a href={BalancerUrls.github} className="link-light"><i className="bi bi-github"></i></a>
-                                    <a href={BalancerUrls.discord} className="link-light"><i className="bi bi-discord"></i></a>
-                                    <a href={BalancerUrls.twitter} className="link-light"><i className="bi bi-twitter"></i></a>
-                                    <a href={BalancerUrls.email} className="link-light"><i className="bi bi-envelope-fill"></i></a>
+                                    <a href={BalancerUrls.github} className={`link-${isDark ? 'light' : 'dark'}`}><i className="bi bi-github"></i></a>
+                                    <a href={BalancerUrls.discord} className={`link-${isDark ? 'light' : 'dark'}`}><i className="bi bi-discord"></i></a>
+                                    <a href={BalancerUrls.twitter} className={`link-${isDark ? 'light' : 'dark'}`}><i className="bi bi-twitter"></i></a>
+                                    <a href={BalancerUrls.email} className={`link-${isDark ? 'light' : 'dark'}`}><i className="bi bi-envelope-fill"></i></a>
                                 </div>
                             </div>
                         </div>
                         <div id="main-col" className="col-12 col-lg-10 ms-lg-auto px-4 px-lg-5">
                             <div className="d-flex d-lg-none mt-2 mb-4">
                                 <select id="select-chain" className="form-select me-auto" onChange={this.changeNetwork} value={this.state.chainId}>
-                                    { Object.keys(NETWORKS).map(chainId =>
+                                    {Object.keys(NETWORKS).map(chainId =>
                                         <option key={chainId} value={chainId}>
                                             {NETWORKS[chainId].name}
                                         </option>
-                                    ) }
+                                    )}
                                 </select>
                                 {this.state.account
-                                    ? <><button className="btn btn-dark text-nowrap me-2" type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className="btn btn-dark me-2" type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
-                                    : <button className="btn btn-dark text-nowrap me-2" type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
+                                    ? <><button className={`${btnClass} text-nowrap me-2`} type="button"><i className="bi bi-wallet me-1"></i> {truncateAddress(this.state.account)}</button><button className={`${btnClass} me-2`} type="button" onClick={this.disconnect}><i className="bi bi-power"></i></button></>
+                                    : <button className={`${btnClass} text-nowrap me-2`} type="button" onClick={this.connectWallet}><i className="bi bi-wallet me-1"></i> Connect wallet</button>
                                 }
-                                <button className="btn btn-dark" type="button"><i className="bi bi-sun"></i></button>
+                                <button className={btnClass} onClick={this.switchTheme} type="button"><i className={themeIcoClass}></i></button>
                             </div>
                             <OutletContext.Provider value={this.state}>
                                 <Outlet />

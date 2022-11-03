@@ -1,4 +1,8 @@
-import { BalancerSDK, POOLS } from "@balancer-labs/sdk";
+import {
+  BalancerSDK,
+  POOLS,
+  PoolsSubgraphRepository,
+} from "@balancer-labs/sdk";
 import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
@@ -11,7 +15,6 @@ export class BalancerHelper {
     this.sdk = new BalancerSDK({
       network: Number(chainId),
       rpcUrl: getRpcUrl(chainId)
-      //rpcUrl: 'https://goerli.infura.io/v3/'
     });
   }
 
@@ -19,57 +22,81 @@ export class BalancerHelper {
     return await this.sdk.pools.apr(pool);
   }
 
-  async loadGaugeShares(account) {
-    return await this.sdk.data.gaugeShares.query({ where: { user: account.toLowerCase(), balance_gt: "0" } });
 
+  async loadGaugeShares(account) {
+    const args = {
+      where: {
+        user: account.toLowerCase(),
+        balance_gt: "0"
+      }
+    };
+    return await this.sdk.data.gaugeShares.query(args);
+  }
+
+  async loadPoolShares(account) {
+    const args = {
+      where: {
+        userAddress: account.toLowerCase(),
+        balance_gt: "0"
+      }
+    };
+    return await this.sdk.data.poolShares.query(args);
+  }
+
+  async loadPools(poolIds) {
+    const { chainId, urls } = this.sdk.networkConfig;
+    const query = {
+      args: { where: { 'id': { 'in': poolIds } } }
+    };
+    const repository = new PoolsSubgraphRepository({
+      chainId: chainId,
+      url: urls.subgraph,
+      query: query,
+    });
+    return await repository.fetch();
+  }
+
+  async loadPool(poolId) {
+    return await this.sdk.pools.find(poolId);
+  }
+
+  async loadLiquidity(pool) {
+    return await this.sdk.pools.liquidity(pool);
   }
 
   async loadStakedPools(account) {
 
     const gaugeShares = await this.loadGaugeShares(account);
     const stakedPoolIds = gaugeShares.map(share => share.gauge.poolId)
-    let stakedPools = await this.sdk.pools.where(pool => stakedPoolIds.includes(pool.id));
 
-    for (let i = 0; i < stakedPools.length; i++) {
-      stakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(stakedPools[i]);
-    }
-
+    let stakedPools = await this.loadPools(stakedPoolIds);
+  
     stakedPools = stakedPools.map(pool => {
       const stakedBpt = gaugeShares.find(gs => gs.gauge.poolId === pool.id);
       return {
         ...pool,
-        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
         bpt: stakedBpt.balance
       };
     });
-    // TODO : pool boosts
 
     return stakedPools;
   }
 
   async loadUnstakedPools(account) {
 
-    const poolShares = await this.sdk.data.poolShares.query({ where: { userAddress: account.toLowerCase(), balance_gt: "0" } });
-    const poolSharesIds = poolShares.map(poolShare => poolShare.poolId);
-    let unstakedPools = await this.sdk.pools.where(pool => poolSharesIds.includes(pool.id) &&
-      !POOLS(this.chainId).ExcludedPoolTypes.includes(pool.poolType));
+    const poolShares = await this.loadPoolShares(account);
+    const unStakedPoolIds = poolShares.map(poolShare => poolShare.poolId);
 
-    // TODO : Phantom poo
-    // TODO : Pool decorated.
-
-    for (let i = 0; i < unstakedPools.length; i++) {
-      unstakedPools[i].totalLiquidity = await this.sdk.pools.liquidity(unstakedPools[i]);
-    }
+    let unstakedPools = (await this.loadPools(unStakedPoolIds))
+      .filter(pool => !POOLS(this.chainId).ExcludedPoolTypes.includes(pool.poolType));
 
     unstakedPools = unstakedPools.map(pool => {
       const stakedBpt = poolShares.find(ps => ps.poolId === pool.id);
       return {
         ...pool,
-        shares: getBptBalanceFiatValue(pool, stakedBpt.balance),
         bpt: stakedBpt.balance
       }
     });
-    // TODO Filter migratables pools
 
     return unstakedPools;
   }
@@ -78,11 +105,12 @@ export class BalancerHelper {
 
     if (!isEthNetwork(this.chainId)) return undefined;
 
-    const { data, balancerContracts } = this.sdk;
+    const { balancerContracts } = this.sdk;
 
     const lockPoolId = this.veBalPoolId();
-    const lockPool = await data.pools.find(lockPoolId);
-    lockPool.totalLiquidity = await this.sdk.pools.liquidity(lockPool);
+    const lockPool = await this.loadPool(lockPoolId);
+
+    lockPool.totalLiquidity = await this.loadLiquidity(lockPool);
 
     const userLockInfo = await balancerContracts.veBal.getLockInfo(account);
 
@@ -96,9 +124,10 @@ export class BalancerHelper {
     };
   }
 
+
   veBalPoolId() {
     return POOLS(this.chainId).IdsMap.veBAL
-  } 
+  }
 
   poolsTotal(pools) {
     return pools
@@ -136,7 +165,6 @@ export class BalancerHelper {
         );
 
 
-      // choose the minimum of either gauge balance or the adjusted gauge balance
       const workingBalance = gaugeBalance.lt(adjustedGaugeBalance)
         ? gaugeBalance
         : adjustedGaugeBalance;

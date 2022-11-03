@@ -1,16 +1,17 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { OutletContext } from "./Layout";
 import { isEthNetwork } from "../networks";
 import CryptoIcon from "../components/CryptoIcon";
-
-import { bnum, bnumToStr } from "../utils/bnum"
-import { format } from "date-fns";
 import PoolTokens from "../components/PoolTokens";
+import PoolApr from "../components/PoolApr";
+import PoolBoost from "../components/PoolBoost";
+import { bnum, bnumf } from "../utils/bnum"
+import { format } from "date-fns";
 
-const SPINNER_SIZE = { width: '2rem', height: '2rem' };
+const LOCKDATE_FORMAT = 'd MMM yyyy';
 
-const PoolApr = React.lazy(() => import("../components/PoolApr"));
-const PoolBoost = React.lazy(() => import("../components/PoolBoost"));
+const SPINNER_SIZE = { width: '1.5rem', height: '1.5rem' };
+const AMOUNT_WIDTH = { width: '5rem' };
 
 class Portfolio extends React.Component {
 
@@ -21,35 +22,60 @@ class Portfolio extends React.Component {
     this.state = {};
   }
 
-  componentDidMount() {
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-  }
-
   render() {
 
-    const isEthereum = () => account && isEthNetwork(chainId);
-
     const {
-      account, chainId, portfolio, stakedPools, unstakedPools,
+      account, chainId, theme, portfolio, stakedPools, unstakedPools,
       veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
 
     const totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
 
+    const isEthereum = () => account && isEthNetwork(chainId);
+
+    const isDark = (theme === 'dark');
+
+    const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
+    const textClass = isDark ? 'text-light text-opacity-75' : 'text-black text-opacity-50';
+    const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
+    const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
+
     return (
       <>
-        <div id="invest-info" className="bg-dark bg-gradient text-center rounded shadow py-2 mb-5">
-          <div className="title fs-1 py-2">My Balancer investments</div>
+        <div id="invest-info" className={`${heroClass} text-center rounded shadow py-2 mb-5`}>
+          <div className="title fs-1">My Balancer investments</div>
           {portfolio &&
-            <div className="total fs-4">
-              <span className="me-5"><span className="text-light text-opacity-75">Total :</span> ${bnumToStr(totalAmount)}</span>
+            <div className="total d-flex justify-content-evenly flex-wrap fs-4">
+              <div>
+                <span className={`${textClass} me-2`}>Total :</span>
+                {totalAmount === undefined || totalAmount.isNaN()
+                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  : <span className="fw-bold">${bnumf(totalAmount)}</span>
+                }
+              </div>
               {isEthereum() &&
-                <span className="me-5"><span className="text-light text-opacity-75">veBAL :</span> ${bnumToStr(veBalAmount)}</span>
+                <div>
+                  <span className={`${textClass} me-2`}>veBAL :</span>
+                  {veBalAmount === undefined
+                    ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                    : <span className={veBalClass}>${bnumf(veBalAmount)}</span>
+                  }
+                </div>
               }
-              <span className="me-5"><span className="text-light text-opacity-75">Staked :</span> ${bnumToStr(stakedAmount)}</span>
-              <span><span className="text-light text-opacity-75">Unstaked :</span> ${bnumToStr(unstakedAmount)}</span>
+              <div>
+                <span className={`${textClass} me-2`}>Staked :</span>
+                {stakedAmount === undefined
+                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  : <span className={textClass}>${bnumf(stakedAmount)}</span>
+                }
+              </div>
+              <div>
+                <span className={`${textClass} me-2`}>Unstaked :</span>
+                {unstakedAmount === undefined
+                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  : <span className={textClass}>${bnumf(unstakedAmount)}</span>
+                }
+              </div>
             </div>
           }
         </div>
@@ -59,7 +85,7 @@ class Portfolio extends React.Component {
         <div id="unstaked-pools" className="mb-5">
           <h4 className="mb-3">Unstaked pools</h4>
           <div className="table-responsive">
-            <table className="table table-dark shadow-sm align-middle">
+            <table className={`${tableClass} shadow-sm align-middle`}>
               <thead>
                 <tr>
                   <th scope="col" className="d-none d-md-table-cell"></th>
@@ -74,8 +100,8 @@ class Portfolio extends React.Component {
                   <>
                     {unstakedPools === undefined ?
                       <tr>
-                        <td className="text-center p-3 fs-4 text-white text-opacity-75" colSpan="5">Loading data
-                          <div className="spinner-border text-white text-opacity-75 ms-2" role="status" style={SPINNER_SIZE} >
+                        <td className={`${textClass} text-center p-3 fs-4`} colSpan="5">Loading data
+                          <div className={`${textClass} spinner-border ms-3`} role="status" style={SPINNER_SIZE} >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </td>
@@ -83,7 +109,7 @@ class Portfolio extends React.Component {
                       :
                       <>
                         {unstakedPools.length === 0 ?
-                          <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">You have no unstaked investments</td></tr>
+                          <tr><td className={`${textClass} text-center p-3 fs-5`}  colSpan="5">You have no unstaked investments</td></tr>
                           :
                           <>
                             {unstakedPools.map(pool =>
@@ -94,11 +120,9 @@ class Portfolio extends React.Component {
                                   )}
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
-                                <td>${bnumToStr(pool.shares)}</td>
+                                <td>${bnumf(pool.shares)}</td>
                                 <td className="text-end text-nowrap">
-                                  <Suspense>
-                                    <PoolApr pool={pool} context={this.context} />
-                                  </Suspense>
+                                  <PoolApr pool={pool} />
                                 </td>
                                 <td className="text-center">—</td>
                               </tr>
@@ -108,7 +132,7 @@ class Portfolio extends React.Component {
                       </>
                     }
                   </>
-                  : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
+                  : <tr><td className={`${textClass} text-center p-3 fs-5`} colSpan="5">Connect your wallet</td></tr>
                 }
               </tbody>
             </table>
@@ -118,7 +142,7 @@ class Portfolio extends React.Component {
         <div id="staked-pools" className="mb-5">
           <h4 className="mb-3">Staked pools</h4>
           <div className="table-responsive">
-            <table className="table table-dark shadow-sm align-middle">
+            <table className={`${tableClass} shadow-sm align-middle`}>
               <thead>
                 <tr>
                   <th scope="col" className="d-none d-md-table-cell"></th>
@@ -133,17 +157,17 @@ class Portfolio extends React.Component {
               <tbody>
                 {portfolio ?
                   <>
-                    {unstakedPools === undefined ?
+                    {stakedPools === undefined ?
                       <tr>
-                        <td className="text-center p-3 fs-4 text-white text-opacity-75" colSpan="5">Loading data
-                          <div className="spinner-border text-white text-opacity-75 ms-2" role="status" style={SPINNER_SIZE} >
+                        <td className={`${textClass} text-center p-3 fs-4`} colSpan="5">Loading data
+                          <div className={`${textClass} spinner-border ms-3`} role="status" style={SPINNER_SIZE} >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </td>
                       </tr>
                       : <>
                         {stakedPools.length === 0 ?
-                          <><tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">You have no staked investments</td></tr></>
+                          <><tr><td className={`${textClass} text-center p-3 fs-5`} colSpan="5">You have no staked investments</td></tr></>
                           :
                           <>
                             {stakedPools.map(pool =>
@@ -154,18 +178,14 @@ class Portfolio extends React.Component {
                                   )}
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
-                                <td>${bnumToStr(pool.shares)}</td>
+                                <td>${bnumf(pool.shares)}</td>
                                 {isEthereum() &&
                                   <td className="text-center text-nowrap">
-                                    <Suspense>
-                                      <PoolBoost pool={pool} context={this.context} />
-                                    </Suspense>
+                                      <PoolBoost pool={pool} />
                                   </td>
                                 }
                                 <td className="text-center">
-                                  <Suspense>
-                                    <PoolApr pool={pool} context={this.context} />
-                                  </Suspense>
+                                  <PoolApr pool={pool} />
                                 </td>
                               </tr>
                             )}</>
@@ -173,7 +193,7 @@ class Portfolio extends React.Component {
                       </>
                     }
                   </>
-                  : <tr><td className="text-center p-3 fs-5 text-white text-opacity-50" colSpan="5">Connect your wallet</td></tr>
+                  : <tr><td className={`${textClass} text-center p-3 fs-5`} colSpan="5">Connect your wallet</td></tr>
                 }
               </tbody>
             </table>
@@ -184,7 +204,7 @@ class Portfolio extends React.Component {
           <div id="veBAL-liquidity">
             <h4 className="pool-title mb-3">veBAL protocol liquidity</h4>
             <div className="table-responsive">
-              <table className="table table-dark shadow-sm align-middle">
+              <table className={`${tableClass} shadow-sm align-middle`}>
                 <thead>
                   <tr>
                     <th scope="col" className="d-none d-md-table-cell"></th>
@@ -202,14 +222,12 @@ class Portfolio extends React.Component {
                       )}
                     </td>
                     <td><PoolTokens pool={veBalPool} /></td>
-                    <td>${bnumToStr(veBalPool.shares)}</td>
+                    <td>${bnumf(veBalPool.shares)}</td>
                     <td className="text-center text-nowrap">
-                      <Suspense>
-                        <PoolApr pool={veBalPool} context={this.context} />
-                      </Suspense>
+                      <PoolApr pool={veBalPool} />
                     </td>
                     <td className="text-center text-nowrap">
-                      {veBalPool.lockedEndDate ? format(veBalPool.lockedEndDate, 'd MMM yyyy') : '—'}
+                      {veBalPool.lockedEndDate ? format(veBalPool.lockedEndDate, LOCKDATE_FORMAT) : '—'}
                     </td>
                   </tr>
                 </tbody>

@@ -8,7 +8,7 @@ export function bnum(val) {
     return new BigNumber(val);
 }
 
-export function bnumToStr(val, precision = 2) {
+export function bnumf(val, precision = 2) {
     let _val;
     if (BigNumber.isBigNumber(val) && !val.isNaN() && val.isFinite()) {
         _val = val;

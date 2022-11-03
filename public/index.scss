@@ -2,7 +2,6 @@
 @import "bootstrap/scss/variables";
 @import "bootstrap/scss/bootstrap";
 
-
 $sidebar-pt: 100px;
 
 html { overflow-y: scroll; }
@@ -30,6 +29,24 @@ html { overflow-y: scroll; }
     }
 }
 
+#sidebar-container-light {
+    position: fixed; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    padding: #{$sidebar-pt} 0 0;
+    
+    > #sidebar-inner {
+        height: calc(100vh - #{$sidebar-pt});
+        > .nav-pills {
+            --bs-nav-pills-link-active-color: #{$light}; 
+            --bs-nav-pills-link-active-bg: #{$dark}; 
+            --bs-nav-link-color: #{$dark}; 
+            --bs-nav-link-hover-color: #{$gray-600};
+        }
+    }
+}
+
 #main-col { 
     padding-top: 2.5rem;
     padding-bottom: 2.5rem;
@@ -38,13 +55,10 @@ html { overflow-y: scroll; }
 
 /* PORTFOLIO */
 
-$veBAL-color: $teal;
+.veBAL { color: $teal; }
+.veBAL-light { color: $green; }
 
 #invest-info {
-    > .title { line-height: 4rem; }
+    > .title { line-height: 5rem; }
     > .total { line-height: 3.5rem; }
-    > .veBAL { line-height: 3.5rem;  color: $veBAL-color; }
 }
-
-#veBAL-liquidity > .pool-title { color: $veBAL-color; }
-

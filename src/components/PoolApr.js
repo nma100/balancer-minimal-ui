@@ -2,10 +2,14 @@
 import React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
 import * as Bootstrap from 'bootstrap';
+import { OutletContext } from '../pages/Layout';
 
 const ICON_SIZE = { fontSize: '90%' };
+const APR_WIDTH = { width: '2rem' };
 
 export default class PoolApr extends React.Component {
+
+    static contextType = OutletContext;
 
     constructor(props) {
         super(props);
@@ -13,7 +17,7 @@ export default class PoolApr extends React.Component {
     }
 
     async componentDidMount() {
-        const apr = await this.props.context.balancer.loadApr(this.props.pool);
+        const apr = await this.context.balancer.loadApr(this.props.pool);
         this.setState({ apr: apr });
     }
 
@@ -24,8 +28,11 @@ export default class PoolApr extends React.Component {
     }
 
     render() {
-        const { apr } = this.state;
-        const { context, pool } = this.props;
+        const { apr, } = this.state;
+        const { pool } = this.props;
+
+        const isDark = (this.context.theme === 'dark');
+        const textClass = isDark ? 'text-white' : 'text-black';
 
         const swapFees = apr?.swapFees;
         const stakingApr = apr?.stakingApr;
@@ -33,7 +40,11 @@ export default class PoolApr extends React.Component {
         const tokenApr = apr?.tokenAprs?.total;
         const rewardApr = apr?.rewardAprs?.total;
 
-        const p = apr => `${parseFloat(apr) / 100}%`;
+        const p = apr => {
+            const float = parseFloat(apr) / 100;
+            const value = (isNaN(float) || !isFinite(float)) ? 0 : float;
+            return `${value}%`;
+        }
 
         let totalApr = null;
         if (apr) {
@@ -56,12 +67,12 @@ export default class PoolApr extends React.Component {
         </>);
 
         let icon;
-        if (context.balancer.veBalPoolId() === pool.id) {
+        if (this.context.balancer.veBalPoolId() === pool.id) {
             icon = <i className='bi bi-stars text-primary' style={ICON_SIZE}></i>;
         } else if (stakingApr > 0 || rewardApr > 0 || tokenApr > 0 || protocolApr > 0) {
             icon = <i className='bi bi-stars text-warning' style={ICON_SIZE}></i>;
         } else {
-            icon = <i className='bi bi-info-circle text-white text-opacity-50' style={ICON_SIZE}></i>;
+            icon = <i className={`bi bi-info-circle ${textClass} text-opacity-50`} style={ICON_SIZE}></i>;
         }
 
         const tooltip = <a href='#' className='apr-breakdown' data-bs-toggle='tooltip' data-bs-title={breakdown}>{icon}</a>;
@@ -69,7 +80,7 @@ export default class PoolApr extends React.Component {
         return <>
             {totalApr
                 ? <><span className='pe-1'>{totalApr}</span> {tooltip}</>
-                : <>—</>
+                : <span className='placeholder-glow'><span className='placeholder' style={APR_WIDTH}></span></span>
             }
         </>;
     }
