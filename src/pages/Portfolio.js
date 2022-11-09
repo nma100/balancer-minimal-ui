@@ -61,7 +61,7 @@ class Portfolio extends React.Component {
           <div className="title fs-1">My Balancer investments</div>
           {portfolio &&
             <div className="total d-flex justify-content-evenly flex-wrap fs-4">
-              <div>
+              <div className="px-2">
                 <span className={`${textClass} me-2`}>Total :</span>
                 {totalAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
@@ -69,7 +69,7 @@ class Portfolio extends React.Component {
                 }
               </div>
               {isEthereum() &&
-                <div>
+                <div className="px-2">
                   <span className={`${textClass} me-2`}>veBAL :</span>
                   {veBalAmount === undefined
                     ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
@@ -77,14 +77,14 @@ class Portfolio extends React.Component {
                   }
                 </div>
               }
-              <div>
+              <div className="px-2">
                 <span className={`${textClass} me-2`}>Staked :</span>
                 {stakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
                   : <span className={textClass}>{amount(stakedAmount)}</span>
                 }
               </div>
-              <div>
+              <div className="px-2">
                 <span className={`${textClass} me-2`}>Unstaked :</span>
                 {unstakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
