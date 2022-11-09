@@ -28,7 +28,7 @@ export const NETWORKS = {
   [POLYGON_ID]  : new Chain(POLYGON_ID, 'Polygon', 18, 'https://polygonscan.com', '/address/{0}', '/tx/{0}'),
   [ARBITRUM_ID] : new Chain(ARBITRUM_ID, 'Arbitrum', 18, 'https://arbiscan.com', '/address/{0}', '/tx/{0}'),
   [GOERLI_ID]   : new Chain(GOERLI_ID, 'Goerli', 18, 'https://goerli.etherscan.io', '/address/{0}', '/tx/{0}'),
-  [SEPOLIA_ID]  : new Chain(SEPOLIA_ID, 'Sepolia', 18, 'https://sepolia.etherscan.io', '/address/{0}', '/tx/{0}')
+  //[SEPOLIA_ID]  : new Chain(SEPOLIA_ID, 'Sepolia', 18, 'https://sepolia.etherscan.io', '/address/{0}', '/tx/{0}')
 }
 
 export async function checkChain(chainId, library) {

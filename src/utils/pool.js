@@ -6,7 +6,5 @@ export function getBptPrice(pool) {
 }
 
 export function getBptBalanceFiatValue(pool, balance) {
-    return bnum(pool.totalLiquidity)
-        .div(pool.totalShares)
-        .times(balance);
+    return getBptPrice(pool).times(balance);
 }

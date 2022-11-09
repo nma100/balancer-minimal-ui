@@ -5,10 +5,12 @@ import CryptoIcon from "../components/CryptoIcon";
 import PoolTokens from "../components/PoolTokens";
 import PoolApr from "../components/PoolApr";
 import PoolBoost from "../components/PoolBoost";
+import PoolShares from "../components/PoolShares";
 import { bnum, bnumf } from "../utils/bnum"
 import { format } from "date-fns";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
+const UNAVAILABLE = 'N/A';
 
 const SPINNER_SIZE = { width: '1.5rem', height: '1.5rem' };
 const AMOUNT_WIDTH = { width: '5rem' };
@@ -28,15 +30,28 @@ class Portfolio extends React.Component {
       account, chainId, theme, portfolio, stakedPools, unstakedPools,
       veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
-
-    const totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
-
+    
     const isEthereum = () => account && isEthNetwork(chainId);
+    const amount = (val) => val === false ? UNAVAILABLE : `$${bnumf(val)}`;
+    
+    let totalAmount;
+    if (stakedAmount === undefined || 
+        unstakedAmount === undefined || 
+        (isEthereum()  && veBalAmount === undefined)) {
+      totalAmount = undefined;
+    } else if (stakedAmount === false || 
+        unstakedAmount === false || 
+        (isEthereum() && veBalAmount === false)) {
+      totalAmount = false;
+    } else {
+      totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
+    }
+
 
     const isDark = (theme === 'dark');
 
     const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
-    const textClass = isDark ? 'text-light text-opacity-75' : 'text-black text-opacity-50';
+    const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
     const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
     const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
 
@@ -48,9 +63,9 @@ class Portfolio extends React.Component {
             <div className="total d-flex justify-content-evenly flex-wrap fs-4">
               <div>
                 <span className={`${textClass} me-2`}>Total :</span>
-                {totalAmount === undefined || totalAmount.isNaN()
+                {totalAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
-                  : <span className="fw-bold">${bnumf(totalAmount)}</span>
+                  : <span className="fw-bold">{amount(totalAmount)}</span>
                 }
               </div>
               {isEthereum() &&
@@ -58,7 +73,7 @@ class Portfolio extends React.Component {
                   <span className={`${textClass} me-2`}>veBAL :</span>
                   {veBalAmount === undefined
                     ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
-                    : <span className={veBalClass}>${bnumf(veBalAmount)}</span>
+                    : <span className={veBalClass}>{amount(veBalAmount)}</span>
                   }
                 </div>
               }
@@ -66,14 +81,14 @@ class Portfolio extends React.Component {
                 <span className={`${textClass} me-2`}>Staked :</span>
                 {stakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
-                  : <span className={textClass}>${bnumf(stakedAmount)}</span>
+                  : <span className={textClass}>{amount(stakedAmount)}</span>
                 }
               </div>
               <div>
                 <span className={`${textClass} me-2`}>Unstaked :</span>
                 {unstakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
-                  : <span className={textClass}>${bnumf(unstakedAmount)}</span>
+                  : <span className={textClass}>{amount(unstakedAmount)}</span>
                 }
               </div>
             </div>
@@ -120,7 +135,7 @@ class Portfolio extends React.Component {
                                   )}
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
-                                <td>${bnumf(pool.shares)}</td>
+                                <td><PoolShares pool={pool} /></td>
                                 <td className="text-end text-nowrap">
                                   <PoolApr pool={pool} />
                                 </td>
@@ -178,7 +193,7 @@ class Portfolio extends React.Component {
                                   )}
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
-                                <td>${bnumf(pool.shares)}</td>
+                                <td><PoolShares pool={pool} /></td>
                                 {isEthereum() &&
                                   <td className="text-center text-nowrap">
                                       <PoolBoost pool={pool} />
@@ -222,7 +237,7 @@ class Portfolio extends React.Component {
                       )}
                     </td>
                     <td><PoolTokens pool={veBalPool} /></td>
-                    <td>${bnumf(veBalPool.shares)}</td>
+                    <td><PoolShares pool={veBalPool} /></td>
                     <td className="text-center text-nowrap">
                       <PoolApr pool={veBalPool} />
                     </td>

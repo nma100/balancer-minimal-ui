@@ -6,18 +6,12 @@ import { BalancerHelper } from './balancer-helper';
 const USER = "0x91F450602455564A64207414c7Fbd1F1F0EbB425";
 const TIMEOUT = 100000;
 
-function logPool(pool) {
-    const tokens = pool.tokens.map(t => t.symbol);
-    const shares = bnumf(pool.shares);
-    console.log(tokens, shares);
-}
-
 it('Load unstaked pools', async () => {
     const balancer = new BalancerHelper(POLYGON_ID);
     const unstaked = await balancer.loadUnstakedPools(USER);
 
     assert.isNotNull(unstaked.pools);
-    unstaked.forEach(logPool);
+    unstaked.forEach(logShares);
 
 }, TIMEOUT);
 
@@ -26,7 +20,7 @@ it('Load staked pools', async () => {
     const staked = await balancer.loadStakedPools(USER);
 
     assert.isNotNull(staked.pools);
-    staked.forEach(logPool);
+    staked.forEach(logShares);
 
 }, TIMEOUT);
 
@@ -36,7 +30,6 @@ it('Load veBal Pool', async () => {
 
     assert.isUndefined(veBal);
 }, TIMEOUT);
-
 
 it('Total investments', async () => {
     const balancer = new BalancerHelper(POLYGON_ID);
@@ -59,7 +52,7 @@ it('Load pools', async () => {
     const POOL_IDs = [POOL_ID1, POOL_ID2];
 
     const balancer = new BalancerHelper(ETHEREUM_ID);
-    const pools = await balancer.loadPools(POOL_IDs);
+    const pools = await balancer.findPools(POOL_IDs);
 
     assert.isArray(pools);
     assert.equal(pools.length, POOL_IDs.length)
@@ -69,7 +62,7 @@ it('Load pool', async () => {
     const POOL_ID = '0x2d011adf89f0576c9b722c28269fcb5d50c2d17900020000000000000000024d';
 
     const balancer = new BalancerHelper(ETHEREUM_ID);
-    const pool = await balancer.loadPool(POOL_ID);
+    const pool = await balancer.findPool(POOL_ID);
 
     assert.isNotNull(pool);
 }, TIMEOUT);
@@ -78,13 +71,20 @@ it('Load Apr', async () => {
     const POOL_ID = '0x2d011adf89f0576c9b722c28269fcb5d50c2d17900020000000000000000024d';
 
     const balancer = new BalancerHelper(ETHEREUM_ID);
-    const pool = await balancer.loadPool(POOL_ID);
+    const pool = await balancer.findPool(POOL_ID);
     const apr = await balancer.loadApr(pool);
 
     console.log(apr);
 
     assert.isNotNull(pool);
 }, TIMEOUT);
+
+
+function logShares(pool) {
+    const tokens = pool.tokens.map(t => t.symbol);
+    const shares = bnumf(pool.shares);
+    console.log(tokens, shares);
+}
 
 // npm run test .\src\protocol\balancer-helper.test.js
 // npm run test .\src\protocol\balancer-helper.test.js -- -t 'Total investments'

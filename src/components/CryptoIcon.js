@@ -1,7 +1,7 @@
 import React from 'react';
-import CryptoIcons from 'cryptocurrency-icons/manifest.json';
+import CryptoIcons from 'nma-cryptocurrency-icons/manifest.json';
 
-const DEFAULT = 'generic';
+const DEFAULT = 'generic-alt';
 
 export default class CryptoIcon extends React.Component {
 
@@ -15,9 +15,9 @@ export default class CryptoIcon extends React.Component {
         if (CryptoIcons.find(o => o.symbol === symbol?.toUpperCase())) {
             _symbol = symbol.toLowerCase();
         } 
-        const _icon = await import(`cryptocurrency-icons/svg/icon/${_symbol}.svg`);
+        const _icon = await import(`nma-cryptocurrency-icons/svg/icon/${_symbol}.svg`);
         return {
-            symbol: _symbol,
+            symbol: symbol.toUpperCase(),
             icon: _icon.default
         }
     }
@@ -32,6 +32,6 @@ export default class CryptoIcon extends React.Component {
 
     render() {
         const { icon, name } = this.state;
-        return <img src={icon} alt={name} />;
+        return <img src={icon} alt={name} title={name} />;
     }
 }
