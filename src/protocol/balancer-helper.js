@@ -9,7 +9,9 @@ import { getBptBalanceFiatValue } from "../utils/pool";
 import { bnum, ZERO } from "../utils/bnum";
 
 export class BalancerHelper {
+  
   constructor(chainId) {
+    console.log('BalancerHelper constructeur');
     this.chainId = chainId;
     this.sdk = new BalancerSDK({
       network: Number(chainId),
@@ -21,7 +23,10 @@ export class BalancerHelper {
 
   async loadApr(pool) {
     if (!this.cacheApr[pool.id]) {
+      //console.log('loadApr NO CACHED', pool.name);
       this.cacheApr[pool.id] = this.sdk.pools.apr(pool);
+    } else {
+      //console.log('loadApr CACHED', pool.name);
     }
     const apr = await this.cacheApr[pool.id];
     this.checkApr(pool, apr);
@@ -31,11 +36,16 @@ export class BalancerHelper {
   checkApr(pool, apr) {
     const isValid = (n) => isFinite(n) && !isNaN(n);
     let err = false;
-    if (!apr) err = `falsy apr = ${apr}`;
-    if (!isValid(apr.min)) err = `apr.min = ${apr.min}`;
-    if (!isValid(apr.max)) err = `apr.max = ${apr.max}`;
-    if (!isValid(apr.swapFees)) err = `apr.swapFees = ${apr.swapFees}`;
-    if (!isValid(apr.protocolApr)) err = `apr.protocolApr = ${apr.protocolApr}`;
+    if (!apr) 
+      err = `falsy apr = ${apr}`;
+    if (!isValid(apr.min)) 
+      err = `apr.min = ${apr.min}`;
+    if (!isValid(apr.max)) 
+      err = `apr.max = ${apr.max}`;
+    if (!isValid(apr.swapFees)) 
+      err = `apr.swapFees = ${apr.swapFees}`;
+    if (!isValid(apr.protocolApr)) 
+      err = `apr.protocolApr = ${apr.protocolApr}`;
     if (!isValid(apr.tokenAprs.total))
       err = `apr.tokenAprs.total = ${apr.tokenAprs.total}`;
     if (!isValid(apr.stakingApr.min))
@@ -104,6 +114,23 @@ export class BalancerHelper {
 
   async findPool(poolId) {
     return await this.sdk.pools.find(poolId);
+  }
+
+  
+  async findPreferentialGauge(pool) {
+    const result = await this.sdk.data.poolGauges.find(pool.address);
+
+    let gauge = undefined;
+    if (result) {
+      console.log('All gauges of this pool', result);
+      if (result.gauges.length === 1) {
+        gauge = result.gauges[0].id;
+      } else {
+        gauge = result.preferentialGauge.id;
+      }
+    }
+    console.log('Preferential gauge', gauge);
+    return gauge;
   }
 
   async loadStakedPools(account) {
@@ -230,4 +257,9 @@ export class BalancerHelper {
 
     return Object.fromEntries(boosts);
   }
+
+  ERC20(address, signerOrProvider) {
+    return this.sdk.balancerContracts.getErc20(address, signerOrProvider);
+  }
+
 }

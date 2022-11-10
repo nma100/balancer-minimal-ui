@@ -30,10 +30,35 @@ class Layout extends React.Component {
     this.state = { theme: currentTheme };
   }
 
+  componentDidUpdate() {
+    //console.log('componentDidUpdate layout');
+  }
+
   componentDidMount() {
-    if (web3Modal.cachedProvider) {
-      this.connectWallet();
-    }
+
+
+    //console.log('componentDidMount layout');
+
+    //if (web3Modal.cachedProvider) {
+       /* web3Modal.connect().then(async provider => {
+          provider.on("chainChanged", this.onNetworkChanged);
+          provider.on("accountsChanged", this.onAccountChanged);
+      
+          const web3Provider = new ethers.providers.Web3Provider(provider);
+          const accounts = await web3Provider.listAccounts();
+          const network = await web3Provider.getNetwork();
+          const chainId = await checkChain(network.chainId, web3Provider);
+          const balancer = new BalancerHelper(chainId);
+          const state = {
+            web3Provider: web3Provider,
+            chainId: chainId,
+            balancer: balancer,
+            account: accounts[0],
+          };
+          this.setState(state);
+          this.loadPortfolio(balancer, accounts[0]);
+      }).catch(e => console.error('Error reconnect', e));*/
+    //}
   }
 
   async connectWallet() {
@@ -53,8 +78,25 @@ class Layout extends React.Component {
       account: accounts[0],
     };
     this.setState(state);
-
     this.loadPortfolio(balancer, accounts[0]);
+    /*web3Modal.connect().then(async provider => {
+        provider.on("chainChanged", this.onNetworkChanged);
+        provider.on("accountsChanged", this.onAccountChanged);
+    
+        const web3Provider = new ethers.providers.Web3Provider(provider);
+        const accounts = await web3Provider.listAccounts();
+        const network = await web3Provider.getNetwork();
+        const chainId = await checkChain(network.chainId, web3Provider);
+        const balancer = new BalancerHelper(chainId);
+        const state = {
+          web3Provider: web3Provider,
+          chainId: chainId,
+          balancer: balancer,
+          account: accounts[0],
+        };
+        this.setState(state);
+        this.loadPortfolio(balancer, accounts[0]);
+    }).catch(e => console.error('Error reconnect', e));*/
   }
 
   async disconnect() {
