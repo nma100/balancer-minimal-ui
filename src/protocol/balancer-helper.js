@@ -115,21 +115,17 @@ export class BalancerHelper {
   async findPool(poolId) {
     return await this.sdk.pools.find(poolId);
   }
-
   
-  async findPreferentialGauge(pool) {
-    const result = await this.sdk.data.poolGauges.find(pool.address);
-
+  async findPreferentialGauge(poolAddress) {
     let gauge = undefined;
+    const result = await this.sdk.data.poolGauges.find(poolAddress);
     if (result) {
-      console.log('All gauges of this pool', result);
       if (result.gauges.length === 1) {
         gauge = result.gauges[0].id;
       } else {
         gauge = result.preferentialGauge.id;
       }
     }
-    console.log('Preferential gauge', gauge);
     return gauge;
   }
 
@@ -197,6 +193,10 @@ export class BalancerHelper {
     return POOLS(this.chainId).IdsMap.veBAL;
   }
 
+  stakablePoolIds() {
+    return POOLS(this.chainId).Stakable.AllowList;
+  }
+
   totalAmount(pools) {
     if (!pools) return ZERO;
 
@@ -258,8 +258,12 @@ export class BalancerHelper {
     return Object.fromEntries(boosts);
   }
 
-  ERC20(address, signerOrProvider) {
-    return this.sdk.balancerContracts.getErc20(address, signerOrProvider);
+  ERC20(erc20address, signerOrProvider) {
+    return this.sdk.balancerContracts.getErc20(erc20address, signerOrProvider);
+  }
+
+  liquidityGauge(gaugeAddress, signerOrProvider) {
+    return this.sdk.balancerContracts.getLiquidityGauge(gaugeAddress, signerOrProvider);
   }
 
 }

@@ -1,13 +1,15 @@
 import React from 'react';
 import { OutletContext } from '../pages/Layout';
-import { formatUnits } from 'ethers/lib/utils';
+import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { constants } from 'ethers';
+
 export const STAKING_MODAL = "staking-modal";
 
 export const Mode = {
     Init: 'init',
     Approval: 'approval',
     Stake: 'stake',
+    Deposited : 'deposited'
 }
 
 export class StakingModal extends React.Component {
@@ -16,75 +18,110 @@ export class StakingModal extends React.Component {
    
     constructor(props) {
         super(props);
-        this.state = { mode: 'init' };
+        this.state = { mode: Mode.Init };
     }
 
     componentDidMount() {
-        //console.log("componentDidMount StakingModal", this.props.pool?.name);
-        
         document
             .getElementById(STAKING_MODAL)
             .addEventListener('show.bs.modal', this.init.bind(this));
     }
 
     async init() {
-
-        /* Deux états : 
-            - Need approve
-            - Stake ready
-
-            Détermination si Need approve :
-            Récup gauge address
-            Interrogation Pool Token, voir si gauge autorisée à transferer token de user
-        */
-        // https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20-allowance-address-address-
-
-        console.log('INIT ==');
-
+        
         const { account, balancer, web3Provider } = this.context;
         
-        const poolId = document.getElementById(STAKING_MODAL).dataset.poolId;
-        console.log(`pool to stake`, poolId);
+        const modal = document.getElementById(STAKING_MODAL);
 
-        const pool = await balancer.findPool(poolId);
-        const gauge = await balancer.findPreferentialGauge(pool);
+        const { poolName, poolAddress, poolBpt, poolShares } = modal.dataset;
 
-        const poolERC20 = balancer.ERC20(pool.address, web3Provider);
+        console.log(`poolName`, poolName);
+        console.log(`poolAddress`, poolAddress);
+        console.log(`poolBpt`, parseUnits(poolBpt).toString());
+        console.log(`poolShares`, poolShares);
+
+        const userPoolBpt = parseUnits(poolBpt);
+        const userPoolShares = parseFloat(poolShares)
+
+        this.setState({ 
+            poolName: poolName, 
+            poolAddress: poolAddress, 
+            poolBpt: userPoolBpt, 
+            poolShares: userPoolShares,
+         });
+
+        const gauge = await balancer.findPreferentialGauge(poolAddress);
+
+        const poolERC20 = balancer.ERC20(poolAddress, web3Provider);
         
-        console.log("pool addr", pool.address);
         console.log("pref gauge", gauge);
         console.log("account", account);
 
-
         const balance = await poolERC20.balanceOf(account);
-        console.log('User balance before :', formatUnits(balance, 0));
+        console.log('User balance :', formatUnits(balance, 0));
 
         const allowance = await poolERC20.allowance(account, gauge);
         console.log('allowance :', formatUnits(allowance, 0));
 
-        const isApproved = allowance.gt(constants.Zero);
+        const isApproved = allowance.gte(userPoolBpt);
         console.log('isApproved :', isApproved);
 
-        this.setState({ 
-            pool:pool, 
-            mode: isApproved ?  'stake' : 'approval' 
-        });
+        const mode = isApproved ?  Mode.Stake : Mode.Approval;
+
+        this.setState({ gauge: gauge, mode: mode });
     }
 
-    handleApprove() {
+    async handleApprove() {
         console.log('Handle Approve !');
+
+        const { account, balancer, web3Provider } = this.context;
+        const { poolAddress, gauge } = this.state;
+
+        const poolERC20 = balancer.ERC20(poolAddress, web3Provider.getSigner());
+        
+        let allowance = await poolERC20.allowance(account, gauge);
+        console.log('allowance before:', formatUnits(allowance, 0));
+
+        const tx = await poolERC20.approve(gauge, constants.MaxUint256);
+        await tx.wait();
+
+        allowance = await poolERC20.allowance(account, gauge);
+        console.log('allowance after:', formatUnits(allowance, 0));
+
+        this.setState({ mode: Mode.Stake });
     }
 
-    handleStake() {
+    async handleStake() {
         console.log('Handle Stake !');
+
+        const { account, balancer, web3Provider } = this.context;
+        const { gauge, poolBpt } = this.state;
+
+        const contract = balancer.liquidityGauge(gauge, web3Provider.getSigner());
+
+        let balance = await contract.balanceOf(account);
+        console.log('User balance before :', formatUnits(balance, 0));
+    
+        console.log('Deposing bpt in gauge. Wait ...');
+        const tx = await contract.functions['deposit(uint256)'](poolBpt);
+        await tx.wait();
+    
+        balance = await contract.balanceOf(account);
+        console.log('User balance after :', formatUnits(balance, 0));
+
+        this.setState({ mode: Mode.Deposited });
+    }
+    
+    handleClose() {
+        window.location.reload();
     }
 
     render() {
-        const { mode, pool } = this.state;   
+        const { poolName, poolShares, mode } = this.state;   
         const { theme } = this.context;
         const isDark = (theme === 'dark');
         const contentClass = isDark ? "bg-dark text-light" : "bg-light text-dark";
-
+        const format = n => `$${n ? n.toFixed(2) : "00.00"}`
         return (
             <div id={STAKING_MODAL} className="modal" tabIndex="-1">
                 <div className="modal-dialog modal-dialog-centered">
@@ -94,21 +131,27 @@ export class StakingModal extends React.Component {
                     <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div className="modal-body">
-                        <p>{ pool?.name }</p>
-                        <p>{ pool?.bpt }</p>
-                        {mode === 'init' &&
+                        <p>{ poolName }</p>
+                        <p>Value to stake : { format(poolShares) }</p>
+                        {mode === Mode.Init &&
                             <>
-                                Wait ...
+                                <button type="button" className="btn btn-secondary">Wait ...</button>
                             </>
                         }
-                        {mode === 'approval' &&
+                        {mode === Mode.Approval &&
                             <>
                                 <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>Approve BPT</button>
                             </>
                         }
-                        {mode === 'stake' &&
+                        {mode === Mode.Stake &&
                             <>
                                 <button type="button" className="btn btn-secondary"  onClick={e => this.handleStake(e)}>Stake</button>
+                            </>
+                        }
+                        {mode === Mode.Deposited &&
+                            <>
+                                <p>Success !</p>
+                                <button type="button" className="btn btn-secondary"  onClick={e => this.handleClose(e)}>Close</button>
                             </>
                         }
                     </div>

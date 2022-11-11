@@ -27,7 +27,6 @@ class Portfolio extends React.Component {
   }
 
   componentDidMount() {
-    //console.log('componentDidMount Portfolio');
     new Modal(`#${STAKING_MODAL}`);
   }
 
@@ -36,14 +35,18 @@ class Portfolio extends React.Component {
   }
 
   handleStake(pool) {
-    document.getElementById(STAKING_MODAL).dataset.poolId = pool.id;
+    const modal = document.getElementById(STAKING_MODAL);
+    modal.dataset.poolName = pool.name;
+    modal.dataset.poolAddress = pool.address;
+    modal.dataset.poolBpt = pool.bpt;
+    modal.dataset.poolShares = pool.shares;
     Modal.getInstance(`#${STAKING_MODAL}`).show();
   }
 
   render() {
 
     const {
-      account, chainId, theme, portfolio, stakedPools, unstakedPools,
+      balancer, account, chainId, theme, portfolio, stakedPools, unstakedPools,
       veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
     
@@ -72,7 +75,7 @@ class Portfolio extends React.Component {
 
     return (
       <>
-        <StakingModal pool={this.state.selectedPool} />
+        <StakingModal />
         <div id="invest-info" className={`${heroClass} text-center rounded shadow py-2 mb-5`}>
           <div className="title fs-1">My Balancer investments</div>
           {portfolio &&
@@ -156,7 +159,10 @@ class Portfolio extends React.Component {
                                   <PoolApr pool={pool} />
                                 </td>
                                 <td className="text-center">
-                                  <button type="button" className={`${btnClass} btn-sm`} onClick={() => this.handleStake(pool)}>Stake</button>
+                                  {balancer.stakablePoolIds().includes(pool.id) ?
+                                    <button type="button" className={`${btnClass} btn-sm`} onClick={() => this.handleStake(pool)}>Stake</button>
+                                    : <>—</> 
+                                  }
                                 </td>
                               </tr>
                             )}
