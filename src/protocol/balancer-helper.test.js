@@ -79,6 +79,18 @@ it('Load Apr', async () => {
     assert.isNotNull(pool);
 }, TIMEOUT);
 
+it('Pref gauge', async () => {
+    const POOL_ID = '0x67f8fcb9d3c463da05de1392efdbb2a87f8599ea000200000000000000000059';
+
+    const balancer = new BalancerHelper(GOERLI_ID);
+    const pool = await balancer.findPool(POOL_ID);
+
+    const prefGauge = await balancer.findPreferentialGauge(pool.address);
+
+    console.log(pool.address, prefGauge);
+
+    assert.isNotNull(prefGauge);
+});
 
 function logShares(pool) {
     const tokens = pool.tokens.map(t => t.symbol);

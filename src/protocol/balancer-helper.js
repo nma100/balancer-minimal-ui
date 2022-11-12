@@ -1,7 +1,7 @@
 import {
   BalancerSDK,
-  POOLS,
   PoolsSubgraphRepository,
+  POOLS,
 } from "@balancer-labs/sdk";
 import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
@@ -11,7 +11,6 @@ import { bnum, ZERO } from "../utils/bnum";
 export class BalancerHelper {
   
   constructor(chainId) {
-    console.log('BalancerHelper constructeur');
     this.chainId = chainId;
     this.sdk = new BalancerSDK({
       network: Number(chainId),
@@ -23,11 +22,8 @@ export class BalancerHelper {
 
   async loadApr(pool) {
     if (!this.cacheApr[pool.id]) {
-      //console.log('loadApr NO CACHED', pool.name);
       this.cacheApr[pool.id] = this.sdk.pools.apr(pool);
-    } else {
-      //console.log('loadApr CACHED', pool.name);
-    }
+    } 
     const apr = await this.cacheApr[pool.id];
     this.checkApr(pool, apr);
     return apr;
@@ -73,7 +69,7 @@ export class BalancerHelper {
   checkLiquidity(pool, liquidity) {
     const bn = bnum(liquidity);
     if (bn.isNaN() || !bn.isFinite() || bn.isZero()) {
-      const msg = `Invalid liquidity (${pool.name}) : ${liquidity}`;
+      const msg = `Incorrect liquidity (${pool.name}) : ${liquidity}`;
       console.error(msg);
       throw new Error(msg);
     }
@@ -117,16 +113,14 @@ export class BalancerHelper {
   }
   
   async findPreferentialGauge(poolAddress) {
-    let gauge = undefined;
     const result = await this.sdk.data.poolGauges.find(poolAddress);
-    if (result) {
-      if (result.gauges.length === 1) {
-        gauge = result.gauges[0].id;
-      } else {
-        gauge = result.preferentialGauge.id;
-      }
+    if (!result) {
+      return undefined;
+    } else if (result.gauges.length === 1) {
+      return result.gauges[0].id;
+    } else {
+      return result.preferentialGauge.id;
     }
-    return gauge;
   }
 
   async loadStakedPools(account) {
@@ -259,11 +253,13 @@ export class BalancerHelper {
   }
 
   ERC20(erc20address, signerOrProvider) {
-    return this.sdk.balancerContracts.getErc20(erc20address, signerOrProvider);
+    const { balancerContracts } = this.sdk;
+    return balancerContracts.getErc20(erc20address, signerOrProvider);
   }
 
   liquidityGauge(gaugeAddress, signerOrProvider) {
-    return this.sdk.balancerContracts.getLiquidityGauge(gaugeAddress, signerOrProvider);
+    const { balancerContracts } = this.sdk;
+    return balancerContracts.getLiquidityGauge(gaugeAddress, signerOrProvider);
   }
 
 }

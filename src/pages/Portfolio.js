@@ -26,21 +26,13 @@ class Portfolio extends React.Component {
     this.state = {};
   }
 
-  componentDidMount() {
-    new Modal(`#${STAKING_MODAL}`);
-  }
-
-  componentDidUpdate() {
-    console.log('componentDidUpdate');
-  }
-
   handleStake(pool) {
     const modal = document.getElementById(STAKING_MODAL);
     modal.dataset.poolName = pool.name;
     modal.dataset.poolAddress = pool.address;
     modal.dataset.poolBpt = pool.bpt;
     modal.dataset.poolShares = pool.shares;
-    Modal.getInstance(`#${STAKING_MODAL}`).show();
+    Modal.getOrCreateInstance(`#${STAKING_MODAL}`).show();
   }
 
   render() {
