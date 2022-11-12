@@ -1,3 +1,5 @@
+import { bnumf } from "../utils/bnum"
+
 export const truncateAddress = (address) => {
     if (!address) return "No Account";
     const match = address.match(
@@ -5,4 +7,6 @@ export const truncateAddress = (address) => {
     );
     if (!match) return address;
     return `${match[1]}....${match[2]}`;
-  };
+};
+
+export const amount = (val) => val === false ? 'N/A' : `$${bnumf(val)}`;

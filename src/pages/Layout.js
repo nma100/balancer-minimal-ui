@@ -5,46 +5,45 @@ import { truncateAddress } from "../utils/page";
 import { web3Modal, switchChain } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
-import { ZERO } from "../utils/bnum";
 import BalancerUrls from "../protocol/balancer-urls.json";
 import { getBptBalanceFiatValue } from "../utils/pool";
+import { currentTheme, switchTheme, Theme } from "../theme";
+import { ZERO } from "../utils/bnum";
 
 export const OutletContext = React.createContext();
 
 class Layout extends React.Component {
   constructor(props) {
     super(props);
-    this.state = this.initState();
-    this.connectWallet = this.connectWallet.bind(this);
+    this.state = { ...this.initState(), theme: currentTheme() };
+    this.handleConnect = this.handleConnect.bind(this);
     this.disconnect = this.disconnect.bind(this);
     this.changeNetwork = this.changeNetwork.bind(this);
+    this.toggleTheme = this.toggleTheme.bind(this);
     this.onNetworkChanged = this.onNetworkChanged.bind(this);
     this.onAccountChanged = this.onAccountChanged.bind(this);
-    this.switchTheme = this.switchTheme.bind(this);
-
-    let currentTheme = localStorage.getItem("current-theme");
-    if (!currentTheme) {
-      currentTheme = "dark";
-      localStorage.setItem("current-theme", currentTheme);
-    }
-    this.state = { theme: currentTheme };
   }
 
   componentDidMount() {
     if (web3Modal.cachedProvider) {
-      this.connectWallet();
+      this.connect()
+        .catch(e => console.warn('Reconnect failure', e));
     }
   }
 
-  async connectWallet() {
-    const provider = await web3Modal.connect();
-    provider.on("chainChanged", this.onNetworkChanged);
-    provider.on("accountsChanged", this.onAccountChanged);
+  handleConnect() {
+    this.connect()
+      .catch(e => console.error('Connect error', e));
+  }
 
+  async connect() {
+    const provider = await web3Modal.connect();
     const web3Provider = new ethers.providers.Web3Provider(provider);
     const accounts = await web3Provider.listAccounts();
     const network = await web3Provider.getNetwork();
     const chainId = await checkChain(network.chainId, web3Provider);
+    provider.on("chainChanged", this.onNetworkChanged);
+    provider.on("accountsChanged", this.onAccountChanged);
     const balancer = new BalancerHelper(chainId);
     const state = {
       web3Provider: web3Provider,
@@ -53,7 +52,6 @@ class Layout extends React.Component {
       account: accounts[0],
     };
     this.setState(state);
-
     this.loadPortfolio(balancer, accounts[0]);
   }
 
@@ -73,8 +71,13 @@ class Layout extends React.Component {
   async onNetworkChanged(hexChainId) {
     const { web3Provider, account } = this.state;
     const chainId = await checkChain(Number(hexChainId), web3Provider);
+    const provider = await web3Modal.connect();
+    const updatedProvider = new ethers.providers.Web3Provider(provider);
     const balancer = new BalancerHelper(chainId);
+    provider.on("chainChanged", this.onNetworkChanged);
+    provider.on("accountsChanged", this.onAccountChanged);
     this.setState({
+      web3Provider: updatedProvider,
       chainId: chainId,
       balancer: balancer,
     });
@@ -86,11 +89,9 @@ class Layout extends React.Component {
     this.loadPortfolio(this.state.balancer, accounts[0]);
   }
 
-  switchTheme() {
-    const theme = localStorage.getItem("current-theme");
-    const newTheme = theme === "light" ? "dark" : "light";
-    localStorage.setItem("current-theme", newTheme);
-    this.setState({ theme: newTheme });
+  toggleTheme() {
+    switchTheme();
+    window.location.reload()
   }
 
   loadPortfolio(balancer, account) {
@@ -181,17 +182,13 @@ class Layout extends React.Component {
 
   render() {
     const { theme } = this.state;
+    const isDark = theme === Theme.Dark;
 
     const logo = `logo-${theme}.svg`;
-    const isDark = theme === "dark";
 
-    const bodyClass = isDark
-      ? "bg-dark text-light bg-opacity-75"
-      : "bg-light text-dark";
+    const bodyClass = isDark ? "bg-dark text-light bg-opacity-75": "bg-light text-dark";
     const btnClass = isDark ? "btn btn-dark" : "btn btn-light shadow-sm";
-    const btnClassOutline = isDark
-      ? "btn btn-outline-light"
-      : "btn btn-light shadow-sm";
+    const btnClassOutline = isDark ? "btn btn-outline-light" : "btn btn-light shadow-sm";
     const hrClass = isDark ? "text-light text-opacity-75" : "";
     const themeIcoClass = isDark ? "bi bi-sun" : "bi bi-moon";
     const navbarClass = isDark
@@ -274,14 +271,14 @@ class Layout extends React.Component {
                   <button
                     className={`${btnClassOutline} me-2`}
                     type="button"
-                    onClick={this.connectWallet}
+                    onClick={this.handleConnect}
                   >
                     <i className="bi bi-wallet me-1"></i> Connect wallet
                   </button>
                 )}
                 <button
                   className={btnClassOutline}
-                  onClick={this.switchTheme}
+                  onClick={this.toggleTheme}
                   type="button"
                 >
                   <i className={themeIcoClass}></i>
@@ -397,14 +394,14 @@ class Layout extends React.Component {
                   <button
                     className={`${btnClass} text-nowrap me-2`}
                     type="button"
-                    onClick={this.connectWallet}
+                    onClick={this.handleConnect}
                   >
                     <i className="bi bi-wallet me-1"></i> Connect wallet
                   </button>
                 )}
                 <button
                   className={btnClass}
-                  onClick={this.switchTheme}
+                  onClick={this.toggleTheme}
                   type="button"
                 >
                   <i className={themeIcoClass}></i>

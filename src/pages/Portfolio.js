@@ -6,11 +6,13 @@ import PoolTokens from "../components/PoolTokens";
 import PoolApr from "../components/PoolApr";
 import PoolBoost from "../components/PoolBoost";
 import PoolShares from "../components/PoolShares";
-import { bnum, bnumf } from "../utils/bnum"
+import { bnum } from "../utils/bnum"
+import { amount } from "../utils/page";
 import { format } from "date-fns";
+import { Modal } from 'bootstrap';
+import { StakingModal, STAKING_MODAL } from "../components/StakingModal";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
-const UNAVAILABLE = 'N/A';
 
 const SPINNER_SIZE = { width: '1.5rem', height: '1.5rem' };
 const AMOUNT_WIDTH = { width: '5rem' };
@@ -24,15 +26,23 @@ class Portfolio extends React.Component {
     this.state = {};
   }
 
+  handleStake(pool) {
+    const modal = document.getElementById(STAKING_MODAL);
+    modal.dataset.poolName = pool.name;
+    modal.dataset.poolAddress = pool.address;
+    modal.dataset.poolBpt = pool.bpt;
+    modal.dataset.poolShares = pool.shares;
+    Modal.getOrCreateInstance(`#${STAKING_MODAL}`).show();
+  }
+
   render() {
 
     const {
-      account, chainId, theme, portfolio, stakedPools, unstakedPools,
+      balancer, account, chainId, theme, portfolio, stakedPools, unstakedPools,
       veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
     
     const isEthereum = () => account && isEthNetwork(chainId);
-    const amount = (val) => val === false ? UNAVAILABLE : `$${bnumf(val)}`;
     
     let totalAmount;
     if (stakedAmount === undefined || 
@@ -47,16 +57,17 @@ class Portfolio extends React.Component {
       totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
     }
 
-
     const isDark = (theme === 'dark');
 
     const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
     const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
     const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
     const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
+    const btnClass = isDark ? "btn btn-outline-light" : "btn btn-light shadow-sm";
 
     return (
       <>
+        <StakingModal />
         <div id="invest-info" className={`${heroClass} text-center rounded shadow py-2 mb-5`}>
           <div className="title fs-1">My Balancer investments</div>
           {portfolio &&
@@ -139,7 +150,12 @@ class Portfolio extends React.Component {
                                 <td className="text-end text-nowrap">
                                   <PoolApr pool={pool} />
                                 </td>
-                                <td className="text-center">—</td>
+                                <td className="text-center">
+                                  {balancer.stakablePoolIds().includes(pool.id) ?
+                                    <button type="button" className={`${btnClass} btn-sm`} onClick={() => this.handleStake(pool)}>Stake</button>
+                                    : <>—</> 
+                                  }
+                                </td>
                               </tr>
                             )}
                           </>

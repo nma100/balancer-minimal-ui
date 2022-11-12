@@ -4,7 +4,7 @@
 
 $sidebar-pt: 100px;
 
-html { overflow-y: scroll; }
+/*html { overflow-y: scroll; }*/
 
 #brand-text {
     font-family: 'Ubuntu'; 
@@ -59,6 +59,6 @@ html { overflow-y: scroll; }
 .veBAL-light { color: $green; }
 
 #invest-info {
-    > .title { line-height: 5rem; }
+    > .title { line-height: 5.5rem; }
     > .total { line-height: 3.5rem; }
 }

@@ -1,24 +1,28 @@
 import React from 'react';
 import CryptoIcons from 'nma-cryptocurrency-icons/manifest.json';
+import { isDark } from '../theme';
+import { OutletContext } from '../pages/Layout';
 
-const DEFAULT = 'generic-alt';
+const LIGHT = 'generic-0', DARK = 'generic-5';
 
 export default class CryptoIcon extends React.Component {
+
+    static contextType = OutletContext;
 
     constructor(props) {
         super(props);
         this.state = { icon: undefined, name: undefined };
     }
 
-    async fetchIcon(symbol) {
-        let _symbol = DEFAULT;
-        if (CryptoIcons.find(o => o.symbol === symbol?.toUpperCase())) {
-            _symbol = symbol.toLowerCase();
+    async fetchIcon(name) {
+        let symbol = isDark(this.context.theme) ? DARK : LIGHT;
+        if (CryptoIcons.find(o => o.symbol === name?.toUpperCase())) {
+            symbol = name.toLowerCase();
         } 
-        const _icon = await import(`nma-cryptocurrency-icons/svg/icon/${_symbol}.svg`);
+        const icon = await import(`nma-cryptocurrency-icons/svg/icon/${symbol}.svg`);
         return {
-            symbol: symbol.toUpperCase(),
-            icon: _icon.default
+            symbol: name.toUpperCase(),
+            icon: icon.default
         }
     }
 

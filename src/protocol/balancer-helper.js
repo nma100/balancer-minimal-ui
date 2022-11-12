@@ -1,7 +1,7 @@
 import {
   BalancerSDK,
-  POOLS,
   PoolsSubgraphRepository,
+  POOLS,
 } from "@balancer-labs/sdk";
 import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
@@ -9,6 +9,7 @@ import { getBptBalanceFiatValue } from "../utils/pool";
 import { bnum, ZERO } from "../utils/bnum";
 
 export class BalancerHelper {
+  
   constructor(chainId) {
     this.chainId = chainId;
     this.sdk = new BalancerSDK({
@@ -22,7 +23,7 @@ export class BalancerHelper {
   async loadApr(pool) {
     if (!this.cacheApr[pool.id]) {
       this.cacheApr[pool.id] = this.sdk.pools.apr(pool);
-    }
+    } 
     const apr = await this.cacheApr[pool.id];
     this.checkApr(pool, apr);
     return apr;
@@ -31,11 +32,16 @@ export class BalancerHelper {
   checkApr(pool, apr) {
     const isValid = (n) => isFinite(n) && !isNaN(n);
     let err = false;
-    if (!apr) err = `falsy apr = ${apr}`;
-    if (!isValid(apr.min)) err = `apr.min = ${apr.min}`;
-    if (!isValid(apr.max)) err = `apr.max = ${apr.max}`;
-    if (!isValid(apr.swapFees)) err = `apr.swapFees = ${apr.swapFees}`;
-    if (!isValid(apr.protocolApr)) err = `apr.protocolApr = ${apr.protocolApr}`;
+    if (!apr) 
+      err = `falsy apr = ${apr}`;
+    if (!isValid(apr.min)) 
+      err = `apr.min = ${apr.min}`;
+    if (!isValid(apr.max)) 
+      err = `apr.max = ${apr.max}`;
+    if (!isValid(apr.swapFees)) 
+      err = `apr.swapFees = ${apr.swapFees}`;
+    if (!isValid(apr.protocolApr)) 
+      err = `apr.protocolApr = ${apr.protocolApr}`;
     if (!isValid(apr.tokenAprs.total))
       err = `apr.tokenAprs.total = ${apr.tokenAprs.total}`;
     if (!isValid(apr.stakingApr.min))
@@ -63,7 +69,7 @@ export class BalancerHelper {
   checkLiquidity(pool, liquidity) {
     const bn = bnum(liquidity);
     if (bn.isNaN() || !bn.isFinite() || bn.isZero()) {
-      const msg = `Invalid liquidity (${pool.name}) : ${liquidity}`;
+      const msg = `Incorrect liquidity (${pool.name}) : ${liquidity}`;
       console.error(msg);
       throw new Error(msg);
     }
@@ -104,6 +110,17 @@ export class BalancerHelper {
 
   async findPool(poolId) {
     return await this.sdk.pools.find(poolId);
+  }
+  
+  async findPreferentialGauge(poolAddress) {
+    const result = await this.sdk.data.poolGauges.find(poolAddress);
+    if (!result) {
+      return undefined;
+    } else if (result.gauges.length === 1) {
+      return result.gauges[0].id;
+    } else {
+      return result.preferentialGauge.id;
+    }
   }
 
   async loadStakedPools(account) {
@@ -170,6 +187,10 @@ export class BalancerHelper {
     return POOLS(this.chainId).IdsMap.veBAL;
   }
 
+  stakablePoolIds() {
+    return POOLS(this.chainId).Stakable.AllowList;
+  }
+
   totalAmount(pools) {
     if (!pools) return ZERO;
 
@@ -230,4 +251,15 @@ export class BalancerHelper {
 
     return Object.fromEntries(boosts);
   }
+
+  ERC20(erc20address, signerOrProvider) {
+    const { balancerContracts } = this.sdk;
+    return balancerContracts.getErc20(erc20address, signerOrProvider);
+  }
+
+  liquidityGauge(gaugeAddress, signerOrProvider) {
+    const { balancerContracts } = this.sdk;
+    return balancerContracts.getLiquidityGauge(gaugeAddress, signerOrProvider);
+  }
+
 }
