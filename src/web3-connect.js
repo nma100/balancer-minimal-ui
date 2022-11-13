@@ -9,7 +9,7 @@ const providerOptions = {
 };
 
 export const web3Modal = new Web3Modal({
-    cacheProvider: false,
+    cacheProvider: true,
     providerOptions 
 });
 

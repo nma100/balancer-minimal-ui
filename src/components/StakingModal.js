@@ -96,65 +96,66 @@ export class StakingModal extends React.Component {
         const { theme } = this.context;
 
         const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
-        const textClass = isDark(theme) ? 'text-white text-opacity-75' : 'text-dark text-opacity-75';
-        const format = n => `$${n ? n.toFixed(2) : "00.00"}`
+        const textClass = isDark(theme) ? 'text-white' : 'text-dark';
+        
+        const format = n => `$${n ? n.toFixed(2) : "00.00"}`;
 
         return (
             <div id={STAKING_MODAL} className="modal" tabIndex="-1">
                 <div className="modal-dialog modal-dialog-centered">
-                <div className={`modal-content ${contentClass}`}>
-                    <div className="modal-header">
-                    <h6 className="modal-title">Stake LP tokens</h6>
-                        <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal" aria-label="Close">X</button>
-                    </div>
-                    <div className="modal-body">
-                        <h4 className='mt-2 mb-4 text-break'>{ poolName }</h4>
-                        <p className='mb-4'>Value to stake : { format(poolShares) }</p>
-                        {mode === Mode.Init &&
-                            <>
-                                <button type="button" className="btn btn-secondary  my-1">
-                                    Initialisation
-                                    <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                        <span className="visually-hidden">Loading...</span>
+                    <div className={`modal-content ${contentClass}`}>
+                        <div className="modal-header">
+                        <h6 className="modal-title">Stake LP tokens</h6>
+                            <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal" aria-label="Close">X</button>
+                        </div>
+                        <div className="modal-body">
+                            <h4 className='mt-2 mb-4 text-break'>{ poolName }</h4>
+                            <p className='mb-4'>Value to stake : { format(poolShares) }</p>
+                            {mode === Mode.Init &&
+                                <>
+                                    <button type="button" className="btn btn-secondary  my-1">
+                                        Initialisation
+                                        <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+                                </>
+                            }
+                            {mode === Mode.Approval &&
+                                <>
+                                    <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleApprove(e)}>Approve BPT</button>
+                                    {waiting && (
+                                        <span className="ms-3">Wait please
+                                            <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        </span>
+                                    )} 
+                                </>
+                            }
+                            {mode === Mode.Stake &&
+                                <>
+                                    <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleStake(e)}>Stake</button>
+                                    {waiting && (
+                                        <span className="ms-3">Wait please
+                                            <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        </span>
+                                    )} 
+                                </>
+                            }
+                            {mode === Mode.Result &&
+                                <>
+                                    <div className={`${isDark(theme) ? 'veBAL' : 'veBAL-light'} mb-3`}>
+                                        Successful deposit !
                                     </div>
-                                </button>
-                            </>
-                        }
-                        {mode === Mode.Approval &&
-                            <>
-                                <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleApprove(e)}>Approve BPT</button>
-                                {waiting && (
-                                    <span className="ms-3">Wait please
-                                        <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </span>
-                                )} 
-                            </>
-                        }
-                        {mode === Mode.Stake &&
-                            <>
-                                <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleStake(e)}>Stake</button>
-                                {waiting && (
-                                    <span className="ms-3">Wait please
-                                        <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                    </span>
-                                )} 
-                            </>
-                        }
-                        {mode === Mode.Result &&
-                            <>
-                                <div className={`${isDark(theme) ? 'veBAL' : 'veBAL-light'} mb-3`}>
-                                    Successful deposit !
-                                </div>
-                                <p>Transaction : <small className={`${textClass} text-break text-muted`}>{txId}</small></p>
-                                <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleClose(e)}>Close</button>
-                            </>
-                        }
+                                    <p>Transaction : <small className={`${textClass} text-opacity-75 text-break text-muted`}>{txId}</small></p>
+                                    <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleClose(e)}>Close</button>
+                                </>
+                            }
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
         );
