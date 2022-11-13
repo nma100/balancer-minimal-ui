@@ -69,7 +69,7 @@ export class BalancerHelper {
   checkLiquidity(pool, liquidity) {
     const bn = bnum(liquidity);
     if (bn.isNaN() || !bn.isFinite() || bn.isZero()) {
-      const msg = `Incorrect liquidity (${pool.name}) : ${liquidity}`;
+      const msg = `Incorrect liquidity value (${pool.name}) : ${liquidity}`;
       console.error(msg);
       throw new Error(msg);
     }

@@ -1,7 +1,6 @@
 import React from "react";
 import { OutletContext } from "./Layout";
 import { isEthNetwork } from "../networks";
-import CryptoIcon from "../components/CryptoIcon";
 import PoolTokens from "../components/PoolTokens";
 import PoolApr from "../components/PoolApr";
 import PoolBoost from "../components/PoolBoost";
@@ -11,6 +10,7 @@ import { amount } from "../utils/page";
 import { format } from "date-fns";
 import { Modal } from 'bootstrap';
 import { StakingModal, STAKING_MODAL } from "../components/StakingModal";
+import PoolIcons from "../components/PoolIcons";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
 
@@ -141,9 +141,7 @@ class Portfolio extends React.Component {
                             {unstakedPools.map(pool =>
                               <tr key={pool.id}>
                                 <td className="d-none d-md-table-cell px-3">
-                                  {pool.tokens.map(token =>
-                                    <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
-                                  )}
+                                  <PoolIcons pool={pool} />
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
                                 <td><PoolShares pool={pool} /></td>
@@ -204,9 +202,7 @@ class Portfolio extends React.Component {
                             {stakedPools.map(pool =>
                               <tr key={pool.id}>
                                 <td className="d-none d-md-table-cell px-3">
-                                  {pool.tokens.map(token =>
-                                    <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
-                                  )}
+                                  <PoolIcons pool={pool} />
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
                                 <td><PoolShares pool={pool} /></td>
@@ -248,9 +244,7 @@ class Portfolio extends React.Component {
                 <tbody>
                   <tr>
                     <td className="d-none d-md-table-cell px-3">
-                      {veBalPool.tokens.map(token =>
-                        <span key={token.id} className="me-1"><CryptoIcon name={token.symbol} /></span>
-                      )}
+                      <PoolIcons pool={veBalPool} />
                     </td>
                     <td><PoolTokens pool={veBalPool} /></td>
                     <td><PoolShares pool={veBalPool} /></td>
