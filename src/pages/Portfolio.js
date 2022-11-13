@@ -88,14 +88,14 @@ class Portfolio extends React.Component {
                   }
                 </div>
               }
-              <div className="px-2">
+              <div className="d-none d-md-block px-2">
                 <span className={`${textClass} me-2`}>Staked :</span>
                 {stakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
                   : <span className={textClass}>{amount(stakedAmount)}</span>
                 }
               </div>
-              <div className="px-2">
+              <div className=" d-none d-md-block px-2">
                 <span className={`${textClass} me-2`}>Unstaked :</span>
                 {unstakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>

@@ -379,7 +379,7 @@ class Layout extends React.Component {
                       className={`${btnClass} text-nowrap me-2`}
                       type="button"
                     >
-                      <i className="bi bi-wallet me-1"></i>{" "}
+                      <i className="bi bi-wallet d-none d-sm-inline me-1"></i>{" "}
                       {truncateAddress(this.state.account)}
                     </button>
                     <button
@@ -396,7 +396,7 @@ class Layout extends React.Component {
                     type="button"
                     onClick={this.handleConnect}
                   >
-                    <i className="bi bi-wallet me-1"></i> Connect wallet
+                    <i className="bi bi-wallet d-none d-sm-inline me-1"></i> Connect wallet
                   </button>
                 )}
                 <button
