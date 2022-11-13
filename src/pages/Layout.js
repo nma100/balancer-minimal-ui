@@ -25,10 +25,10 @@ class Layout extends React.Component {
   }
 
   componentDidMount() {
-    if (web3Modal.cachedProvider) {
+    //if (web3Modal.cachedProvider) {
       this.connect()
         .catch(e => console.warn('Reconnect failure', e));
-    }
+    //}
   }
 
   handleConnect() {
