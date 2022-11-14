@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Modal } from 'bootstrap';
 import { StakingModal, STAKING_MODAL } from "../components/StakingModal";
 import PoolIcons from "../components/PoolIcons";
+import { Theme } from "../theme";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
 
@@ -57,7 +58,7 @@ class Portfolio extends React.Component {
       totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
     }
 
-    const isDark = (theme === 'dark');
+    const isDark = (theme === Theme.Dark);
 
     const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
     const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';

@@ -29,12 +29,7 @@ export default class PoolBoost extends React.Component {
         this.setState({ boost: boost });
     }
 
-    render() {
-        return <>
-            {this.state.boost !== undefined
-                ? <>x{this.state.boost}</>
-                : <span className="placeholder-glow"><span className="placeholder" style={BOOST_WIDTH}></span></span>
-            }
-        </>;
-    }
+    render = () => this.state.boost !== undefined
+            ? <>x{this.state.boost}</>
+            : <span className="placeholder-glow"><span className="placeholder" style={BOOST_WIDTH}></span></span>;
 }

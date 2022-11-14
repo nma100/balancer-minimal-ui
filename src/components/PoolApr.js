@@ -3,6 +3,7 @@ import React from "react";
 import * as ReactDOMServer from "react-dom/server";
 import * as Bootstrap from "bootstrap";
 import { OutletContext } from "../pages/Layout";
+import { isDark } from "../theme";
 
 const UNAVAILABLE = "N/A";
 
@@ -22,6 +23,7 @@ export default class PoolApr extends React.Component {
       const { pool } = this.props;
       const { balancer } = this.context;
       const apr = await balancer.loadApr(pool);
+      console.log('APR', pool.name, apr);
       this.setState({ apr: apr })
     } catch (e) {
       this.setState({ apr: false });
@@ -76,8 +78,7 @@ export default class PoolApr extends React.Component {
       </>
     );
 
-    const isDark = this.context.theme === "dark";
-    const textClass = isDark ? "text-white" : "text-black";
+    const textClass = isDark(this.context.theme) ? "text-white" : "text-black";
 
     let icon;
     if (this.context.balancer.veBalPoolId() === pool.id) {

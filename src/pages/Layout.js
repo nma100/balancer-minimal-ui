@@ -182,7 +182,7 @@ class Layout extends React.Component {
 
   render() {
     const { theme } = this.state;
-    const isDark = theme === Theme.Dark;
+    const isDark = (theme === Theme.Dark);
 
     const logo = `logo-${theme}.svg`;
 

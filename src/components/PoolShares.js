@@ -15,13 +15,10 @@ export default class PoolShares extends React.Component {
 
     render() {
         const { shares } = this.props.pool;
-        return <>
-            {shares === undefined
-                ? <span className='placeholder-glow'>
+        return shares === undefined ? 
+                <span className='placeholder-glow'>
                     <span className='placeholder' style={PLACEHOLDER}></span>
                 </span>
-                : <>{amount(shares)}</>
-            }
-        </>;
+                : <>{amount(shares)}</>;
     }
 }

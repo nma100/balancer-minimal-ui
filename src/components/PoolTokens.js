@@ -17,17 +17,13 @@ export default class PoolTokens extends React.Component {
         const bgClass = isDark(theme) ? 'bg-light' : 'bg-dark';
         const textClass = isDark(theme) ? 'text-light' : 'text-dark';
         const format = val => (parseFloat(val) * 100).toFixed();
-        return <>
-            {pool.tokens
+        return pool.tokens
                 .filter(token => token.address !== pool.address)
-                .map(token => token.weight ? (
+                .map(token => token.weight ?
                     <div key={token.id} className={`d-inline-flex align-items-center ${bgClass} bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded`}>
                         <div className="me-1">{token.symbol}</div><div className={`${textClass} text-opacity-75`} style={{ fontSize: '70%' }}>{format(token.weight)}%</div>
                     </div>
-                ) : ( 
-                    <span key={token.id} className={`${bgClass} bg-opacity-10 px-2 py-1 me-1 rounded-pill`}>{token.symbol}</span> 
-                )
-            )}
-        </>;
+                    : <span key={token.id} className={`${bgClass} bg-opacity-10 px-2 py-1 me-1 rounded-pill`}>{token.symbol}</span>
+                );
     }
 }
