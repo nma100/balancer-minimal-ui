@@ -33,14 +33,14 @@ export class BalancerHelper {
     const isValid = (n) => isFinite(n) && !isNaN(n);
     let err = false;
     if (!apr) err = `falsy apr = ${apr}`;
-    if (!isValid(apr.min)) err = `apr.min = ${apr.min}`;
-    if (!isValid(apr.max)) err = `apr.max = ${apr.max}`;
-    if (!isValid(apr.swapFees)) err = `apr.swapFees = ${apr.swapFees}`;
-    if (!isValid(apr.protocolApr)) err = `apr.protocolApr = ${apr.protocolApr}`;
-    if (!isValid(apr.tokenAprs.total)) err = `apr.tokenAprs.total = ${apr.tokenAprs.total}`;
-    if (!isValid(apr.stakingApr.min)) err = `apr.stakingApr.min = ${apr.stakingApr.min}`;
-    if (!isValid(apr.stakingApr.max)) err = `apr.stakingApr.max = ${apr.stakingApr.max}`;
-    if (!isValid(apr.rewardAprs.total)) err = `apr.rewardAprs.total = ${apr.rewardAprs.total}`;
+    else if (!isValid(apr.swapFees)) err = `apr.swapFees = ${apr.swapFees}`;
+    else if (!isValid(apr.protocolApr)) err = `apr.protocolApr = ${apr.protocolApr}`;
+    else if (!isValid(apr.tokenAprs.total)) err = `apr.tokenAprs.total = ${apr.tokenAprs.total}`;
+    else if (!isValid(apr.stakingApr.min)) err = `apr.stakingApr.min = ${apr.stakingApr.min}`;
+    else if (!isValid(apr.stakingApr.max)) err = `apr.stakingApr.max = ${apr.stakingApr.max}`;
+    else if (!isValid(apr.rewardAprs.total)) err = `apr.rewardAprs.total = ${apr.rewardAprs.total}`;
+    else if (!isValid(apr.min)) err = `apr.min = ${apr.min}`;
+    else if (!isValid(apr.max)) err = `apr.max = ${apr.max}`;
     if (err !== false) {
       const msg = `Invalid APR (${pool.name}) : ${err}`;
       console.error(msg, apr);

@@ -5,12 +5,18 @@ import * as Bootstrap from "bootstrap";
 import { OutletContext } from "../pages/Layout";
 import { isDark } from "../theme";
 
-const UNAVAILABLE = "N/A";
-
 const ICON_SIZE = { fontSize: "90%" };
 const APR_WIDTH = { width: "2rem" };
 
+const LOADING = (
+  <span className="placeholder-glow">
+    <span className="placeholder" style={APR_WIDTH}></span>
+  </span>
+);
+const UNAVAILABLE = "N/A";
+
 export default class PoolApr extends React.Component {
+  
   static contextType = OutletContext;
 
   constructor(props) {
@@ -24,10 +30,10 @@ export default class PoolApr extends React.Component {
       const { balancer } = this.context;
       const apr = await balancer.loadApr(pool);
       console.log('APR', pool.name, apr);
-      this.setState({ apr: apr })
+      this.setState({ apr: apr }); 
     } catch (e) {
-      this.setState({ apr: false });
-    }
+      this.setState({ apr: false }); 
+    } 
   }
 
   componentDidUpdate() {
@@ -38,8 +44,8 @@ export default class PoolApr extends React.Component {
 
   render() {
     const { apr } = this.state;
-    const { pool } = this.props;
 
+    if (apr === undefined) return LOADING;
     if (apr === false) return UNAVAILABLE;
 
     const swapFees = apr?.swapFees;
@@ -50,38 +56,34 @@ export default class PoolApr extends React.Component {
 
     const p = (apr) => `${parseFloat(apr) / 100}%`;
 
-    let totalApr = null;
-    if (apr) {
-      if (apr.min === apr.max) {
-        totalApr = `${p(apr.min)}`;
-      } else {
-        totalApr = `${p(apr.min)} - ${p(apr.max)}`;
-      }
+    let totalApr;
+    if (apr.min === apr.max) {
+      totalApr = `${p(apr.min)}`;
+    } else {
+      totalApr = `${p(apr.min)} - ${p(apr.max)}`;
     }
 
     const breakdown = ReactDOMServer.renderToStaticMarkup(
-      <>
-        <div className="px-3 pt-3 pb-2 text-start">
+      <div className="px-3 pt-3 pb-2 text-start">
+        <p>
+          <strong>Total APR</strong> : {totalApr}
+        </p>
+        <p>Swap fees : {p(swapFees)}</p>
+        {stakingApr > 0 && (
           <p>
-            <strong>Total APR</strong> : {totalApr}
+            Staking APR : {p(stakingApr.min)} - {p(stakingApr.max)}
           </p>
-          <p>Swap fees : {p(swapFees)}</p>
-          {stakingApr > 0 && (
-            <p>
-              Staking APR : {p(stakingApr.min)} - {p(stakingApr.max)}
-            </p>
-          )}
-          {rewardApr > 0 && <p>Reward APR : {p(rewardApr)}</p>}
-          {tokenApr > 0 && <p>Token APR : {p(tokenApr)}</p>}
-          {protocolApr > 0 && <p>Protocol APR : {p(protocolApr)}</p>}
-        </div>
-      </>
+        )}
+        {rewardApr > 0 && <p>Reward APR : {p(rewardApr)}</p>}
+        {tokenApr > 0 && <p>Token APR : {p(tokenApr)}</p>}
+        {protocolApr > 0 && <p>Protocol APR : {p(protocolApr)}</p>}
+      </div>
     );
 
     const textClass = isDark(this.context.theme) ? "text-white" : "text-black";
 
     let icon;
-    if (this.context.balancer.veBalPoolId() === pool.id) {
+    if (this.context.balancer.veBalPoolId() === this.props.pool.id) {
       icon = <i className="bi bi-stars text-primary" style={ICON_SIZE}></i>;
     } else if (stakingApr > 0 || rewardApr > 0 || tokenApr > 0 || protocolApr > 0) {
       icon = <i className="bi bi-stars text-warning" style={ICON_SIZE}></i>;
@@ -95,16 +97,6 @@ export default class PoolApr extends React.Component {
       </a>
     );
 
-    return (
-      <>
-        {totalApr ? (
-          <><span className="pe-1">{totalApr}</span> {tooltip}</>
-        ) : (
-          <span className="placeholder-glow">
-            <span className="placeholder" style={APR_WIDTH}></span>
-          </span>
-        )}
-      </>
-    );
+    return <><span className="pe-1">{totalApr}</span> {tooltip}</>;
   }
 }
