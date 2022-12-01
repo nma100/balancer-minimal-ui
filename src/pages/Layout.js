@@ -6,9 +6,7 @@ import { web3Modal, switchChain } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/balancer-urls.json";
-import { getBptBalanceFiatValue } from "../utils/pool";
-import { currentTheme, switchTheme, Theme } from "../theme";
-import { ZERO } from "../utils/bnum";
+import { currentTheme, switchTheme, isDark } from "../theme";
 
 export const OutletContext = React.createContext();
 
@@ -16,12 +14,6 @@ class Layout extends React.Component {
   constructor(props) {
     super(props);
     this.state = { ...this.initState(), theme: currentTheme() };
-    this.handleConnect = this.handleConnect.bind(this);
-    this.disconnect = this.disconnect.bind(this);
-    this.changeNetwork = this.changeNetwork.bind(this);
-    this.toggleTheme = this.toggleTheme.bind(this);
-    this.onNetworkChanged = this.onNetworkChanged.bind(this);
-    this.onAccountChanged = this.onAccountChanged.bind(this);
   }
 
   componentDidMount() {
@@ -29,6 +21,7 @@ class Layout extends React.Component {
       this.connect()
         .catch(e => console.warn('Reconnect failure', e));
     }
+    document.querySelector('body').className = this.css().bodyClass;
   }
 
   handleConnect() {
@@ -36,126 +29,50 @@ class Layout extends React.Component {
       .catch(e => console.error('Connect error', e));
   }
 
-  async connect() {
-    const provider = await web3Modal.connect();
-    const web3Provider = new ethers.providers.Web3Provider(provider);
-    const accounts = await web3Provider.listAccounts();
-    const network = await web3Provider.getNetwork();
-    const chainId = await checkChain(network.chainId, web3Provider);
-    provider.on("chainChanged", this.onNetworkChanged);
-    provider.on("accountsChanged", this.onAccountChanged);
-    const balancer = new BalancerHelper(chainId);
-    const state = {
-      web3Provider: web3Provider,
-      chainId: chainId,
-      balancer: balancer,
-      account: accounts[0],
-    };
-    this.setState(state);
-    this.loadPortfolio(balancer, accounts[0]);
-  }
-
-  async disconnect() {
+  handleDisconnect() {
     web3Modal.clearCachedProvider();
     const state = this.initState();
     this.setState(state);
   }
 
-  async changeNetwork(e) {
+  handleChangeNetwork(e) {
     if (!this.state.account) return;
     const chainId = e.target.value;
     const web3Provider = this.state.web3Provider;
-    await switchChain(chainId, web3Provider);
+    switchChain(chainId, web3Provider);
   }
 
-  async onNetworkChanged(hexChainId) {
-    const { web3Provider, account } = this.state;
-    const chainId = await checkChain(Number(hexChainId), web3Provider);
-    const provider = await web3Modal.connect();
-    const updatedProvider = new ethers.providers.Web3Provider(provider);
-    const balancer = new BalancerHelper(chainId);
-    provider.on("chainChanged", this.onNetworkChanged);
-    provider.on("accountsChanged", this.onAccountChanged);
-    this.setState({
-      web3Provider: updatedProvider,
-      chainId: chainId,
-      balancer: balancer,
-    });
-    this.loadPortfolio(balancer, account);
-  }
-
-  async onAccountChanged(accounts) {
-    this.setState({ account: accounts[0] });
-    this.loadPortfolio(this.state.balancer, accounts[0]);
-  }
-
-  toggleTheme() {
+  handleToggleTheme() {
     switchTheme();
     window.location.reload()
   }
 
-  loadPortfolio(balancer, account) {
-    this.setState({ portfolio: true, ...this.initPools() });
+  onNetworkChanged() {
+    this.connect();
+  }
 
-    balancer
-      .loadStakedPools(account)
-      .then((pools) => {
-        this.setState({ stakedPools: pools });
-        if (pools.length === 0) {
-          this.setState({ stakedAmount: ZERO });
-        }
-        return pools;
-      })
-      .then(async (pools) => {
-        for (const pool of pools) {
-          balancer
-            .loadLiquidity(pool)
-            .then((liquidity) => {
-              pool.totalLiquidity = liquidity;
-              pool.shares = getBptBalanceFiatValue(pool, pool.bpt);
-            })
-            .catch(() => pool.shares = false)
-            .finally(() =>
-              this.setState({ stakedAmount: balancer.totalAmount(pools) })
-            );
-        }
-      });
+  onAccountChanged(accounts) {
+    const { balancer } = this.state;
+    balancer.loadPortfolio(accounts[0], this.setState.bind(this));
+  }
 
-    balancer
-      .loadUnstakedPools(account)
-      .then((pools) => {
-        this.setState({ unstakedPools: pools });
-        if (pools.length === 0) {
-          this.setState({ unstakedAmount: ZERO });
-        }
-        return pools;
-      })
-      .then(async (pools) => {
-        for (const pool of pools) {
-          balancer
-            .loadLiquidity(pool)
-            .then((liquidity) => {
-              pool.totalLiquidity = liquidity;
-              pool.shares = getBptBalanceFiatValue(pool, pool.bpt);
-            })
-            .catch(() => pool.shares = false)
-            .finally(() =>
-              this.setState({ unstakedAmount: balancer.totalAmount(pools) })
-            );
-        }
-      });
-      
-    balancer
-      .loadVeBalPool(account)
-      .then((pool) => {
-        this.setState({ veBalPool: pool });
-        return pool;
-      })
-      .then((pool) => {
-        this.setState({
-          veBalAmount: pool?.shares || ZERO,
-        });
-      });
+  async connect() {
+    const provider = await web3Modal.connect();
+    const web3Provider = new ethers.providers.Web3Provider(provider);
+    const network = await web3Provider.getNetwork();
+    const account = (await web3Provider.listAccounts())[0];
+    const chainId = await checkChain(network.chainId, web3Provider);
+    const balancer = new BalancerHelper(chainId);
+    provider.on('chainChanged', e => this.onNetworkChanged(e));
+    provider.on('accountsChanged', e => this.onAccountChanged(e));
+    const state = {
+      web3Provider: web3Provider,
+      chainId: chainId,
+      balancer: balancer,
+      account: account,
+    };
+    this.setState(state);
+    balancer.loadPortfolio(account, this.setState.bind(this));
   }
 
   initState() {
@@ -165,12 +82,6 @@ class Layout extends React.Component {
       web3Provider: undefined,
       account: undefined,
       portfolio: undefined,
-      ...this.initPools(),
-    };
-  }
-
-  initPools() {
-    return {
       stakedPools: undefined,
       unstakedPools: undefined,
       veBalPool: undefined,
@@ -180,30 +91,36 @@ class Layout extends React.Component {
     };
   }
 
+  css() {
+    const { theme } = this.state;
+
+    const bodyClass = isDark(theme) ? [ 'bg-dark', 'text-light', 'bg-opacity-75' ] : [ 'bg-light',  'text-dark' ];
+    const hrClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
+    const btnClass = [ 'btn' ].concat(isDark(theme) ? ['btn-dark'] : ['btn-light', 'shadow-sm']);
+    const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? ['btn-outline-light'] : ['btn-light', 'shadow-sm']);
+    const themeIcoClass = [ 'bi' ].concat(isDark(theme) ?  [ 'bi-sun' ] : [ 'bi-moon' ]);
+    const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow',  'py-3' ]
+      .concat(isDark(theme) ? [ 'bg-dark', 'navbar-dark', 'border-bottom', 'border-light', 'border-opacity-25' ] : [ 'bg-white' ]);
+
+    const classes = { bodyClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };
+    Object.keys(classes).forEach(key => classes[key] = classes[key].join(' '));
+    return classes;
+
+  }
+
   render() {
     const { theme } = this.state;
-    const isDark = (theme === Theme.Dark);
-
-    const logo = `logo-${theme}.svg`;
-
-    const bodyClass = isDark ? "bg-dark text-light bg-opacity-75": "bg-light text-dark";
-    const btnClass = isDark ? "btn btn-dark" : "btn btn-light shadow-sm";
-    const btnClassOutline = isDark ? "btn btn-outline-light" : "btn btn-light shadow-sm";
-    const hrClass = isDark ? "text-light text-opacity-75" : "";
-    const themeIcoClass = isDark ? "bi bi-sun" : "bi bi-moon";
-    const navbarClass = isDark
-      ? "navbar navbar-dark sticky-top navbar-expand-lg bg-dark bg-gradient shadow py-3 border-bottom border-light border-opacity-25"
-      : "navbar sticky-top navbar-expand-lg bg-white bg-gradient shadow py-3";
-
-    document.querySelector("body").className = bodyClass;
-
+    const {
+      btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass,
+    } = this.css();
+    
     return (
       <>
         <nav className={navbarClass}>
           <div className="container-fluid">
             <a className="navbar-brand d-flex align-items-center" href="/">
               <img
-                src={`/image/${logo}`}
+                src={`/image/logo-${theme}.svg`}
                 className="me-2"
                 alt=""
                 width="40"
@@ -262,7 +179,7 @@ class Layout extends React.Component {
                     <button
                       className={`${btnClassOutline} me-2`}
                       type="button"
-                      onClick={this.disconnect}
+                      onClick={e => this.handleDisconnect(e)}
                     >
                       <i className="bi bi-power"></i>
                     </button>
@@ -271,14 +188,14 @@ class Layout extends React.Component {
                   <button
                     className={`${btnClassOutline} me-2`}
                     type="button"
-                    onClick={this.handleConnect}
+                    onClick={e => this.handleConnect(e)}
                   >
                     <i className="bi bi-wallet me-1"></i> Connect wallet
                   </button>
                 )}
                 <button
                   className={btnClassOutline}
-                  onClick={this.toggleTheme}
+                  onClick={e => this.handleToggleTheme(e)}
                   type="button"
                 >
                   <i className={themeIcoClass}></i>
@@ -291,15 +208,15 @@ class Layout extends React.Component {
         <div className="container-fluid">
           <div className="row">
             <div
-              id={isDark ? "sidebar-container" : "sidebar-container-light"}
+              id={isDark(theme) ? "sidebar-container" : "sidebar-container-light"}
               className={`col-lg-2 d-none d-lg-block bg-${
-                isDark ? "dark" : "white"
+                isDark(theme) ? "dark" : "white"
               } shadow`}
             >
               <div id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
                 <select
                   className="form-select"
-                  onChange={this.changeNetwork}
+                  onChange={e => this.handleChangeNetwork(e)}
                   value={this.state.chainId}
                 >
                   {Object.keys(NETWORKS).map((chainId) => (
@@ -331,25 +248,25 @@ class Layout extends React.Component {
                 <div className="d-flex justify-content-around fs-5">
                   <a
                     href={BalancerUrls.github}
-                    className={`link-${isDark ? "light" : "dark"}`}
+                    className={`link-${isDark(theme) ? "light" : "dark"}`}
                   >
                     <i className="bi bi-github"></i>
                   </a>
                   <a
                     href={BalancerUrls.discord}
-                    className={`link-${isDark ? "light" : "dark"}`}
+                    className={`link-${isDark(theme) ? "light" : "dark"}`}
                   >
                     <i className="bi bi-discord"></i>
                   </a>
                   <a
                     href={BalancerUrls.twitter}
-                    className={`link-${isDark ? "light" : "dark"}`}
+                    className={`link-${isDark(theme) ? "light" : "dark"}`}
                   >
                     <i className="bi bi-twitter"></i>
                   </a>
                   <a
                     href={BalancerUrls.email}
-                    className={`link-${isDark ? "light" : "dark"}`}
+                    className={`link-${isDark(theme) ? "light" : "dark"}`}
                   >
                     <i className="bi bi-envelope-fill"></i>
                   </a>
@@ -364,7 +281,7 @@ class Layout extends React.Component {
                 <select
                   id="select-chain"
                   className="form-select me-auto"
-                  onChange={this.changeNetwork}
+                  onChange={e => this.handleChangeNetwork(e)}
                   value={this.state.chainId}
                 >
                   {Object.keys(NETWORKS).map((chainId) => (
@@ -385,7 +302,7 @@ class Layout extends React.Component {
                     <button
                       className={`${btnClass} me-2`}
                       type="button"
-                      onClick={this.disconnect}
+                      onClick={e => this.handleDisconnect(e)}
                     >
                       <i className="bi bi-power"></i>
                     </button>
@@ -394,14 +311,14 @@ class Layout extends React.Component {
                   <button
                     className={`${btnClass} text-nowrap me-2`}
                     type="button"
-                    onClick={this.handleConnect}
+                    onClick={e => this.handleConnect(e)}
                   >
                     <i className="bi bi-wallet d-none d-sm-inline me-1"></i> Connect wallet
                   </button>
                 )}
                 <button
                   className={btnClass}
-                  onClick={this.toggleTheme}
+                  onClick={e => this.handleToggleTheme(e)}
                   type="button"
                 >
                   <i className={themeIcoClass}></i>

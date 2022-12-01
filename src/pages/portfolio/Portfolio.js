@@ -1,17 +1,17 @@
 import React from "react";
-import { OutletContext } from "./Layout";
-import { isEthNetwork } from "../networks";
-import PoolTokens from "../components/PoolTokens";
-import PoolApr from "../components/PoolApr";
-import PoolBoost from "../components/PoolBoost";
-import PoolShares from "../components/PoolShares";
-import { bnum } from "../utils/bnum"
-import { amount } from "../utils/page";
+import { OutletContext } from "../Layout";
+import { isEthNetwork } from "../../networks";
+import PoolTokens from "../../components/PoolTokens";
+import PoolApr from "../../components/PoolApr";
+import PoolBoost from "../../components/PoolBoost";
+import PoolShares from "../../components/PoolShares";
+import { bnum } from "../../utils/bnum"
+import { amount } from "../../utils/page";
 import { format } from "date-fns";
 import { Modal } from 'bootstrap';
-import { StakingModal, STAKING_MODAL } from "../components/StakingModal";
-import PoolIcons from "../components/PoolIcons";
-import { Theme } from "../theme";
+import { StakingModal, STAKING_MODAL } from "./StakingModal";
+import PoolIcons from "../../components/PoolIcons";
+import { Theme } from "../../theme";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
 

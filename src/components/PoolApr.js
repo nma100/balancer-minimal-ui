@@ -29,7 +29,6 @@ export default class PoolApr extends React.Component {
       const { pool } = this.props;
       const { balancer } = this.context;
       const apr = await balancer.loadApr(pool);
-      console.log('APR', pool.name, apr);
       this.setState({ apr: apr }); 
     } catch (e) {
       this.setState({ apr: false }); 

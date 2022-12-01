@@ -7,10 +7,10 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import Layout from "./pages/Layout";
-import Portfolio from "./pages/Portfolio";
-import Trade from "./pages/Trade";
-import Invest from "./pages/Invest";
-import Error404 from "./pages/Error404";
+import Portfolio from "./pages/portfolio/Portfolio";
+import Trade from "./pages/trade/Trade";
+import Invest from "./pages/invest/Invest";
+import Error404 from "./pages/error/Error404";
 import * as Bootstrap from 'bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 

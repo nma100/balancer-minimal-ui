@@ -243,6 +243,75 @@ export class BalancerHelper {
     return Object.fromEntries(boosts);
   }
 
+  loadPortfolio(account, callback) {
+
+    callback({ 
+      account: account,
+      portfolio: true,
+      stakedPools: undefined,
+      unstakedPools: undefined,
+      veBalPool: undefined,
+      stakedAmount: undefined,
+      unstakedAmount: undefined,
+      veBalAmount: undefined,
+    });
+
+    this.loadStakedPools(account)
+      .then((pools) => {
+        callback({ stakedPools: pools });
+        if (pools.length === 0) {
+          callback({ stakedAmount: ZERO });
+        }
+        return pools;
+      })
+      .then(async (pools) => {
+        for (const pool of pools) {
+          this.loadLiquidity(pool)
+            .then((liquidity) => {
+              pool.totalLiquidity = liquidity;
+              pool.shares = getBptBalanceFiatValue(pool, pool.bpt);
+            })
+            .catch(() => pool.shares = false)
+            .finally(() =>
+              callback({ stakedAmount: this.totalAmount(pools) })
+            );
+        }
+      });
+
+    this.loadUnstakedPools(account)
+      .then((pools) => {
+        callback({ unstakedPools: pools });
+        if (pools.length === 0) {
+          callback({ unstakedAmount: ZERO });
+        }
+        return pools;
+      })
+      .then(async (pools) => {
+        for (const pool of pools) {
+          this.loadLiquidity(pool)
+            .then((liquidity) => {
+              pool.totalLiquidity = liquidity;
+              pool.shares = getBptBalanceFiatValue(pool, pool.bpt);
+            })
+            .catch(() => pool.shares = false)
+            .finally(() =>
+              callback({ unstakedAmount: this.totalAmount(pools) })
+            );
+        }
+      });
+      
+    this.loadVeBalPool(account)
+      .then((pool) => {
+        callback({ veBalPool: pool });
+        return pool;
+      })
+      .then((pool) => {
+        callback({
+          veBalAmount: pool?.shares || ZERO,
+        });
+      });
+  }
+
   ERC20(erc20address, signerOrProvider) {
     const { balancerContracts } = this.sdk;
     return balancerContracts.getErc20(erc20address, signerOrProvider);

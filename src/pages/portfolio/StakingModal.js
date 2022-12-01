@@ -1,8 +1,8 @@
 import React from 'react';
-import { OutletContext } from '../pages/Layout';
+import { OutletContext } from '../Layout';
 import { parseUnits } from 'ethers/lib/utils';
 import { constants } from 'ethers';
-import { isDark } from '../theme';
+import { isDark } from '../../theme';
 
 export const STAKING_MODAL = 'staking-modal';
 
