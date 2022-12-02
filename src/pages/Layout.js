@@ -11,6 +11,7 @@ import { currentTheme, switchTheme, isDark } from "../theme";
 export const OutletContext = React.createContext();
 
 class Layout extends React.Component {
+
   constructor(props) {
     super(props);
     this.state = { ...this.initState(), theme: currentTheme() };
@@ -96,10 +97,10 @@ class Layout extends React.Component {
 
     const bodyClass = isDark(theme) ? [ 'bg-dark', 'text-light', 'bg-opacity-75' ] : [ 'bg-light',  'text-dark' ];
     const hrClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
-    const btnClass = [ 'btn' ].concat(isDark(theme) ? ['btn-dark'] : ['btn-light', 'shadow-sm']);
-    const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? ['btn-outline-light'] : ['btn-light', 'shadow-sm']);
+    const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'shadow-sm' ]);
+    const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'shadow-sm' ]);
     const themeIcoClass = [ 'bi' ].concat(isDark(theme) ?  [ 'bi-sun' ] : [ 'bi-moon' ]);
-    const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow',  'py-3' ]
+    const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow', 'py-3' ]
       .concat(isDark(theme) ? [ 'bg-dark', 'navbar-dark', 'border-bottom', 'border-light', 'border-opacity-25' ] : [ 'bg-white' ]);
 
     const classes = { bodyClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };

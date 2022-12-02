@@ -8,12 +8,12 @@ export function bnum(val) {
     return new BigNumber(val);
 }
 
-export function bnumf(val, precision = 2) {
-    let _val;
-    if (BigNumber.isBigNumber(val) && !val.isNaN() && val.isFinite()) {
-        _val = val;
+export function bnumf(value, precision = 2) {
+    let val;
+    if (BigNumber.isBigNumber(value) && !value.isNaN() && value.isFinite()) {
+        val = value;
     } else {
-        _val = ZERO;
+        val = ZERO;
     }
-    return _val.toFixed(precision)
+    return val.toFixed(precision)
 }

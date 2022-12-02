@@ -13,7 +13,7 @@ const LOADING = (
     <span className="placeholder" style={APR_WIDTH}></span>
   </span>
 );
-const UNAVAILABLE = "N/A";
+const UNAVAILABLE = 'N/A';
 
 export default class PoolApr extends React.Component {
   

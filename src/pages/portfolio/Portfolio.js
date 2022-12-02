@@ -15,9 +15,6 @@ import { Theme } from "../../theme";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
 
-const SPINNER_SIZE = { width: '1.5rem', height: '1.5rem' };
-const AMOUNT_WIDTH = { width: '5rem' };
-
 class Portfolio extends React.Component {
 
   static contextType = OutletContext;
@@ -36,19 +33,35 @@ class Portfolio extends React.Component {
     Modal.getOrCreateInstance(`#${STAKING_MODAL}`).show();
   }
 
+  css() {
+    const isDark = (this.context.theme === Theme.Dark);
+
+    const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
+    const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
+    const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
+    const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
+    const btnClass = isDark ? 'btn btn-outline-light' : 'btn btn-light shadow-sm';
+
+    return { heroClass, textClass, veBalClass, tableClass, btnClass };
+  }
+
   render() {
 
     const {
-      balancer, account, chainId, theme, portfolio, stakedPools, unstakedPools,
-      veBalPool, stakedAmount, unstakedAmount, veBalAmount
+      balancer, account, chainId, portfolio, stakedPools, 
+      unstakedPools, veBalPool, stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
+
+    const { 
+      heroClass, textClass, veBalClass, tableClass, btnClass 
+    } = this.css();
     
     const isEthereum = () => account && isEthNetwork(chainId);
     
     let totalAmount;
     if (stakedAmount === undefined || 
         unstakedAmount === undefined || 
-        (isEthereum()  && veBalAmount === undefined)) {
+        (isEthereum() && veBalAmount === undefined)) {
       totalAmount = undefined;
     } else if (stakedAmount === false || 
         unstakedAmount === false || 
@@ -57,14 +70,6 @@ class Portfolio extends React.Component {
     } else {
       totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
     }
-
-    const isDark = (theme === Theme.Dark);
-
-    const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
-    const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
-    const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
-    const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
-    const btnClass = isDark ? "btn btn-outline-light" : "btn btn-light shadow-sm";
 
     return (
       <>
@@ -76,7 +81,7 @@ class Portfolio extends React.Component {
               <div className="px-2">
                 <span className={`${textClass} me-2`}>Total :</span>
                 {totalAmount === undefined
-                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
                   : <span className="fw-bold">{amount(totalAmount)}</span>
                 }
               </div>
@@ -84,7 +89,7 @@ class Portfolio extends React.Component {
                 <div className="px-2">
                   <span className={`${textClass} me-2`}>veBAL :</span>
                   {veBalAmount === undefined
-                    ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                    ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
                     : <span className={veBalClass}>{amount(veBalAmount)}</span>
                   }
                 </div>
@@ -92,14 +97,14 @@ class Portfolio extends React.Component {
               <div className="d-none d-md-block px-2">
                 <span className={`${textClass} me-2`}>Staked :</span>
                 {stakedAmount === undefined
-                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
                   : <span className={textClass}>{amount(stakedAmount)}</span>
                 }
               </div>
               <div className=" d-none d-md-block px-2">
                 <span className={`${textClass} me-2`}>Unstaked :</span>
                 {unstakedAmount === undefined
-                  ? <span className="placeholder-glow"><span className="placeholder placeholder-lg" style={AMOUNT_WIDTH}></span></span>
+                  ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
                   : <span className={textClass}>{amount(unstakedAmount)}</span>
                 }
               </div>
@@ -128,7 +133,7 @@ class Portfolio extends React.Component {
                     {unstakedPools === undefined ?
                       <tr>
                         <td className={`${textClass} text-center p-3 fs-4`} colSpan="5">Loading data
-                          <div className={`${textClass} spinner-border ms-3`} role="status" style={SPINNER_SIZE} >
+                          <div className={`spinner ${textClass} spinner-border ms-3`} role="status">
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </td>
@@ -190,7 +195,7 @@ class Portfolio extends React.Component {
                     {stakedPools === undefined ?
                       <tr>
                         <td className={`${textClass} text-center p-3 fs-4`} colSpan="5">Loading data
-                          <div className={`${textClass} spinner-border ms-3`} role="status" style={SPINNER_SIZE} >
+                          <div className={`spinner ${textClass} spinner-border ms-3`} role="status" >
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </td>

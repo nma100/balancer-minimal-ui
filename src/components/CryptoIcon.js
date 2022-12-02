@@ -11,7 +11,7 @@ export default class CryptoIcon extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = { icon: undefined, name: undefined };
+        this.state = {};
     }
 
     async fetchIcon(name) {
@@ -36,6 +36,7 @@ export default class CryptoIcon extends React.Component {
 
     render() {
         const { icon, name } = this.state;
-        return <img src={icon} alt={name} title={name} />;
+        const { cssClass } = this.props;
+        return <img src={icon} alt={name} title={name} className={cssClass} />;
     }
 }

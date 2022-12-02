@@ -3,7 +3,6 @@ import { bnumf } from '../utils/bnum';
 import { OutletContext } from '../pages/Layout';
 
 const PRECISION = 3, UNKNOWN = 'N/A';
-const BOOST_WIDTH = { width: '2rem' };
 
 export default class PoolBoost extends React.Component {
 
@@ -29,7 +28,12 @@ export default class PoolBoost extends React.Component {
         this.setState({ boost: boost });
     }
 
-    render = () => this.state.boost !== undefined
-            ? <>x{this.state.boost}</>
-            : <span className="placeholder-glow"><span className="placeholder" style={BOOST_WIDTH}></span></span>;
+    render() {
+        const { boost } = this.state;
+        return boost === undefined ? ( 
+                <span className="placeholder-glow">
+                    <span className="boost placeholder"></span>
+                </span> 
+            ) : <>x{boost}</>;
+    }
 }

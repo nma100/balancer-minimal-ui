@@ -11,11 +11,13 @@ export default class PoolIcons extends React.Component {
         this.state = {};
     }
 
-    render = () => this.props.pool?.tokens
-        .filter(token => token.address !== this.props.pool.address)
-        .map(token =>
-            <span key={token.id} className="me-1">
-                <CryptoIcon name={token.symbol} />
-            </span>
-        );
+    render() { 
+        return this.props.pool?.tokens
+            .filter(token => token.address !== this.props.pool.address)
+            .map(token =>
+                <span key={token.id} className="me-1">
+                    <CryptoIcon name={token.symbol} />
+                </span>
+            );
+    }
 }

@@ -56,7 +56,31 @@ $sidebar-pt: 100px;
 .veBAL { color: $teal; }
 .veBAL-light { color: $green; }
 
+.spinner { width: 1.5rem; height: 1.5rem; }
+.amount  { width: 5rem; }
+.boost, .shares  { width: 2rem; }
+
 #invest-info {
     > .title { line-height: 5.5rem; }
     > .total { line-height: 3.5rem; }
+}
+
+/* TRADE */
+
+.select-token { cursor: pointer; }
+
+.swap-separator {
+    margin-top: 0.8rem; 
+    margin-bottom: 0.8rem;
+    > .progress { 
+        height: 1px;
+        > .progress-bar { width: 0%; }
+    }
+    > .arrow {
+        width: 2.8rem; 
+        height: 2.8rem;
+        .bi { 
+            font-size: 1.5rem; 
+        }
+    }
 }
