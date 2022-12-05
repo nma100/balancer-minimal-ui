@@ -5,7 +5,7 @@ import { truncateAddress } from "../utils/page";
 import { web3Modal, switchChain } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
-import BalancerUrls from "../protocol/balancer-urls.json";
+import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
 
 export const OutletContext = React.createContext();

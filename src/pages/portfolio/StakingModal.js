@@ -4,7 +4,7 @@ import { parseUnits } from 'ethers/lib/utils';
 import { constants } from 'ethers';
 import { isDark } from '../../theme';
 
-export const STAKING_MODAL = 'staking-modal';
+export const STAKING_MODAL = 'staking-bpt-modal';
 
 export const Mode = {
     Init: 'init',
@@ -91,13 +91,20 @@ export class StakingModal extends React.Component {
         window.location.reload();
     }
 
-    render() {
-        const { poolName, poolShares, mode, waiting, txId } = this.state;   
+    css() {
         const { theme } = this.context;
 
         const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
         const textClass = isDark(theme) ? 'text-white' : 'text-dark';
-        
+        const veBalClass = isDark(theme) ? 'veBAL' : 'veBAL-light'
+
+        return { contentClass, textClass, veBalClass };
+    }
+
+    render() {
+        const { poolName, poolShares, mode, waiting, txId } = this.state;   
+        const { contentClass, textClass, veBalClass } = this.css();
+
         const format = n => `$${n ? n.toFixed(2) : "00.00"}`;
 
         return (
@@ -147,7 +154,7 @@ export class StakingModal extends React.Component {
                             }
                             {mode === Mode.Result &&
                                 <>
-                                    <div className={`${isDark(theme) ? 'veBAL' : 'veBAL-light'} mb-3`}>
+                                    <div className={`${veBalClass} mb-3`}>
                                         Successful deposit !
                                     </div>
                                     <p>Transaction : <small className={`${textClass} text-opacity-75 text-break text-muted`}>{txId}</small></p>

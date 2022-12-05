@@ -1,5 +1,7 @@
 import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
+import { Modal } from 'bootstrap';
+import { SELECT_TOKEN_MODAL, TokenSelector } from './TokenSelector';
 
 const TOKEN_IN = 'in', TOKEN_OUT = 'out';
 
@@ -12,10 +14,13 @@ class Trade extends React.Component {
 
   handleSelectToken(type) {
     console.log('handleSelectToken', type);
+    Modal.getOrCreateInstance(`#${SELECT_TOKEN_MODAL}`).show();
   }
 
   render() {
     return (
+      <>
+        <TokenSelector />
         <div className="row">
           <div className="col-12 col-lg-8">
             <div className="bg-dark bg-gradient rounded shadow p-3 pt-2">
@@ -61,6 +66,7 @@ class Trade extends React.Component {
             </div>
           </div>
         </div>
+      </>
     );
   }
 }
