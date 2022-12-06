@@ -96,7 +96,7 @@ export class StakingModal extends React.Component {
 
         const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
         const textClass = isDark(theme) ? 'text-white' : 'text-dark';
-        const veBalClass = isDark(theme) ? 'veBAL' : 'veBAL-light'
+        const veBalClass = isDark(theme) ? 'veBAL' : 'veBAL-light';
 
         return { contentClass, textClass, veBalClass };
     }
@@ -112,7 +112,7 @@ export class StakingModal extends React.Component {
                 <div className="modal-dialog modal-dialog-centered">
                     <div className={`modal-content ${contentClass}`}>
                         <div className="modal-header">
-                        <h6 className="modal-title">Stake LP tokens</h6>
+                            <h6 className="modal-title">Stake LP tokens</h6>
                             <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal" aria-label="Close">X</button>
                         </div>
                         <div className="modal-body">

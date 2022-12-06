@@ -65,6 +65,14 @@ $sidebar-pt: 100px;
     > .total { line-height: 3.5rem; }
 }
 
+.apr-breakdown {
+    > .bi { font-size: 90%; } 
+}
+
+.apr-placeholder {
+    > .placeholder { width: 2rem; }
+}
+
 /* TRADE */
 
 .select-token { cursor: pointer; }

@@ -11,11 +11,16 @@ export default class PoolTokens extends React.Component {
         this.state = {};
     }
 
-    render() {
-        const { pool } = this.props;
+    css() {
         const { theme } = this.context;
         const bgClass = isDark(theme) ? 'bg-light' : 'bg-dark';
         const textClass = isDark(theme) ? 'text-light' : 'text-dark';
+        return { bgClass, textClass };
+    }
+
+    render() {
+        const { pool } = this.props;
+        const { bgClass, textClass } = this.css();
         const format = val => (parseFloat(val) * 100).toFixed();
         return pool.tokens
                 .filter(token => token.address !== pool.address)

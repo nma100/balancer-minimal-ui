@@ -2,10 +2,13 @@ import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
 import { Modal } from 'bootstrap';
 import { SELECT_TOKEN_MODAL, TokenSelector } from './TokenSelector';
+import { OutletContext } from '../Layout';
 
 const TOKEN_IN = 'in', TOKEN_OUT = 'out';
 
 class Trade extends React.Component {
+
+  static contextType = OutletContext;
 
   constructor(props) {
     super(props);
@@ -22,7 +25,7 @@ class Trade extends React.Component {
       <>
         <TokenSelector />
         <div className="row">
-          <div className="col-12 col-lg-8">
+          <div className="col-12 col-lg-8 col-xxl-6">
             <div className="bg-dark bg-gradient rounded shadow p-3 pt-2">
               <div className="pb-4 d-flex justify-content-between align-items-center">
                 <div className="fs-1">Swap tokens</div>

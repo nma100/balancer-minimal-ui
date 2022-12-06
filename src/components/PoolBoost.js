@@ -20,7 +20,6 @@ export default class PoolBoost extends React.Component {
         const userBoosts = await balancer.userBoosts(account);
 
         let boost = UNKNOWN;
-        
         if (userBoosts && userBoosts[pool.id]) {
             boost = bnumf(userBoosts[pool.id], PRECISION);
         } 

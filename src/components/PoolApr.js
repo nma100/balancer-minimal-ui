@@ -1,16 +1,13 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from "react";
 import * as ReactDOMServer from "react-dom/server";
-import * as Bootstrap from "bootstrap";
+import { Tooltip } from "bootstrap";
 import { OutletContext } from "../pages/Layout";
 import { isDark } from "../theme";
 
-const ICON_SIZE = { fontSize: "90%" };
-const APR_WIDTH = { width: "2rem" };
-
 const LOADING = (
-  <span className="placeholder-glow">
-    <span className="placeholder" style={APR_WIDTH}></span>
+  <span className="apr-placeholder placeholder-glow">
+    <span className="placeholder"></span>
   </span>
 );
 const UNAVAILABLE = 'N/A';
@@ -37,12 +34,13 @@ export default class PoolApr extends React.Component {
 
   componentDidUpdate() {
     document
-      .querySelectorAll(".apr-breakdown")
-      .forEach((el) => new Bootstrap.Tooltip(el, { html: true }));
+      .querySelectorAll('.apr-breakdown')
+      .forEach(el => new Tooltip(el, { html: true }));
   }
 
   render() {
-    const { apr } = this.state;
+    const { pool } = this.props;
+    const { apr  } = this.state;
 
     if (apr === undefined) return LOADING;
     if (apr === false) return UNAVAILABLE;
@@ -79,15 +77,15 @@ export default class PoolApr extends React.Component {
       </div>
     );
 
-    const textClass = isDark(this.context.theme) ? "text-white" : "text-black";
+    const textClass = isDark(this.context.theme) ? 'text-white' : 'text-black';
 
     let icon;
-    if (this.context.balancer.veBalPoolId() === this.props.pool.id) {
-      icon = <i className="bi bi-stars text-primary" style={ICON_SIZE}></i>;
+    if (this.context.balancer.veBalPoolId() === pool.id) {
+      icon = <i className="bi bi-stars text-primary"></i>;
     } else if (stakingApr > 0 || rewardApr > 0 || tokenApr > 0 || protocolApr > 0) {
-      icon = <i className="bi bi-stars text-warning" style={ICON_SIZE}></i>;
+      icon = <i className="bi bi-stars text-warning"></i>;
     } else {
-      icon = <i className={`bi bi-info-circle ${textClass} text-opacity-75`} style={ICON_SIZE}></i>;
+      icon = <i className={`bi bi-info-circle ${textClass} text-opacity-75`}></i>;
     }
 
     const tooltip = (
