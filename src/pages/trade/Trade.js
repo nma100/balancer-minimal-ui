@@ -16,18 +16,19 @@ class Trade extends React.Component {
   }
 
   openTokenSelector(type) {
-    this.setState({tokenType: type});
+    this.setState({tokenSelectType: type});
     Modal.getOrCreateInstance(`#${SELECT_TOKEN_MODAL}`).show();
   }
 
-  onTokenSelect(type, token) {
+  onTokenSelect(token) {
+    const type = this.state.tokenSelectType;
     console.log('onTokenSelect', type, token);
   }
 
   render() {
     return (
       <>
-        <TokenSelector tokenType={this.state.tokenType} onTokenSelect={this.onTokenSelect} />
+        <TokenSelector onTokenSelect={this.onTokenSelect.bind(this)} />
         <div className="row">
           <div className="col-12 col-lg-8 col-xxl-6">
             <div className="bg-dark bg-gradient rounded shadow p-3 pt-2">

@@ -32,8 +32,7 @@ export class TokenSelector extends React.Component {
 
   handleSelectToken(index) {
     const token = this.state.displayedTokens[index];
-    const type  = this.props.tokenType;
-    this.props.onTokenSelect(type, token);
+    this.props.onTokenSelect(token);
     Modal.getInstance(`#${SELECT_TOKEN_MODAL}`).hide();
   }
 
