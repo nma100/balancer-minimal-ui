@@ -15,15 +15,19 @@ class Trade extends React.Component {
     this.state = {};
   }
 
-  handleSelectToken(type) {
-    console.log('handleSelectToken', type);
+  openTokenSelector(type) {
+    this.setState({tokenType: type});
     Modal.getOrCreateInstance(`#${SELECT_TOKEN_MODAL}`).show();
+  }
+
+  onTokenSelect(type, token) {
+    console.log('onTokenSelect', type, token);
   }
 
   render() {
     return (
       <>
-        <TokenSelector />
+        <TokenSelector tokenType={this.state.tokenType} onTokenSelect={this.onTokenSelect} />
         <div className="row">
           <div className="col-12 col-lg-8 col-xxl-6">
             <div className="bg-dark bg-gradient rounded shadow p-3 pt-2">
@@ -37,7 +41,7 @@ class Trade extends React.Component {
                   <div className="text-light text-opacity-75">$50000.00</div>
                 </div>
                 <div>
-                  <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.handleSelectToken(TOKEN_IN)}>
+                  <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(TOKEN_IN)}>
                     <CryptoIcon name="ETH" cssClass="me-3" /> <span className="fs-5 me-3">ETH</span> <i className="bi bi-chevron-down align-self-center"></i>
                   </div>
                   <div className="text-center small">Balance : 15 <span className="px-1">·</span> <a href="/" className="link-light">Max</a></div>
@@ -57,7 +61,7 @@ class Trade extends React.Component {
                   <div className="text-light text-opacity-75">$50001.34</div>
                 </div>
                 <div>
-                  <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.handleSelectToken(TOKEN_OUT)}>
+                  <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(TOKEN_OUT)}>
                     <CryptoIcon name="BAL" cssClass="me-3" /> <span className="fs-5 me-3">BAL</span> <i className="bi bi-chevron-down align-self-center"></i>
                   </div>
                   <div className="text-center small">Balance : 800</div>

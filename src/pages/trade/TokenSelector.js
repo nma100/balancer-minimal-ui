@@ -3,6 +3,7 @@ import CryptoIcon from '../../components/CryptoIcon';
 import { TokenListService } from '../../protocol/services/token-list-service';
 import { isDark } from '../../theme';
 import { OutletContext } from '../Layout';
+import { Modal } from 'bootstrap';
 
 export const SELECT_TOKEN_MODAL = 'token-selector';
 
@@ -31,7 +32,9 @@ export class TokenSelector extends React.Component {
 
   handleSelectToken(index) {
     const token = this.state.displayedTokens[index];
-    console.log("Selected token", token);
+    const type  = this.props.tokenType;
+    this.props.onTokenSelect(type, token);
+    Modal.getInstance(`#${SELECT_TOKEN_MODAL}`).hide();
   }
 
   onShow() {
@@ -65,7 +68,7 @@ export class TokenSelector extends React.Component {
                     <form>
                       <div className="mb-3">
                         <label htmlFor="search-input" className="col-form-label fs-4 py-0 mb-3">Select a token</label>
-                        <input type="text" id="search-input" className="form-control" onChange={e => this.handleSearch(e)} />
+                        <input type="text" id="search-input" className="form-control" onChange={e => this.handleSearch(e)} placeholder="Search name" />
                       </div>
                       <hr />
                       <div>
@@ -77,7 +80,7 @@ export class TokenSelector extends React.Component {
                       }
                       {this.state.displayedTokens?.map((token, index) =>
                         <div key={index} className="select-token py-1" onClick={() => this.handleSelectToken(index)}>
-                          <CryptoIcon name={token.symbol} cssClass="me-2" /> {token.symbol} <span className="px-2">·</span> <span className="text-muted">{token.name}</span>
+                          <CryptoIcon key={token.symbol} name={token.symbol} cssClass="me-2" /> {token.symbol} <span className="text-muted">{token.name}</span>
                         </div>
                       )}
                       </div>
