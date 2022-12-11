@@ -75,20 +75,35 @@ $sidebar-pt: 100px;
 
 /* TRADE */
 
-.select-token { cursor: pointer; }
-
-.swap-separator {
-    margin-top: 0.8rem; 
-    margin-bottom: 0.8rem;
-    > .progress { 
-        height: 1px;
-        > .progress-bar { width: 0%; }
+#swap {
+    input[type=text] { 
+        all: unset;
     }
-    > .arrow {
-        width: 2.8rem; 
-        height: 2.8rem;
-        .bi { 
-            font-size: 1.5rem; 
+    .select-token { cursor: pointer; }
+}
+
+#swap {
+    .separator-line {
+        margin-top: 0.8rem; 
+        margin-bottom: 0.8rem;
+        > .progress { 
+            height: 1px;
+            > .progress-bar { width: 0%; }
         }
+        > .arrow {
+            width: 2.8rem; 
+            height: 2.8rem;
+            .bi { 
+                font-size: 1.5rem; 
+            }
+        }
+    }
+}
+
+#token-selector {
+    #token-list {
+        height: 20rem;
+        overflow-y: auto;
+        .token { cursor: pointer; }
     }
 }

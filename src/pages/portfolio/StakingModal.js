@@ -3,6 +3,7 @@ import { OutletContext } from '../Layout';
 import { parseUnits } from 'ethers/lib/utils';
 import { constants } from 'ethers';
 import { isDark } from '../../theme';
+import { ndollar } from '../../utils/page';
 
 export const STAKING_MODAL = 'staking-bpt-modal';
 
@@ -104,8 +105,6 @@ export class StakingModal extends React.Component {
         const { poolName, poolShares, mode, waiting, txId } = this.state;   
         const { contentClass, textClass, veBalClass } = this.css();
 
-        const format = n => `$${n ? n.toFixed(2) : "00.00"}`;
-
         return (
             <div id={STAKING_MODAL} className="modal" tabIndex="-1">
                 <div className="modal-dialog modal-dialog-centered">
@@ -116,7 +115,7 @@ export class StakingModal extends React.Component {
                         </div>
                         <div className="modal-body">
                             <h4 className='mt-2 mb-4 text-break'>{ poolName }</h4>
-                            <p className='mb-4'>Value to stake : { format(poolShares) }</p>
+                            <p className='mb-4'>Value to stake : { ndollar(poolShares) }</p>
                             {mode === Mode.Init &&
                                 <>
                                     <button type="button" className="btn btn-secondary  my-1">

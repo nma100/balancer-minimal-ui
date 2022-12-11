@@ -6,7 +6,7 @@ import PoolApr from "../../components/PoolApr";
 import PoolBoost from "../../components/PoolBoost";
 import PoolShares from "../../components/PoolShares";
 import { bnum } from "../../utils/bnum"
-import { amount } from "../../utils/page";
+import { dollar } from "../../utils/page";
 import { format } from "date-fns";
 import { Modal } from 'bootstrap';
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
@@ -82,7 +82,7 @@ class Portfolio extends React.Component {
                 <span className={`${textClass} me-2`}>Total :</span>
                 {totalAmount === undefined
                   ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
-                  : <span className="fw-bold">{amount(totalAmount)}</span>
+                  : <span className="fw-bold">{dollar(totalAmount)}</span>
                 }
               </div>
               {isEthereum() &&
@@ -90,7 +90,7 @@ class Portfolio extends React.Component {
                   <span className={`${textClass} me-2`}>veBAL :</span>
                   {veBalAmount === undefined
                     ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
-                    : <span className={veBalClass}>{amount(veBalAmount)}</span>
+                    : <span className={veBalClass}>{dollar(veBalAmount)}</span>
                   }
                 </div>
               }
@@ -98,14 +98,14 @@ class Portfolio extends React.Component {
                 <span className={`${textClass} me-2`}>Staked :</span>
                 {stakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
-                  : <span className={textClass}>{amount(stakedAmount)}</span>
+                  : <span className={textClass}>{dollar(stakedAmount)}</span>
                 }
               </div>
               <div className=" d-none d-md-block px-2">
                 <span className={`${textClass} me-2`}>Unstaked :</span>
                 {unstakedAmount === undefined
                   ? <span className="placeholder-glow"><span className="amount placeholder placeholder-lg"></span></span>
-                  : <span className={textClass}>{amount(unstakedAmount)}</span>
+                  : <span className={textClass}>{dollar(unstakedAmount)}</span>
                 }
               </div>
             </div>

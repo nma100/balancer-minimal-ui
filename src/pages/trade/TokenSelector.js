@@ -67,10 +67,10 @@ export class TokenSelector extends React.Component {
                     <form>
                       <div className="mb-3">
                         <label htmlFor="search-input" className="col-form-label fs-4 py-0 mb-3">Select a token</label>
-                        <input type="text" id="search-input" className="form-control" onChange={e => this.handleSearch(e)} placeholder="Search name" />
+                        <input type="text" id="search-input" className="form-control" onChange={e => this.handleSearch(e)} placeholder="Search ..." autoComplete="off" />
                       </div>
-                      <hr />
-                      <div>
+                      <hr className="my-4" />
+                      <div id="token-list">
                       {this.state.displayedTokens === undefined &&
                         <div className="fs-4 text-muted text-center">Loading ...</div>
                       }
@@ -78,8 +78,8 @@ export class TokenSelector extends React.Component {
                         <div className="fs-4 text-muted text-center">No result</div>
                       }
                       {this.state.displayedTokens?.map((token, index) =>
-                        <div key={index} className="select-token py-1" onClick={() => this.handleSelectToken(index)}>
-                          <CryptoIcon key={token.symbol} name={token.symbol} cssClass="me-2" /> {token.symbol} <span className="text-muted">{token.name}</span>
+                        <div key={index} className="token py-1" onClick={() => this.handleSelectToken(index)}>
+                          <CryptoIcon key={token.symbol} name={token.symbol} cssClass="me-2" /> {token.symbol} <span className="text-muted ms-1">{token.name}</span>
                         </div>
                       )}
                       </div>
