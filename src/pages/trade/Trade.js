@@ -3,7 +3,7 @@ import CryptoIcon from '../../components/CryptoIcon';
 import { Modal } from 'bootstrap';
 import { SELECT_TOKEN_MODAL, TokenSelector } from './TokenSelector';
 import { OutletContext } from '../Layout';
-import { ndollar } from '../../utils/page';
+import { fdollar } from '../../utils/page';
 
 const TOKEN_IN = 'in', TOKEN_OUT = 'out';
 
@@ -52,7 +52,7 @@ class Trade extends React.Component {
                   <div className="fs-1 mb-1">
                     <input id="amount-in" type="text" autoComplete="off" placeholder="0" />
                   </div>
-                  <div className="text-light text-opacity-75">{ndollar(dollarsIn)}</div>
+                  <div className="text-light text-opacity-75">{fdollar(dollarsIn)}</div>
                 </div>
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(TOKEN_IN)}>
@@ -74,7 +74,7 @@ class Trade extends React.Component {
                   <div className="fs-1 mb-1">
                     <input type="text" autoComplete="off" placeholder="0" />
                   </div>
-                  <div className="text-light text-opacity-75">{ndollar(dollarsOut)}</div>
+                  <div className="text-light text-opacity-75">{fdollar(dollarsOut)}</div>
                 </div>
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(TOKEN_OUT)}>

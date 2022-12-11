@@ -10,4 +10,4 @@ export const truncateAddress = (address) => {
 };
 
 export const dollar = bn => bn === false ? 'N/A' : `$${bnumf(bn)}`;
-export const ndollar = n => `$${n ? n.toFixed(2) : '0.00'}`;
+export const fdollar = n => `$${n ? n.toFixed(2) : '0.00'}`;
