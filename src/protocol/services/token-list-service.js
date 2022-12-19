@@ -33,4 +33,8 @@ export class TokenListService {
             .map(([K,V]) => V);
     }
 
+    static reduce(tab) {
+        return tab.reduce((accu, current) => accu.concat(current.tokens), []);
+    }
+    
 }

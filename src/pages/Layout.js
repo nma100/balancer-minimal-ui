@@ -3,7 +3,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from "ethers";
 import { truncateAddress } from "../utils/page";
 import { web3Modal, switchChain } from "../web3-connect";
-import { NETWORKS, checkChain, defaultChainId } from "../networks";
+import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
@@ -63,12 +63,14 @@ class Layout extends React.Component {
     const network = await web3Provider.getNetwork();
     const account = (await web3Provider.listAccounts())[0];
     const chainId = await checkChain(network.chainId, web3Provider);
+    const asset = nativeAsset(chainId);
     const balancer = new BalancerHelper(chainId);
     provider.on('chainChanged', e => this.onNetworkChanged(e));
     provider.on('accountsChanged', e => this.onAccountChanged(e));
     const state = {
       web3Provider: web3Provider,
       chainId: chainId,
+      nativeAsset: asset,
       balancer: balancer,
       account: account,
     };
@@ -77,9 +79,13 @@ class Layout extends React.Component {
   }
 
   initState() {
+    const chainId = defaultChainId();
+    const asset = nativeAsset(chainId);
+    const balancer = new BalancerHelper(chainId);
     return {
-      chainId: defaultChainId(),
-      balancer: undefined,
+      chainId: chainId,
+      nativeAsset: asset,
+      balancer: balancer,
       web3Provider: undefined,
       account: undefined,
       portfolio: undefined,

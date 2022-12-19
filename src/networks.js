@@ -1,4 +1,5 @@
 import { switchChain } from "./web3-connect";
+import { constants } from "ethers";
 
 export class BlockExplorer {
   constructor(url, addrUri, txUri) {
@@ -41,6 +42,14 @@ export async function checkChain(chainId, library) {
 
 export function defaultChainId() {
   return process.env.NODE_ENV === 'production' ? ETHEREUM_ID : GOERLI_ID;
+}
+
+export function nativeAsset(chainId) {
+  return {
+    symbol: chainId === POLYGON_ID ? 'MATIC' : 'ETH',
+    address: constants.AddressZero,
+    decimals: 18,
+  }
 }
 
 export const isEthMainnet = (networkId) => ETHEREUM_ID === networkId;

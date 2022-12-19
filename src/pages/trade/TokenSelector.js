@@ -1,9 +1,9 @@
 import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
-import { TokenListService } from '../../protocol/services/token-list-service';
 import { isDark } from '../../theme';
 import { OutletContext } from '../Layout';
 import { Modal } from 'bootstrap';
+import { BalancerHelper } from '../../protocol/balancer-helper';
 
 export const SELECT_TOKEN_MODAL = 'token-selector';
 
@@ -36,13 +36,10 @@ export class TokenSelector extends React.Component {
     Modal.getInstance(`#${SELECT_TOKEN_MODAL}`).hide();
   }
 
-  onShow() {
-    new TokenListService(this.context.chainId)
-      .approvedTokens()
-      .then(approved => { 
-        const tokens = approved.reduce((accu, current) => accu.concat(current.tokens), []);
-        this.setState({ allTokens: tokens, displayedTokens: tokens });
-    });
+  async onShow() {
+    const { chainId } = this.context;
+    const tokens = await (new BalancerHelper(chainId)).fetchTokens();
+    this.setState({ allTokens: tokens, displayedTokens: tokens });
   }
 
   onHide() {

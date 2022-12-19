@@ -93,11 +93,9 @@ export class StakingModal extends React.Component {
 
     css() {
         const { theme } = this.context;
-
         const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
         const textClass = isDark(theme) ? 'text-white' : 'text-dark';
         const veBalClass = isDark(theme) ? 'veBAL' : 'veBAL-light';
-
         return { contentClass, textClass, veBalClass };
     }
 

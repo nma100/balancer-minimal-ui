@@ -7,6 +7,10 @@ import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
 import { bnum, ZERO } from "../utils/bnum";
+import { TokenListService } from "./services/token-list-service";
+import { AprService } from "./services/apr-service";
+import { LiquidityService } from "./services/liquidity-service";
+import { SwapService } from "./services/swap-service";
 
 export class BalancerHelper {
   
@@ -15,55 +19,30 @@ export class BalancerHelper {
     this.sdk = new BalancerSDK({
       network: Number(chainId),
       rpcUrl: getRpcUrl(chainId),
+      sor: { fetchOnChainBalances: false }
     });
-    this.cacheLiquidity = {};
-    this.cacheApr = {};
+    this.aprService = new AprService(this.sdk.pools);
+    this.liquidityService = new LiquidityService(this.sdk.pools);
+    this.swapService = new SwapService(this.sdk.swaps);
+    this.tokenListService = new TokenListService(chainId);
   }
 
   async loadApr(pool) {
-    if (!this.cacheApr[pool.id]) {
-      this.cacheApr[pool.id] = this.sdk.pools.apr(pool);
-    } 
-    const apr = await this.cacheApr[pool.id];
-    this.checkApr(pool, apr);
-    return apr;
-  }
-
-  checkApr(pool, apr) {
-    const isValid = (n) => isFinite(n) && !isNaN(n);
-    let err = false;
-    if (!apr) err = `falsy apr = ${apr}`;
-    else if (!isValid(apr.swapFees)) err = `apr.swapFees = ${apr.swapFees}`;
-    else if (!isValid(apr.protocolApr)) err = `apr.protocolApr = ${apr.protocolApr}`;
-    else if (!isValid(apr.tokenAprs.total)) err = `apr.tokenAprs.total = ${apr.tokenAprs.total}`;
-    else if (!isValid(apr.stakingApr.min)) err = `apr.stakingApr.min = ${apr.stakingApr.min}`;
-    else if (!isValid(apr.stakingApr.max)) err = `apr.stakingApr.max = ${apr.stakingApr.max}`;
-    else if (!isValid(apr.rewardAprs.total)) err = `apr.rewardAprs.total = ${apr.rewardAprs.total}`;
-    else if (!isValid(apr.min)) err = `apr.min = ${apr.min}`;
-    else if (!isValid(apr.max)) err = `apr.max = ${apr.max}`;
-    if (err !== false) {
-      const msg = `Invalid APR (${pool.name}) : ${err}`;
-      console.error(msg, apr);
-      throw new Error(msg);
-    }
+    return await this.aprService.apr(pool);
   }
 
   async loadLiquidity(pool) {
-    if (!this.cacheLiquidity[pool.id]) {
-      this.cacheLiquidity[pool.id] = this.sdk.pools.liquidity(pool);
-    }
-    const liquidity = await this.cacheLiquidity[pool.id];
-    this.checkLiquidity(pool, liquidity);
-    return liquidity;
+    return await this.liquidityService.liquidity(pool);
   }
 
-  checkLiquidity(pool, liquidity) {
-    const bn = bnum(liquidity);
-    if (bn.isNaN() || !bn.isFinite() || bn.isZero()) {
-      const msg = `Incorrect liquidity value (${pool.name}) : ${liquidity}`;
-      console.error(msg);
-      throw new Error(msg);
-    }
+  async findRouteGivenIn(tokenIn, tokenOut, amount) {
+    console.log('findRouteGivenIn', tokenIn, tokenOut, amount?.toString());
+    return await this.swapService.findRouteGivenIn(tokenIn, tokenOut, amount);
+  }
+
+  async findRouteGivenOut(tokenIn, tokenOut, amount) {
+    console.log('findRouteGivenOut', tokenIn, tokenOut, amount?.toString());
+    return await this.swapService.findRouteGivenOut(tokenIn, tokenOut, amount);
   }
 
   async loadGaugeShares(account) {
@@ -241,6 +220,16 @@ export class BalancerHelper {
     });
 
     return Object.fromEntries(boosts);
+  }
+
+  async fetchTokens() {
+    const tokens = this.tokenListService.approvedTokens();
+    return TokenListService.reduce(await tokens);
+  }
+
+  async findToken(symbol) {
+    const tokens = await this.fetchTokens();
+    return tokens.find(t => t.symbol === symbol);
   }
 
   loadPortfolio(account, callback) {

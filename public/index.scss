@@ -76,8 +76,12 @@ $sidebar-pt: 100px;
 /* TRADE */
 
 #swap {
-    input[type=text] { 
-        all: unset;
+    .amount-block { 
+        width: 50%; 
+        #amount-in, #amount-out { 
+            all: inherit;
+            width: 100%;
+        }
     }
     .select-token { cursor: pointer; }
 }
