@@ -3,7 +3,6 @@ import CryptoIcon from '../../components/CryptoIcon';
 import { isDark } from '../../theme';
 import { OutletContext } from '../Layout';
 import { Modal } from 'bootstrap';
-import { BalancerHelper } from '../../protocol/balancer-helper';
 
 export const SELECT_TOKEN_MODAL = 'token-selector';
 
@@ -37,8 +36,8 @@ export class TokenSelector extends React.Component {
   }
 
   async onShow() {
-    const { chainId } = this.context;
-    const tokens = await (new BalancerHelper(chainId)).fetchTokens();
+    const { balancer } = this.context;
+    const tokens = await balancer.fetchTokens();
     this.setState({ allTokens: tokens, displayedTokens: tokens });
   }
 
