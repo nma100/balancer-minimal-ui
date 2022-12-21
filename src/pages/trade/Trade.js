@@ -30,15 +30,15 @@ class Trade extends React.Component {
     this.amountElement(IN).focus();
   }
 
-  openTokenSelector(kind) {
-    this.setState({kind: kind});
+  openTokenSelector(type) {
+    this.setState({tokenSelect: type});
     Modal.getOrCreateInstance(`#${SELECT_TOKEN_MODAL}`).show();
   }
 
   onTokenSelect(token) {
-    const { mode, kind } = this.state;
+    const { mode, tokenSelect } = this.state;
     const callBack = () => this.handleAmountChange(IN);
-    if (kind === IN) {
+    if (tokenSelect === IN) {
       this.setState({tokenIn: token}, callBack);
     } else {
       if (mode === Mode.Init) {
@@ -60,6 +60,7 @@ class Trade extends React.Component {
       inElement  = this.amountElement(OUT);
       outElement = this.amountElement(IN);
     }
+    this.setState({kind: kind});
 
     if (bnum(inElement.value).isZero()) {
       inElement.value = outElement.value = '';
@@ -80,10 +81,10 @@ class Trade extends React.Component {
     const { kind, route, tokenOut} = this.state;
     this.setState({
       swapInfo: {
-        kind: kind,
         tokenIn: this.tokenIn(),
         tokenOut: tokenOut,
         route: route,
+        kind: kind,
       }
     });
     Modal.getOrCreateInstance(`#${PREVIEW_MODAL}`).show();
