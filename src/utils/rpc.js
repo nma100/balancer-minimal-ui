@@ -28,7 +28,7 @@ export function getInfuraUrl(chainId) {
     default:
       throw Error(`Unsupported network ${chainId}`);
   }
-
+  
   return `https://${subdomain}.infura.io/v3/${REACT_APP_INFURA}`;
 }
 

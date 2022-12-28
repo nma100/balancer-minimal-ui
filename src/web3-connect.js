@@ -15,7 +15,7 @@ export const web3Modal = new Web3Modal({
 
 export async function switchChain(chainId, library) {
     await library.provider.request({
-        method: "wallet_switchEthereumChain",
+        method: 'wallet_switchEthereumChain',
         params: [{ chainId: toHex(chainId) }]
     });
 }

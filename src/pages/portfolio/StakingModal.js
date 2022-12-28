@@ -31,7 +31,7 @@ export class StakingModal extends React.Component {
 
     async onShow() {
         const { account, balancer, web3Provider } = this.context;
-        
+
         const modal = document.getElementById(STAKING_MODAL);
         const { poolName, poolAddress, poolBpt, poolShares } = modal.dataset;
 

@@ -6,9 +6,8 @@ import PoolApr from "../../components/PoolApr";
 import PoolBoost from "../../components/PoolBoost";
 import PoolShares from "../../components/PoolShares";
 import { bnum } from "../../utils/bnum"
-import { dollar } from "../../utils/page";
+import { dollar, openModal } from "../../utils/page";
 import { format } from "date-fns";
-import { Modal } from 'bootstrap';
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
 import PoolIcons from "../../components/PoolIcons";
 import { Theme } from "../../theme";
@@ -30,7 +29,7 @@ class Portfolio extends React.Component {
     modal.dataset.poolAddress = pool.address;
     modal.dataset.poolBpt = pool.bpt;
     modal.dataset.poolShares = pool.shares;
-    Modal.getOrCreateInstance(`#${STAKING_MODAL}`).show();
+    openModal(STAKING_MODAL);
   }
 
   css() {

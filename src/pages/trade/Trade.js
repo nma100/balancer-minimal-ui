@@ -1,9 +1,8 @@
 import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
-import { Modal } from 'bootstrap';
 import { TokenSelector, SELECT_TOKEN_MODAL } from './TokenSelector';
 import { OutletContext } from '../Layout';
-import { fdollar } from '../../utils/page';
+import { fdollar, openModal } from '../../utils/page';
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { bnum } from '../../utils/bnum';
 import { Preview, PREVIEW_MODAL } from './Preview';
@@ -12,9 +11,9 @@ const IN = 0, OUT = 1;
 
 const Mode = {
   Init: 0,
-  TokensSelected : 1,
-  AmountEntered : 2,
-  Executed : 3,
+  TokensSelected: 1,
+  NoRoute: 2,
+  SwapReady: 3,
 }
 
 class Trade extends React.Component {
@@ -32,7 +31,7 @@ class Trade extends React.Component {
 
   openTokenSelector(type) {
     this.setState({tokenSelect: type});
-    Modal.getOrCreateInstance(`#${SELECT_TOKEN_MODAL}`).show();
+    openModal(SELECT_TOKEN_MODAL);
   }
 
   onTokenSelect(token) {
@@ -64,30 +63,24 @@ class Trade extends React.Component {
 
     if (bnum(inElement.value).isZero()) {
       inElement.value = outElement.value = '';
-      if (mode === Mode.AmountEntered) {
+      if (mode > Mode.TokensSelected) {
         this.setState({ mode: Mode.TokensSelected });
       }
     } else {
       if (mode >= Mode.TokensSelected) {
         outElement.value = await this.fetchAmount(kind, inElement.value);
       }
-      if (mode === Mode.TokensSelected) {
-        this.setState({ mode: Mode.AmountEntered });
-      }
     }
   }
 
   handleSwap() {
-    const { kind, route, tokenOut} = this.state;
-    this.setState({
+    this.setState(state => ({
       swapInfo: {
-        tokenIn: this.tokenIn(),
-        tokenOut: tokenOut,
-        route: route,
-        kind: kind,
+        route: state.route,
+        kind: state.kind,
       }
-    });
-    Modal.getOrCreateInstance(`#${PREVIEW_MODAL}`).show();
+    }));
+    openModal(PREVIEW_MODAL);
   }
 
   async fetchAmount(kind, amount) {
@@ -109,9 +102,10 @@ class Trade extends React.Component {
     }
     console.log('swapAmount', formatUnits(route.swapAmount));
     console.log('Return amount', returnAmount);
-    this.setState({route: route});
     if (route.returnAmount.isZero()) {
-      console.warn('No swap route');
+      this.setState({ mode: Mode.NoRoute });
+    } else {
+      this.setState({ mode: Mode.SwapReady, route: route });
     }
     return returnAmount;
   }
@@ -143,7 +137,7 @@ class Trade extends React.Component {
               <div className="pb-4 d-flex justify-content-between align-items-center">
                 <div className="fs-1">Swap tokens</div>
                 <div className="d-flex align-items-center">
-                  {mode >= Mode.AmountEntered &&
+                  {mode === Mode.SwapReady &&
                     <span className="text-light text-opacity-50 me-3">{effectivePrice}</span>
                   }
                   <i className="bi bi-gear fs-4 me-1"></i>
@@ -212,7 +206,10 @@ class Trade extends React.Component {
                   {mode === Mode.TokensSelected &&
                     <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Enter amount</button>
                   }
-                  {mode === Mode.AmountEntered &&
+                  {mode === Mode.NoRoute &&
+                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>No swap route</button>
+                  }
+                  {mode === Mode.SwapReady &&
                     <button className="btn btn-secondary btn-lg fs-4" type="button" onClick={() => this.handleSwap()}>Swap</button>
                   }
                 </>

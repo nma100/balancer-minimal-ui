@@ -1,4 +1,17 @@
 import { bnumf } from "../utils/bnum"
+import { Modal, Toast } from 'bootstrap';
+
+export function openModal(id) {
+  Modal.getOrCreateInstance(`#${id}`).show();
+}
+
+export function hideModal(id) {
+  Modal.getOrCreateInstance(`#${id}`).hide();
+}
+
+export function openToast(id) {
+  Toast.getOrCreateInstance(`#${id}`).show();
+}
 
 export const truncateAddress = (address) => {
     if (!address) return 'No Account';

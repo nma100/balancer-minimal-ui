@@ -2,7 +2,7 @@ import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
 import { isDark } from '../../theme';
 import { OutletContext } from '../Layout';
-import { Modal } from 'bootstrap';
+import { hideModal } from '../../utils/page';
 
 export const SELECT_TOKEN_MODAL = 'token-selector';
 
@@ -32,7 +32,7 @@ export class TokenSelector extends React.Component {
   handleSelectToken(index) {
     const token = this.state.displayedTokens[index];
     this.props.onTokenSelect(token);
-    Modal.getInstance(`#${SELECT_TOKEN_MODAL}`).hide();
+    hideModal(SELECT_TOKEN_MODAL);
   }
 
   async onShow() {

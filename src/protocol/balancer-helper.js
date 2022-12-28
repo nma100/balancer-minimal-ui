@@ -19,11 +19,10 @@ export class BalancerHelper {
     this.sdk = new BalancerSDK({
       network: Number(chainId),
       rpcUrl: getRpcUrl(chainId),
-      sor: { fetchOnChainBalances: false }
     });
     this.aprService = new AprService(this.sdk.pools);
-    this.liquidityService = new LiquidityService(this.sdk.pools);
     this.swapService = new SwapService(this.sdk.swaps);
+    this.liquidityService = new LiquidityService(this.sdk.pools);
     this.tokenListService = new TokenListService(chainId);
   }
 
@@ -43,6 +42,10 @@ export class BalancerHelper {
   async findRouteGivenOut(tokenIn, tokenOut, amount) {
     console.log('findRouteGivenOut', tokenIn, tokenOut, amount?.toString());
     return await this.swapService.findRouteGivenOut(tokenIn, tokenOut, amount);
+  }
+
+  async swap(route, kind, signer, account) {
+    return await this.swapService.swap(route, kind, signer, account);
   }
 
   async loadGaugeShares(account) {
