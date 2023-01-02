@@ -37,8 +37,9 @@ export class SwapService {
     }
 
     async swap(route, kind, signer, account) {
-        const slippage = 50;
+        
         const tenMinutes = BigNumber.from(`${Math.ceil(Date.now() / 1000) + 600}`); 
+        const slippage = 50;
 
         const { to, data, value } = this.swapper.buildSwap({
             userAddress: account,

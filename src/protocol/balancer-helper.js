@@ -314,4 +314,14 @@ export class BalancerHelper {
     return balancerContracts.getLiquidityGauge(gaugeAddress, signerOrProvider);
   }
 
+  networkConfig() {
+    return this.sdk.networkConfig;
+  }
+
+  async getSpotPrice(tokenIn, tokenOut) {
+    return await this.sdk.pricing.getSpotPrice(
+      tokenIn,
+      tokenOut
+    );
+  }
 }

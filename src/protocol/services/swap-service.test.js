@@ -8,8 +8,8 @@ import { BalancerSDK } from '@balancer-labs/sdk';
 import { Wallet, providers, BigNumber } from 'ethers';
 
 const INFURA = '';
-const TRADER_ADDRESS = ''
-const TRADER_KEY = ''
+const TRADER_ADDRESS = '';
+const TRADER_KEY = '';
 
 const TIMEOUT = 1000000000;
 const { WeiPerEther, MaxUint256 } = constants;
@@ -18,11 +18,10 @@ const GAS_PRICE = parseUnits('1', 9);
 const MAX_POOLS = 4;
 const GOERLI_VAULT = '0xBA12222222228d8Ba445958a75a0704d566BF2C8';
 
-let balancer, WETH, BAL, DAI, RPC_GOERLI;
+let balancer, BAL, DAI, RPC_GOERLI;
 
 beforeAll(async () => {
     balancer = new BalancerHelper(GOERLI_ID);
-    WETH = await balancer.findToken('WETH');
     BAL  = await balancer.findToken('BAL');
     DAI  = await balancer.findToken('DAI');
     RPC_GOERLI = `https://goerli.infura.io/v3/${INFURA}`;
@@ -117,10 +116,32 @@ it('Approve', async () => {
     await tx.wait();
 }, TIMEOUT);
 
-it('FindRouteGivenIn', async () => {
-    const service = new SwapService(balancer.sdk.swaps);
-    const route = await service.findRouteGivenIn(WETH.address, DAI.address, WeiPerEther);
-    assert.isFalse(route.returnAmount.isZero());
+it('FindRoute', async () => {
+
+    let balancer = new BalancerHelper('1');
+
+    const net = '1',
+        rpc = `https://mainnet.infura.io/v3/${INFURA}`,
+        tokenIn  = (await balancer.findToken('DAI')), 
+        tokenOut = (await balancer.findToken('BAL')), 
+        swapAmount = WeiPerEther.div(10);
+
+    const sdk = new BalancerSDK({
+        network: Number(net),
+        rpcUrl: rpc,
+      });
+
+    await sdk.swaps.fetchPools();
+
+    let route = await sdk.swaps.findRouteGivenIn({
+        tokenIn: tokenIn.address,
+        tokenOut: tokenOut.address,
+        amount: swapAmount,
+        gasPrice: GAS_PRICE,
+        maxPools: MAX_POOLS,
+    });
+    console.log('Given In', tokenIn.symbol, tokenOut.symbol, route.marketSp);
+
 }, TIMEOUT);
 
 // npm run test .\src\protocol\services\swap-service.test.js

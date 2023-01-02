@@ -2,6 +2,7 @@
 import BigNumber from 'bignumber.js';
 
 export const ZERO = new BigNumber(0);
+export const ONE = new BigNumber(1);
 
 export function bnum(val) {
     if (!val) return ZERO;
@@ -15,5 +16,5 @@ export function bnumf(value, precision = 2) {
     } else {
         val = ZERO;
     }
-    return val.toFixed(precision)
+    return val.toFixed(precision);
 }

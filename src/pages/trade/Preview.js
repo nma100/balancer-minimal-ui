@@ -2,11 +2,22 @@ import React from 'react';
 import { isDark } from '../../theme';
 import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
+import { constants } from 'ethers';
+import { bnumf } from '../../utils/bnum';
+import { Result, RESULT_TOAST } from './Result';
 
 export const PREVIEW_MODAL = 'preview';
-export const RESULT_TOAST  = 'result';
 
 // TODO Reentrance
+
+const { MaxUint256 } = constants;
+
+const Mode = {
+  Init: 'init',
+  Allowance: 'allow',
+  Swap : 'swap',
+  Executed : 'Exec'
+}
 
 export class Preview extends React.Component {
       
@@ -14,31 +25,48 @@ export class Preview extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { mode: Mode.Init };
   }
 
   componentDidMount() { 
     const modal = document.getElementById(PREVIEW_MODAL);
     modal.addEventListener('show.bs.modal', this.onShow.bind(this));
-    modal.addEventListener('hide.bs.modal', this.onHide.bind(this));
     modal.addEventListener('hidden.bs.modal', this.onHidden.bind(this));
   }
   
-  onShow() {
+  async onShow() {
+    const { account, balancer, web3Provider } = this.context;
+    const { tokenIn, swapAmount } = this.props.swapInfo.route;
+    const { vault } = balancer.networkConfig().addresses.contracts;
+
+    const allowance = await balancer
+      .ERC20(tokenIn, web3Provider)
+      .allowance(account, vault);
+
+    const mode = allowance.gte(swapAmount) ? Mode.Swap : Mode.Allowance;
+    this.setState({ mode });
   }
 
-  onHide() {
-  }
-
-  async onHidden() {
-    const { tx } = this.state;
-
-    if (tx !== undefined) {
+  onHidden() {
+    const { mode} = this.state;
+    if (mode === Mode.Executed) {
       openToast(RESULT_TOAST);
-      this.setState({ waiting: true });
-      await tx.wait();
-      this.setState({ waiting: false });
     }
+    this.setState({ mode: Mode.Init });
+  }
+
+  async handleApprove() {
+    const { balancer, web3Provider } = this.context;
+    const { tokenIn } = this.props.swapInfo.route;
+    const { vault } = balancer.networkConfig().addresses.contracts;
+    const signer = web3Provider.getSigner();
+
+    const tx = await balancer
+      .ERC20(tokenIn, signer)
+      .approve(vault, MaxUint256);
+    await tx.wait();
+
+    this.setState({ mode: Mode.Swap });
   }
       
   async handleSwap() {
@@ -47,7 +75,7 @@ export class Preview extends React.Component {
     const signer = web3Provider.getSigner();
 
     const tx = await balancer.swap(route, kind, signer, account);
-    this.setState({ tx }, () => hideModal(PREVIEW_MODAL));
+    this.setState({ mode: Mode.Executed, tx }, () => hideModal(PREVIEW_MODAL));
   }
 
   css() {
@@ -58,42 +86,41 @@ export class Preview extends React.Component {
 
   render() {
     const { contentClass } = this.css();
+    const { mode, tx } = this.state;
+    const { swapInfo } = this.props;
+    const priceInfo = swapInfo?.priceInfo;
     return ( 
       <>
+        <Result tx={tx} />
         <div id={PREVIEW_MODAL} className="modal" tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                      <p>In : </p>
-                      <p>Out : </p>
-                      <p className="small">Price impact : </p>
+                      <p>In : {priceInfo?.amounts?.amountIn} {swapInfo?.tokenIn?.symbol} </p>
+                      <p>Out : {priceInfo?.amounts?.amountOut} {swapInfo?.tokenOut?.symbol} </p>
+                      <p className="small">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</p>
                       <p className="small">Max Slippage : </p>
-                      <button type="button" className="btn btn-secondary" onClick={() => this.handleSwap()}>Swap</button>
+                      {mode === Mode.Init &&
+                        <button type="button" className="btn btn-secondary">
+                            Initialisation
+                            <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                      }
+                      {mode === Mode.Allowance &&
+                        <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
+                          Allow token transfer
+                        </button>
+                      }
+                      {mode === Mode.Swap &&
+                        <button type="button" className="btn btn-secondary" onClick={e => this.handleSwap(e)}>
+                          Swap
+                        </button>
+                      }
                     </div>
                 </div>
             </div>
-        </div>
-        <div className="toast-container position-fixed bottom-0 end-0 p-3">
-          <div id={RESULT_TOAST} className="toast" role="alert" aria-live="assertive" aria-atomic="true"  data-bs-autohide="false">
-            <div className="toast-header">
-              <strong className="me-auto">Swap</strong>
-              <small>11 mins ago</small>
-              <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div className="toast-body">
-              {this.state.waiting === true ?
-                (
-                  <>
-                    Swap pending. Wait please.
-                  </>
-                ) : (
-                  <>
-                    Success : {this.state.tx?.hash}
-                  </>
-                ) 
-              }
-            </div>
-          </div>
         </div>
       </>
     );

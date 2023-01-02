@@ -14,6 +14,7 @@
     "chai": "^4.3.6",
     "date-fns": "^2.29.3",
     "ethers": "^5.7.1",
+    "lodash": "^4.17.21",
     "nma-cryptocurrency-icons": "^0.18.2",
     "node-sass": "^7.0.3",
     "react": "^18.2.0",
