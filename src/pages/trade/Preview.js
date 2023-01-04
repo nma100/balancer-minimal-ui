@@ -100,24 +100,32 @@ export class Preview extends React.Component {
                       <p>Out : {priceInfo?.amounts?.amountOut} {swapInfo?.tokenOut?.symbol} </p>
                       <p className="small">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</p>
                       <p className="small">Max Slippage : </p>
-                      {mode === Mode.Init &&
-                        <button type="button" className="btn btn-secondary">
-                            Initialisation
-                            <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
+                      {!this.context.account ? (
+                        <button type="button" className="btn btn-secondary" disabled>
+                          Connect wallet
                         </button>
-                      }
-                      {mode === Mode.Allowance &&
-                        <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
-                          Allow token transfer
-                        </button>
-                      }
-                      {mode === Mode.Swap &&
-                        <button type="button" className="btn btn-secondary" onClick={e => this.handleSwap(e)}>
-                          Swap
-                        </button>
-                      }
+                      ) : (
+                        <>
+                          {mode === Mode.Init &&
+                            <button type="button" className="btn btn-secondary" disabled>
+                                Initialisation
+                                <div className="spinner-border spinner-border-sm ms-2" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </button>
+                          }
+                          {mode === Mode.Allowance &&
+                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
+                              Allow token transfer
+                            </button>
+                          }
+                          {mode === Mode.Swap &&
+                            <button type="button" className="btn btn-secondary" onClick={e => this.handleSwap(e)}>
+                              Swap
+                            </button>
+                          }
+                        </>
+                      )}
                     </div>
                 </div>
             </div>

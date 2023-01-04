@@ -34,13 +34,11 @@ class Portfolio extends React.Component {
 
   css() {
     const isDark = (this.context.theme === Theme.Dark);
-
-    const heroClass = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
-    const textClass = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
     const veBalClass = isDark ? 'veBAL' : 'veBAL-light';
+    const textClass  = isDark ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
+    const heroClass  = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
     const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
-    const btnClass = isDark ? 'btn btn-outline-light' : 'btn btn-light shadow-sm';
-
+    const btnClass   = isDark ? 'btn btn-outline-light' : 'btn btn-light shadow-sm';
     return { heroClass, textClass, veBalClass, tableClass, btnClass };
   }
 

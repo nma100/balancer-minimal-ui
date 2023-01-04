@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { GOERLI_ID, POLYGON_ID, ETHEREUM_ID } from '../networks';
-import { bnumf } from '../utils/bnum';
+import { bnum, bnumf } from '../utils/bnum';
 import { BalancerHelper } from './balancer-helper';
 
 const USER = "0x91F450602455564A64207414c7Fbd1F1F0EbB425";
@@ -90,6 +90,15 @@ it('Pref gauge', async () => {
     console.log(pool.address, prefGauge);
 
     assert.isNotNull(prefGauge);
+});
+
+it('Token price', async () => {
+    const dai = '0x6b175474e89094c44da98b954eedeac495271d0f';
+    const eth = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+    const balancer = new BalancerHelper(ETHEREUM_ID);
+    const oneEthPrice = await balancer.fetchPrice(eth);
+    const tenDaiPrice = await balancer.fetchPrice(dai, bnum(10));
+    console.log(bnumf(oneEthPrice), bnumf(tenDaiPrice));
 });
 
 function logShares(pool) {

@@ -2,7 +2,7 @@ import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
 import { TokenSelector, SELECT_TOKEN_MODAL } from './TokenSelector';
 import { OutletContext } from '../Layout';
-import { fdollar, openModal } from '../../utils/page';
+import { dollar, openModal } from '../../utils/page';
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { bnum, bnumf, ONE } from '../../utils/bnum';
 import { Preview, PREVIEW_MODAL } from './Preview';
@@ -13,11 +13,12 @@ const IN = 0, OUT = 1;
 const Mode = {
   Init: 0,
   TokensSelected: 1,
-  NoRoute: 2,
-  SwapReady: 3,
+  FetchPrice : 2,
+  NoRoute: 3,
+  SwapReady: 4,
 }
 
-const DEBOUNCE = 2000;
+const DEBOUNCE = 1500;
 
 class Trade extends React.Component {
 
@@ -26,6 +27,9 @@ class Trade extends React.Component {
   constructor(props) {
     super(props);
     this.state = { mode: Mode.Init };
+    this.handleAmountChange = debounce(
+      this.handleAmountChange.bind(this),
+      DEBOUNCE);
   }
 
   async componentDidMount() { 
@@ -50,9 +54,27 @@ class Trade extends React.Component {
     }
   }
 
-  handleAmountChange = debounce(async (kind) => {
+  async updateUsdValue(kind) {
+    const { balancer } = this.context;
+    const { tokenOut } = this.state;
+
+    const token = kind === IN ? this.tokenIn() : tokenOut;
+    const amount = bnum(this.amountElement(kind).value);
+   
+    const usdValue = await balancer.fetchPrice(token.address, amount);
+
+    if (kind === IN ) {
+      this.setState({ usdValueIn:  usdValue })
+    } else {
+      this.setState({ usdValueOut: usdValue })
+    }
+  }
+
+  async handleAmountChange(kind) {
     const { mode, tokenOut } = this.state;
     const tokenIn = this.tokenIn();
+
+    this.updateUsdValue(kind);
 
     let enteredAmount, calculatedAmount;
     if (kind === IN) {
@@ -70,6 +92,7 @@ class Trade extends React.Component {
       calculatedAmount.value = '';
     } else {
       if (mode >= Mode.TokensSelected) {
+        this.setState({ mode: Mode.FetchPrice });
         const route = await this.findRoute(kind, enteredAmount.value);
         if (route.returnAmount.isZero()) {
           this.setState({ mode: Mode.NoRoute });
@@ -83,10 +106,11 @@ class Trade extends React.Component {
             calculatedAmount.value = this.formatAmount(route.returnAmount, tokenIn.decimals);
           }
         }
+        this.updateUsdValue(kind === IN ? OUT : IN);
       }
     }
-  }, DEBOUNCE);
- 
+  }
+
   handleSwap() {
     const { nativeAsset } = this.context;
     this.setState(state => ({
@@ -159,7 +183,7 @@ class Trade extends React.Component {
   render() {
     let { tokenOut, usdValueIn, usdValueOut, 
       balanceIn, balanceOut, mode, swapInfo } = this.state;
-    balanceIn = balanceOut = usdValueIn = usdValueOut = 0;
+    balanceIn = balanceOut = 0;  
     const tokenIn = this.tokenIn();
     return (
       <>
@@ -182,7 +206,7 @@ class Trade extends React.Component {
                   <div className="fs-1 mb-1">
                     <input id="amount-in" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(IN)} />
                   </div>
-                  <div className="text-light text-opacity-75">{fdollar(usdValueIn)}</div>
+                  <div className="text-light text-opacity-75">{dollar(usdValueIn)}</div>
                 </div>
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(IN)}>
@@ -208,7 +232,7 @@ class Trade extends React.Component {
                   <div className="fs-1 mb-1">
                     <input id="amount-out" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(OUT)} />
                   </div>
-                  <div className="text-light text-opacity-75">{fdollar(usdValueOut)}</div>
+                  <div className="text-light text-opacity-75">{dollar(usdValueOut)}</div>
                 </div>
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(OUT)}>
@@ -230,9 +254,7 @@ class Trade extends React.Component {
                 </div>
               </div>
               <div className="d-grid">
-              {!this.context.account ? 
-                  <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Connect wallet</button>
-                : (
+              {
                 <>
                   {mode === Mode.Init &&
                     <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Select token</button>
@@ -240,14 +262,21 @@ class Trade extends React.Component {
                   {mode === Mode.TokensSelected &&
                     <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Enter amount</button>
                   }
+                  {mode === Mode.FetchPrice &&
+                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Fetching best price
+                      <div className="spinner-border ms-3" style={{width: '1.5rem', height: '1.5rem'}} role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </button>
+                  }
                   {mode === Mode.NoRoute &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>No swap route</button>
+                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Insufficient liquidity for this trade</button>
                   }
                   {mode === Mode.SwapReady &&
                     <button className="btn btn-secondary btn-lg fs-4" type="button" onClick={() => this.handleSwap()}>Swap</button>
                   }
                 </>
-              )}  
+              }  
               </div>
             </div>
           </div>

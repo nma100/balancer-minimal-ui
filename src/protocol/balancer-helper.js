@@ -7,10 +7,11 @@ import { isEthNetwork } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
 import { bnum, ZERO } from "../utils/bnum";
-import { TokenListService } from "./services/token-list-service";
 import { AprService } from "./services/apr-service";
-import { LiquidityService } from "./services/liquidity-service";
 import { SwapService } from "./services/swap-service";
+import { LiquidityService } from "./services/liquidity-service";
+import { TokenListService } from "./services/token-list-service";
+import { TokenPriceService } from "./services/token-price-service";
 
 export class BalancerHelper {
   
@@ -23,6 +24,7 @@ export class BalancerHelper {
     this.aprService = new AprService(this.sdk.pools);
     this.swapService = new SwapService(this.sdk.swaps);
     this.liquidityService = new LiquidityService(this.sdk.pools);
+    this.tokenPriceService = new TokenPriceService(this.sdk.data);
     this.tokenListService = new TokenListService(chainId);
   }
 
@@ -233,6 +235,11 @@ export class BalancerHelper {
   async findToken(symbol) {
     const tokens = await this.fetchTokens();
     return tokens.find(t => t.symbol === symbol);
+  }
+
+  async fetchPrice(token, amount) {
+    if (amount?.isZero()) return ZERO;
+    return await this.tokenPriceService.fetch(token, amount);
   }
 
   loadPortfolio(account, callback) {
