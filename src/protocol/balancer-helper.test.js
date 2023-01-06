@@ -93,11 +93,11 @@ it('Pref gauge', async () => {
 });
 
 it('Token price', async () => {
-    const dai = '0x6b175474e89094c44da98b954eedeac495271d0f';
-    const eth = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+    const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f';
+    const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
     const balancer = new BalancerHelper(ETHEREUM_ID);
-    const oneEthPrice = await balancer.fetchPrice(eth);
-    const tenDaiPrice = await balancer.fetchPrice(dai, bnum(10));
+    const oneEthPrice = await balancer.fetchPrice(ETH);
+    const tenDaiPrice = await balancer.fetchPrice(DAI, bnum(10));
     console.log(bnumf(oneEthPrice), bnumf(tenDaiPrice));
 });
 

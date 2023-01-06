@@ -1,9 +1,9 @@
 import { constants } from "ethers";
 import { bnum, ONE } from "../../utils/bnum";
 
-const { AddressZero } = constants;
-
 const NATIVE_ASSET = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
+const { AddressZero } = constants;
 
 export class TokenPriceService {
   

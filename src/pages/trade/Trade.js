@@ -7,8 +7,12 @@ import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { bnum, bnumf, ONE } from '../../utils/bnum';
 import { Preview, PREVIEW_MODAL } from './Preview';
 import { debounce } from 'lodash';
+import { constants } from 'ethers';
+import { Settings, SETTINGS_MODAL } from './Settings';
 
 const IN = 0, OUT = 1;
+const DEBOUNCE = 1500;
+const PRECISION = 5;
 
 const Mode = {
   Init: 0,
@@ -17,8 +21,6 @@ const Mode = {
   NoRoute: 3,
   SwapReady: 4,
 }
-
-const DEBOUNCE = 1500;
 
 class Trade extends React.Component {
 
@@ -32,7 +34,7 @@ class Trade extends React.Component {
       DEBOUNCE);
   }
 
-  async componentDidMount() { 
+  componentDidMount() { 
     this.amountElement(IN).focus();
   }
 
@@ -43,7 +45,10 @@ class Trade extends React.Component {
 
   onTokenSelect(token) {
     const { mode, tokenSelect } = this.state;
-    const callBack = () => this.handleAmountChange(IN);
+    const callBack = () => { 
+      this.updateBalance(tokenSelect);
+      this.handleAmountChange(IN);
+    }
     if (tokenSelect === IN) {
       this.setState({tokenIn: token}, callBack);
     } else {
@@ -56,9 +61,9 @@ class Trade extends React.Component {
 
   async updateUsdValue(kind) {
     const { balancer } = this.context;
-    const { tokenOut } = this.state;
+    const { tokenIn, tokenOut } = this.tokens();
 
-    const token = kind === IN ? this.tokenIn() : tokenOut;
+    const token = kind === IN ? tokenIn : tokenOut;
     const amount = bnum(this.amountElement(kind).value);
    
     const usdValue = await balancer.fetchPrice(token.address, amount);
@@ -70,9 +75,30 @@ class Trade extends React.Component {
     }
   }
 
+  async updateBalance(kind) {
+    const { balancer, account, web3Provider } = this.context;
+    const { tokenIn, tokenOut } = this.tokens();
+
+    if (!account) return;
+    const token = kind === IN ? tokenIn : tokenOut;
+
+    let balance;
+    if (token.address === constants.AddressZero) {
+      balance = await web3Provider.getBalance(account);
+    } else {
+      balance = await balancer.ERC20(token.address, web3Provider).balanceOf(account);
+    }
+
+    if (kind === IN ) {
+      this.setState({ balanceIn:  this.bnum(balance, token.decimals) })
+    } else {
+      this.setState({ balanceOut: this.bnum(balance, token.decimals) })
+    }
+  }
+
   async handleAmountChange(kind) {
-    const { mode, tokenOut } = this.state;
-    const tokenIn = this.tokenIn();
+    const { mode} = this.state;
+    const { tokenIn, tokenOut } = this.tokens();
 
     this.updateUsdValue(kind);
 
@@ -100,11 +126,13 @@ class Trade extends React.Component {
         } else {
           const priceInfo = this.priceInfo(route, kind, tokenIn, tokenOut)
           this.setState({ mode: Mode.SwapReady, route, kind, priceInfo });
+          let calculated;
           if (kind === IN) {
-            calculatedAmount.value = this.formatAmount(route.returnAmount, tokenOut.decimals);
+            calculated = this.bnum(route.returnAmount, tokenOut.decimals);
           } else {
-            calculatedAmount.value = this.formatAmount(route.returnAmount, tokenIn.decimals);
+            calculated = this.bnum(route.returnAmount, tokenIn.decimals);
           }
+          calculatedAmount.value = bnumf(calculated, PRECISION);
         }
         this.updateUsdValue(kind === IN ? OUT : IN);
       }
@@ -127,8 +155,7 @@ class Trade extends React.Component {
 
   findRoute(kind, amount) {
     const { balancer } = this.context;
-    const tokenIn = this.tokenIn();
-    const { tokenOut } = this.state;
+    const { tokenIn, tokenOut } = this.tokens();
 
     if (kind === IN) {
       const amountIn = parseUnits(amount, tokenIn.decimals);
@@ -139,10 +166,10 @@ class Trade extends React.Component {
     }
   }
 
-  tokenIn() {
-    const { tokenIn } = this.state;
+  tokens() {
     const { nativeAsset } = this.context;
-    return tokenIn ?? nativeAsset;
+    const { tokenIn, tokenOut } = this.state;
+    return { tokenIn: tokenIn ?? nativeAsset, tokenOut };
   }
   
   amountElement(kind) {
@@ -153,14 +180,14 @@ class Trade extends React.Component {
   priceInfo(route, kind, tokenIn, tokenOut) {
     let amountIn, amountOut;
     if (kind === IN) {
-      amountIn  = formatUnits(route.swapAmount, tokenIn.decimals);
-      amountOut = formatUnits(route.returnAmount, tokenOut.decimals);
+      amountIn  = this.bnum(route.swapAmount, tokenIn.decimals);
+      amountOut = this.bnum(route.returnAmount, tokenOut.decimals);
     } else {
-      amountIn  = formatUnits(route.returnAmount, tokenIn.decimals);
-      amountOut = formatUnits(route.swapAmount, tokenOut.decimals);
+      amountIn  = this.bnum(route.returnAmount, tokenIn.decimals);
+      amountOut = this.bnum(route.swapAmount, tokenOut.decimals);
     }
     const spotPrice = ONE.div(bnum(route.marketSp));
-    const effectivePrice = bnum(amountOut).div(bnum(amountIn));
+    const effectivePrice = amountOut.div(amountIn);
     const priceImpact = spotPrice.minus(effectivePrice).div(spotPrice).times(100);
     return { 
       spotPrice, effectivePrice, priceImpact, 
@@ -169,24 +196,25 @@ class Trade extends React.Component {
   }
 
   effectivePrice() {
-    const tokenIn = this.tokenIn();
-    const { tokenOut, priceInfo } = this.state;
-    const price = bnumf(priceInfo.effectivePrice);
-    return `1 ${tokenIn.symbol} = ${price} ${tokenOut.symbol}`;
+    const { tokenIn, tokenOut } = this.tokens();
+    const { priceInfo: { effectivePrice } } = this.state;
+    if (effectivePrice.lt(0.01)) return '';
+    return `1 ${tokenIn.symbol} = ${bnumf(effectivePrice)} ${tokenOut.symbol}`;
   }
-    
-  formatAmount(amount, decimals, precision = 5) {
-    const bn = bnum(formatUnits(amount, decimals));
-    return bnumf(bn, precision);
+
+  bnum(amount, decimals)  {
+    const formatted = formatUnits(amount, decimals);
+    return bnum(formatted);
   }
 
   render() {
-    let { tokenOut, usdValueIn, usdValueOut, 
-      balanceIn, balanceOut, mode, swapInfo } = this.state;
-    balanceIn = balanceOut = 0;  
-    const tokenIn = this.tokenIn();
+    const { 
+      mode, balanceIn, balanceOut, usdValueIn, usdValueOut, swapInfo 
+    } = this.state;
+    const { tokenIn, tokenOut } = this.tokens();
     return (
       <>
+        <Settings />
         <TokenSelector onTokenSelect={this.onTokenSelect.bind(this)} />
         <Preview swapInfo={swapInfo} />
         <div id="swap" className="row">
@@ -198,7 +226,9 @@ class Trade extends React.Component {
                   {mode === Mode.SwapReady &&
                     <span className="text-light text-opacity-50 me-3">{this.effectivePrice()}</span>
                   }
-                  <i className="bi bi-gear fs-4 me-1"></i>
+                  <div id="settings" className="fs-4 me-1" onClick={() => openModal(SETTINGS_MODAL)}>
+                    <i className="bi bi-gear"></i>
+                  </div>
                 </div>
               </div>
               <div className="d-flex justify-content-between align-items-center bg-light bg-opacity-10 rounded px-4 py-2">
@@ -215,7 +245,7 @@ class Trade extends React.Component {
                     <i className="bi bi-chevron-down align-self-center"></i>
                   </div>
                   <div className="text-center small">
-                    Balance : {balanceIn} {balanceIn > 0 && <><span className="px-1">·</span> <a href="/" className="link-light">Max</a></>}
+                    Balance : {bnumf(balanceIn)} {balanceIn?.gt(0) && <><span className="px-1">·</span> <a href="/" className="link-light">Max</a></>}
                   </div>
                 </div>
               </div>
@@ -250,7 +280,7 @@ class Trade extends React.Component {
                       ) 
                     } <i className="bi bi-chevron-down align-self-center"></i>               
                   </div>
-                  <div className="text-center small">Balance : {balanceOut}</div>
+                  <div className="text-center small">Balance : {bnumf(balanceOut)}</div>
                 </div>
               </div>
               <div className="d-grid">

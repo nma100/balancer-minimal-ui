@@ -8,8 +8,6 @@ import { Result, RESULT_TOAST } from './Result';
 
 export const PREVIEW_MODAL = 'preview';
 
-// TODO Reentrance
-
 const { MaxUint256 } = constants;
 
 const Mode = {
@@ -75,7 +73,8 @@ export class Preview extends React.Component {
     const signer = web3Provider.getSigner();
 
     const tx = await balancer.swap(route, kind, signer, account);
-    this.setState({ mode: Mode.Executed, tx }, () => hideModal(PREVIEW_MODAL));
+    const callback = () => hideModal(PREVIEW_MODAL);
+    this.setState({ mode: Mode.Executed, tx }, callback);
   }
 
   css() {
@@ -96,10 +95,13 @@ export class Preview extends React.Component {
             <div className="modal-dialog modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                      <p>In : {priceInfo?.amounts?.amountIn} {swapInfo?.tokenIn?.symbol} </p>
-                      <p>Out : {priceInfo?.amounts?.amountOut} {swapInfo?.tokenOut?.symbol} </p>
-                      <p className="small">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</p>
-                      <p className="small">Max Slippage : </p>
+                      <div className="text-center border rounded fs-3 py-4 px-3 mb-2">
+                        {bnumf(priceInfo?.amounts?.amountIn)} {swapInfo?.tokenIn?.symbol} <i className="bi bi-arrow-right"></i> {bnumf(priceInfo?.amounts?.amountOut)} {swapInfo?.tokenOut?.symbol} 
+                      </div>
+                      <div className="d-flex small mb-4">
+                        <span className="me-auto">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</span>
+                        Max slippage : —
+                      </div>
                       {!this.context.account ? (
                         <button type="button" className="btn btn-secondary" disabled>
                           Connect wallet
@@ -116,7 +118,7 @@ export class Preview extends React.Component {
                           }
                           {mode === Mode.Allowance &&
                             <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
-                              Allow token transfer
+                              Approve token transfer
                             </button>
                           }
                           {mode === Mode.Swap &&
