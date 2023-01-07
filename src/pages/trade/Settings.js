@@ -19,11 +19,16 @@ export class Settings extends React.Component {
   }
   
   async onShow() {
-    console.log('Settings on show')
+    const { maxSlippage } = this.props.settingsInfo;
+    document.getElementById('max-slippage').value = maxSlippage;
   }
 
   async handleSave() {
-    console.log('Settings save')
+    const value = document.getElementById('max-slippage').value; 
+    const maxSlippage = Number(value);
+    if (0 < maxSlippage && maxSlippage <= 10000) {
+      this.props.settingsInfo.onSave({ maxSlippage });
+    }
     hideModal(SETTINGS_MODAL);
   }
 
@@ -41,11 +46,15 @@ export class Settings extends React.Component {
             <div className="modal-dialog modal-sm modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                        <h3>Settings</h3>
-                        <p>TODO ...</p>
-                        <button type="button" className="btn btn-secondary" onClick={() => this.handleSave()}>
-                          Save
-                        </button>
+                        <h3 className="mb-4">Settings</h3>
+                        <div className="mb-3">
+                          <label htmlFor="max-slippage" className="form-label">Max. slippage (in bps)</label>
+                          <input type="number" min="1" step="1" autoComplete="off" className="form-control mb-1" id="max-slippage" />
+                          <div className="small text-muted">1 bps = 0.01%</div>
+                        </div>
+                        <div className="d-grid">
+                          <button type="button" className="btn btn-secondary" onClick={() => this.handleSave()}>Save</button>
+                        </div>
                     </div>
                 </div>
             </div>

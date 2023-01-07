@@ -8,13 +8,13 @@ import { Result, RESULT_TOAST } from './Result';
 
 export const PREVIEW_MODAL = 'preview';
 
-const { MaxUint256 } = constants;
+const { MaxUint256, AddressZero } = constants;
 
 const Mode = {
   Init: 'init',
-  Allowance: 'allow',
+  Approve: 'appr',
   Swap : 'swap',
-  Executed : 'Exec'
+  Executed : 'exec'
 }
 
 export class Preview extends React.Component {
@@ -37,11 +37,16 @@ export class Preview extends React.Component {
     const { tokenIn, swapAmount } = this.props.swapInfo.route;
     const { vault } = balancer.networkConfig().addresses.contracts;
 
-    const allowance = await balancer
-      .ERC20(tokenIn, web3Provider)
-      .allowance(account, vault);
+    let mode;
+    if (tokenIn === AddressZero) {
+      mode = Mode.Swap;
+    } else {
+      const allowance = await balancer
+        .ERC20(tokenIn, web3Provider)
+        .allowance(account, vault);
+      mode = allowance.gte(swapAmount) ? Mode.Swap : Mode.Approve;
+    }
 
-    const mode = allowance.gte(swapAmount) ? Mode.Swap : Mode.Allowance;
     this.setState({ mode });
   }
 
@@ -68,11 +73,10 @@ export class Preview extends React.Component {
   }
       
   async handleSwap() {
-    const { balancer, web3Provider, account } = this.context;
-    const { route, kind } = this.props.swapInfo;
-    const signer = web3Provider.getSigner();
+    const { swapInfo } = this.props;
+    const { balancer, web3Provider } = this.context;
 
-    const tx = await balancer.swap(route, kind, signer, account);
+    const tx = await balancer.swap(swapInfo, web3Provider);
     const callback = () => hideModal(PREVIEW_MODAL);
     this.setState({ mode: Mode.Executed, tx }, callback);
   }
@@ -81,6 +85,11 @@ export class Preview extends React.Component {
     const { theme } = this.context;
     const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
     return { contentClass };
+  }
+
+  maxSlippage() {
+    const ms = this.props.swapInfo?.maxSlippage;
+    return ms ? `${(ms / 100).toFixed(2)}%` : '—';
   }
 
   render() {
@@ -100,7 +109,7 @@ export class Preview extends React.Component {
                       </div>
                       <div className="d-flex small mb-4">
                         <span className="me-auto">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</span>
-                        Max slippage : —
+                        Max slippage : { this.maxSlippage() }
                       </div>
                       {!this.context.account ? (
                         <button type="button" className="btn btn-secondary" disabled>
@@ -116,7 +125,7 @@ export class Preview extends React.Component {
                                 </div>
                             </button>
                           }
-                          {mode === Mode.Allowance &&
+                          {mode === Mode.Approve &&
                             <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
                               Approve token transfer
                             </button>

@@ -13,6 +13,7 @@ import { Settings, SETTINGS_MODAL } from './Settings';
 const IN = 0, OUT = 1;
 const DEBOUNCE = 1500;
 const PRECISION = 5;
+const SLIPPAGE = 50;
 
 const Mode = {
   Init: 0,
@@ -28,7 +29,10 @@ class Trade extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { mode: Mode.Init };
+    this.state = { 
+      mode: Mode.Init, 
+      maxSlippage: SLIPPAGE, 
+    };
     this.handleAmountChange = debounce(
       this.handleAmountChange.bind(this),
       DEBOUNCE);
@@ -39,8 +43,8 @@ class Trade extends React.Component {
   }
 
   openTokenSelector(type) {
-    this.setState({tokenSelect: type});
-    openModal(SELECT_TOKEN_MODAL);
+    const callBack = () => openModal(SELECT_TOKEN_MODAL);
+    this.setState({tokenSelect: type}, callBack);
   }
 
   onTokenSelect(token) {
@@ -57,6 +61,19 @@ class Trade extends React.Component {
       } 
       this.setState({tokenOut: token}, callBack);
     }
+  }
+
+  openSettings() {
+    const settingsInfo = {
+        maxSlippage: this.state.maxSlippage,
+        onSave: this.onSaveSettings.bind(this),
+    }
+    this.setState({settingsInfo}, () => openModal(SETTINGS_MODAL));
+  }
+
+  onSaveSettings(settings) {
+    const { maxSlippage } = settings;
+    this.setState({ maxSlippage});
   }
 
   async updateUsdValue(kind) {
@@ -116,6 +133,7 @@ class Trade extends React.Component {
         this.setState({ mode: Mode.TokensSelected });
       }
       calculatedAmount.value = '';
+      this.updateUsdValue(kind === IN ? OUT : IN);
     } else {
       if (mode >= Mode.TokensSelected) {
         this.setState({ mode: Mode.FetchPrice });
@@ -141,6 +159,7 @@ class Trade extends React.Component {
 
   handleSwap() {
     const { nativeAsset } = this.context;
+    const callback = () => openModal(PREVIEW_MODAL);
     this.setState(state => ({
       swapInfo: {
         tokenIn: state.tokenIn ?? nativeAsset,
@@ -148,9 +167,9 @@ class Trade extends React.Component {
         route: state.route,
         kind:  state.kind,
         priceInfo: state.priceInfo,
+        maxSlippage: state.maxSlippage,
       }
-    }), 
-    () => openModal(PREVIEW_MODAL));
+    }), callback);
   }
 
   findRoute(kind, amount) {
@@ -171,7 +190,7 @@ class Trade extends React.Component {
     const { tokenIn, tokenOut } = this.state;
     return { tokenIn: tokenIn ?? nativeAsset, tokenOut };
   }
-  
+
   amountElement(kind) {
     const suffix = kind === IN  ? 'in' : 'out';
     return document.getElementById(`amount-${suffix}`);
@@ -209,13 +228,14 @@ class Trade extends React.Component {
 
   render() {
     const { 
-      mode, balanceIn, balanceOut, usdValueIn, usdValueOut, swapInfo 
+      mode, balanceIn, balanceOut, usdValueIn, 
+      usdValueOut, swapInfo, settingsInfo,
     } = this.state;
     const { tokenIn, tokenOut } = this.tokens();
     return (
       <>
-        <Settings />
         <TokenSelector onTokenSelect={this.onTokenSelect.bind(this)} />
+        <Settings settingsInfo={settingsInfo} />
         <Preview swapInfo={swapInfo} />
         <div id="swap" className="row">
           <div className="col-12 col-lg-8 col-xxl-6">
@@ -226,7 +246,7 @@ class Trade extends React.Component {
                   {mode === Mode.SwapReady &&
                     <span className="text-light text-opacity-50 me-3">{this.effectivePrice()}</span>
                   }
-                  <div id="settings" className="fs-4 me-1" onClick={() => openModal(SETTINGS_MODAL)}>
+                  <div id="settings" className="fs-4 me-1" onClick={() => this.openSettings()}>
                     <i className="bi bi-gear"></i>
                   </div>
                 </div>

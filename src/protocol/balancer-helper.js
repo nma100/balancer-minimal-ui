@@ -46,8 +46,8 @@ export class BalancerHelper {
     return await this.swapService.findRouteGivenOut(tokenIn, tokenOut, amount);
   }
 
-  async swap(route, kind, signer, account) {
-    return await this.swapService.swap(route, kind, signer, account);
+  async swap(swapInfo, web3Provider) {
+    return await this.swapService.swap(swapInfo, web3Provider);
   }
 
   async loadGaugeShares(account) {

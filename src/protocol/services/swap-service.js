@@ -36,17 +36,19 @@ export class SwapService {
         });
     }
 
-    async swap(route, kind, signer, account) {
+    async swap(swapInfo, web3Provider) {
+        const {route, kind, maxSlippage } = swapInfo;
+        const signer = web3Provider.getSigner();
+        const account = (await web3Provider.listAccounts())[0];
         
         const tenMinutes = BigNumber.from(`${Math.ceil(Date.now() / 1000) + 600}`); 
-        const slippage = 50;
 
         const { to, data, value } = this.swapper.buildSwap({
             userAddress: account,
             swapInfo: route,
             kind: kind,
             deadline: tenMinutes,
-            maxSlippage: slippage,
+            maxSlippage: maxSlippage,
         });
     
         return await signer.sendTransaction({ to, data, value });

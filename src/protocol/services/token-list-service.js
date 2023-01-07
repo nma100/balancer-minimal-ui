@@ -29,8 +29,8 @@ export class TokenListService {
         const Approved = [Balancer.Default, ...External];
         return Object
             .entries(await this.allTokens())
-            .filter(([K,V]) => Approved.includes(K))
-            .map(([K,V]) => V);
+            .filter(([K,]) => Approved.includes(K))
+            .map(([,V]) => V);
     }
 
     static reduce(tab) {

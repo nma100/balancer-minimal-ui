@@ -63,8 +63,12 @@ class Layout extends React.Component {
     const network = await web3Provider.getNetwork();
     const account = (await web3Provider.listAccounts())[0];
     const chainId = await checkChain(network.chainId, web3Provider);
-    const asset = nativeAsset(chainId);
     const balancer = new BalancerHelper(chainId);
+    const asset = nativeAsset(chainId);
+    /*const asset = { 
+      coin: nativeAsset(chainId),
+      balance: await web3Provider.getBalance(account),
+    };*/
     provider.on('chainChanged', e => this.onNetworkChanged(e));
     provider.on('accountsChanged', e => this.onAccountChanged(e));
     const state = {
