@@ -2,11 +2,13 @@ import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from "ethers";
 import { truncateAddress } from "../utils/page";
-import { web3Modal, switchChain } from "../web3-connect";
+import { web3Modal, switchChain, web3Account } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
+import { fromEthersBnum, ZERO } from "../utils/bnum";
+import { debounce } from "lodash";
 
 export const OutletContext = React.createContext();
 
@@ -18,11 +20,17 @@ class Layout extends React.Component {
   }
 
   componentDidMount() {
+    this.reconnect();
+    document.querySelector('body')
+      .className = this.css().bodyClass;
+  }
+
+  reconnect() {
+    console.log('reconnect');
     if (web3Modal.cachedProvider) {
       this.connect()
         .catch(e => console.warn('Reconnect failure', e));
     }
-    document.querySelector('body').className = this.css().bodyClass;
   }
 
   handleConnect() {
@@ -61,35 +69,25 @@ class Layout extends React.Component {
     const provider = await web3Modal.connect();
     const web3Provider = new ethers.providers.Web3Provider(provider);
     const network = await web3Provider.getNetwork();
-    const account = (await web3Provider.listAccounts())[0];
+    const account = await web3Account(web3Provider);
     const chainId = await checkChain(network.chainId, web3Provider);
+    const nativeCoin = await this.nativeCoin(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);
-    const asset = nativeAsset(chainId);
-    /*const asset = { 
-      coin: nativeAsset(chainId),
-      balance: await web3Provider.getBalance(account),
-    };*/
+    this.setState({ web3Provider, chainId, nativeCoin, balancer, account });
     provider.on('chainChanged', e => this.onNetworkChanged(e));
     provider.on('accountsChanged', e => this.onAccountChanged(e));
-    const state = {
-      web3Provider: web3Provider,
-      chainId: chainId,
-      nativeAsset: asset,
-      balancer: balancer,
-      account: account,
-    };
-    this.setState(state);
     balancer.loadPortfolio(account, this.setState.bind(this));
   }
 
   initState() {
     const chainId = defaultChainId();
-    const asset = nativeAsset(chainId);
     const balancer = new BalancerHelper(chainId);
+    const nativeCoin = { 
+      coin: nativeAsset(chainId),
+      balance: ZERO,
+    };
     return {
-      chainId: chainId,
-      nativeAsset: asset,
-      balancer: balancer,
+      chainId, nativeCoin, balancer,
       web3Provider: undefined,
       account: undefined,
       portfolio: undefined,
@@ -99,6 +97,21 @@ class Layout extends React.Component {
       stakedAmount: undefined,
       unstakedAmount: undefined,
       veBalAmount: undefined,
+    };
+  }
+
+  async nativeCoin(chainId, web3Provider) {
+    let balance;
+    if (web3Provider) {
+      const account = await web3Account(web3Provider);
+      balance = await web3Provider.getBalance(account);
+      balance = fromEthersBnum(balance);
+    } else {
+      balance = ZERO;
+    }
+    return { 
+      coin: nativeAsset(chainId),
+      balance,
     };
   }
 

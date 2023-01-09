@@ -1,8 +1,8 @@
 import React from 'react';
-import CryptoIcon from '../../components/CryptoIcon';
-import { isDark } from '../../theme';
-import { OutletContext } from '../Layout';
-import { hideModal } from '../../utils/page';
+import CryptoIcon from './CryptoIcon';
+import { isDark } from '../theme';
+import { OutletContext } from '../pages/Layout';
+import { hideModal } from '../utils/page';
 
 export const SELECT_TOKEN_MODAL = 'token-selector';
 

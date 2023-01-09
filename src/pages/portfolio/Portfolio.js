@@ -3,13 +3,13 @@ import { OutletContext } from "../Layout";
 import { isEthNetwork } from "../../networks";
 import PoolTokens from "../../components/PoolTokens";
 import PoolApr from "../../components/PoolApr";
-import PoolBoost from "../../components/PoolBoost";
 import PoolShares from "../../components/PoolShares";
+import PoolIcons from "../../components/PoolIcons";
+import UserBoost from "../../components/UserBoost";
 import { bnum } from "../../utils/bnum"
 import { dollar, openModal } from "../../utils/page";
 import { format } from "date-fns";
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
-import PoolIcons from "../../components/PoolIcons";
 import { Theme } from "../../theme";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
@@ -42,31 +42,37 @@ class Portfolio extends React.Component {
     return { heroClass, textClass, veBalClass, tableClass, btnClass };
   }
 
+  totalAmount(staked, unstaked, veBal) {
+    let total;
+    if (staked === undefined || unstaked === undefined || 
+        (this.isEthereum() && veBal === undefined)) {
+      total = undefined;
+    } else if (staked === false || unstaked === false || 
+        (this.isEthereum() && veBal === false)) {
+      total = false;
+    } else {
+      total = bnum(staked).plus(unstaked).plus(veBal);
+    }
+    return total;
+  }
+
+  isEthereum() {
+    const { account, chainId } = this.context;
+    return account && isEthNetwork(chainId);
+  }
+
   render() {
 
     const {
-      balancer, account, chainId, portfolio, stakedPools, 
-      unstakedPools, veBalPool, stakedAmount, unstakedAmount, veBalAmount
+      balancer, portfolio, stakedPools, unstakedPools, veBalPool, 
+      stakedAmount, unstakedAmount, veBalAmount
     } = this.context;
 
     const { 
       heroClass, textClass, veBalClass, tableClass, btnClass 
     } = this.css();
     
-    const isEthereum = () => account && isEthNetwork(chainId);
-    
-    let totalAmount;
-    if (stakedAmount === undefined || 
-        unstakedAmount === undefined || 
-        (isEthereum() && veBalAmount === undefined)) {
-      totalAmount = undefined;
-    } else if (stakedAmount === false || 
-        unstakedAmount === false || 
-        (isEthereum() && veBalAmount === false)) {
-      totalAmount = false;
-    } else {
-      totalAmount = bnum(stakedAmount).plus(unstakedAmount).plus(veBalAmount);
-    }
+    const totalAmount = this.totalAmount(stakedAmount, unstakedAmount, veBalAmount);
 
     return (
       <>
@@ -82,7 +88,7 @@ class Portfolio extends React.Component {
                   : <span className="fw-bold">{dollar(totalAmount)}</span>
                 }
               </div>
-              {isEthereum() &&
+              {this.isEthereum() &&
                 <div className="px-2">
                   <span className={`${textClass} me-2`}>veBAL :</span>
                   {veBalAmount === undefined
@@ -180,7 +186,7 @@ class Portfolio extends React.Component {
                   <th scope="col" className="d-none d-md-table-cell"></th>
                   <th scope="col">Composition</th>
                   <th scope="col"><div className="text-nowrap">My balance</div></th>
-                  {isEthereum() &&
+                  {this.isEthereum() &&
                     <th scope="col"><div className="text-center text-nowrap">My boost</div></th>
                   }
                   <th scope="col"><div className="text-center text-nowrap">My APR</div></th>
@@ -209,9 +215,9 @@ class Portfolio extends React.Component {
                                 </td>
                                 <td><PoolTokens pool={pool} /></td>
                                 <td><PoolShares pool={pool} /></td>
-                                {isEthereum() &&
+                                {this.isEthereum() &&
                                   <td className="text-center text-nowrap">
-                                      <PoolBoost pool={pool} />
+                                      <UserBoost pool={pool} />
                                   </td>
                                 }
                                 <td className="text-center">
@@ -230,7 +236,7 @@ class Portfolio extends React.Component {
           </div>
         </div>{/* Staked pools */}
 
-        {isEthereum() && veBalPool?.shares.isGreaterThan(0) &&
+        {this.isEthereum() && veBalPool?.shares.isGreaterThan(0) &&
           <div id="veBAL-liquidity">
             <h4 className="pool-title mb-3">veBAL protocol liquidity</h4>
             <div className="table-responsive">

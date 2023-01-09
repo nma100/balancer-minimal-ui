@@ -33,8 +33,17 @@ export class TokenListService {
             .map(([,V]) => V);
     }
 
-    static reduce(tab) {
-        return tab.reduce((accu, current) => accu.concat(current.tokens), []);
+    static reduce(tab, chainId) {
+        return tab.reduce((accu, current) => {
+            current.tokens
+                .filter(t => t.chainId === Number(chainId))
+                .forEach(token => {
+                    if (!accu.find(t => t.address === token.address)) {
+                        accu.push(token);
+                    }
+                });
+            return accu;
+        }, []);
     }
     
 }

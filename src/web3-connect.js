@@ -24,3 +24,7 @@ export const toHex = (num) => {
     const val = Number(num);
     return `0x${val.toString(16)}`;
 };
+
+export const web3Account = async (web3Provider) => {
+    return (await web3Provider.listAccounts())[0];
+}

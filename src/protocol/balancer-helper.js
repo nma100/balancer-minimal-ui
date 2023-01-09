@@ -3,7 +3,7 @@ import {
   PoolsSubgraphRepository,
   POOLS,
 } from "@balancer-labs/sdk";
-import { isEthNetwork } from "../networks";
+import { isEthNetwork, nativeAsset } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
 import { bnum, ZERO } from "../utils/bnum";
@@ -16,6 +16,7 @@ import { TokenPriceService } from "./services/token-price-service";
 export class BalancerHelper {
   
   constructor(chainId) {
+    console.log('BalancerHelper', chainId);
     this.chainId = chainId;
     this.sdk = new BalancerSDK({
       network: Number(chainId),
@@ -36,14 +37,12 @@ export class BalancerHelper {
     return await this.liquidityService.liquidity(pool);
   }
 
-  async findRouteGivenIn(tokenIn, tokenOut, amount) {
-    console.log('findRouteGivenIn', tokenIn, tokenOut, amount?.toString());
-    return await this.swapService.findRouteGivenIn(tokenIn, tokenOut, amount);
+  async initPools() {
+    return await this.swapService.initPools();
   }
 
-  async findRouteGivenOut(tokenIn, tokenOut, amount) {
-    console.log('findRouteGivenOut', tokenIn, tokenOut, amount?.toString());
-    return await this.swapService.findRouteGivenOut(tokenIn, tokenOut, amount);
+  async findRoute(kind, tokens, amount) {
+    return await this.swapService.findRoute(kind, tokens, amount);
   }
 
   async swap(swapInfo, web3Provider) {
@@ -228,8 +227,11 @@ export class BalancerHelper {
   }
 
   async fetchTokens() {
-    const tokens = this.tokenListService.approvedTokens();
-    return TokenListService.reduce(await tokens);
+    const nativeCoin = nativeAsset(this.chainId);
+    const approved = this.tokenListService.approvedTokens();
+    let tokens = TokenListService.reduce(await approved, this.chainId);
+    tokens.unshift(nativeCoin);
+    return tokens;
   }
 
   async findToken(symbol) {
@@ -238,7 +240,7 @@ export class BalancerHelper {
   }
 
   async fetchPrice(token, amount) {
-    if (amount?.isZero()) return ZERO;
+    if (!token || !amount || amount.isZero()) return ZERO;
     return await this.tokenPriceService.fetch(token, amount);
   }
 

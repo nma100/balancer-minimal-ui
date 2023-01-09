@@ -1,4 +1,5 @@
-import { bnumf } from "../utils/bnum"
+import { bnumf } from "../utils/bnum";
+import { numf } from "./number";
 import { Modal, Toast } from 'bootstrap';
 
 export function openModal(id) {
@@ -23,4 +24,4 @@ export const truncateAddress = (address) => {
 };
 
 export const dollar = bn => bn === false ? 'N/A' : `$${bnumf(bn)}`;
-export const fdollar = n => `$${n ? n.toFixed(2) : '0.00'}`;
+export const fdollar = n => `$${ n ? numf(n) : '0.00'}`;

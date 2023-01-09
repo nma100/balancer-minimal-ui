@@ -4,7 +4,7 @@ import { OutletContext } from '../pages/Layout';
 
 const PRECISION = 3, UNKNOWN = 'N/A';
 
-export default class PoolBoost extends React.Component {
+export default class UserBoost extends React.Component {
 
     static contextType = OutletContext;
    
@@ -24,7 +24,7 @@ export default class PoolBoost extends React.Component {
             boost = bnumf(userBoosts[pool.id], PRECISION);
         } 
 
-        this.setState({ boost: boost });
+        this.setState({ boost });
     }
 
     render() {

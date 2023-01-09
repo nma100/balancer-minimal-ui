@@ -4,11 +4,13 @@ import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
 import { constants } from 'ethers';
 import { bnumf } from '../../utils/bnum';
+import { numf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 
 export const PREVIEW_MODAL = 'preview';
 
 const { MaxUint256, AddressZero } = constants;
+
 
 const Mode = {
   Init: 'init',
@@ -16,6 +18,8 @@ const Mode = {
   Swap : 'swap',
   Executed : 'exec'
 }
+
+const MIN_PI = 0.01;
 
 export class Preview extends React.Component {
       
@@ -81,34 +85,61 @@ export class Preview extends React.Component {
     this.setState({ mode: Mode.Executed, tx }, callback);
   }
 
+  tradeAmount() {
+    const { swapInfo } = this.props;
+    const tokens = swapInfo?.tokens;
+    const priceInfo = swapInfo?.priceInfo;
+    return ( 
+        <>
+          {bnumf(priceInfo?.amounts?.amountIn)} {tokens?.tokenIn?.symbol} 
+          <i className="bi bi-arrow-right mx-3"></i> 
+          {bnumf(priceInfo?.amounts?.amountOut)} {tokens?.tokenOut?.symbol}
+        </>
+      );
+  }
+
+  effectivePrice() {
+    const { swapInfo } = this.props;
+    const tokens = swapInfo?.tokens;
+    const effectivePrice = swapInfo?.priceInfo?.effectivePrice;
+    return `1 ${tokens?.tokenIn.symbol} = ${bnumf(effectivePrice)} ${tokens?.tokenOut.symbol}`;
+  }
+
+  maxSlippage() {
+    const ms = this.props.swapInfo?.maxSlippage;
+    return ms ? `${numf(ms / 100)}%` : '—';
+  }
+
+  priceImpact() {
+    const { swapInfo } = this.props;
+    const pi = swapInfo?.priceInfo?.priceImpact
+    return pi < MIN_PI ?  `< ${numf(MIN_PI)}%` : `${numf(pi)}%`;
+  }
+
   css() {
     const { theme } = this.context;
     const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
     return { contentClass };
   }
 
-  maxSlippage() {
-    const ms = this.props.swapInfo?.maxSlippage;
-    return ms ? `${(ms / 100).toFixed(2)}%` : '—';
-  }
-
   render() {
     const { contentClass } = this.css();
     const { mode, tx } = this.state;
     const { swapInfo } = this.props;
-    const priceInfo = swapInfo?.priceInfo;
+    const tokens = swapInfo?.tokens;
     return ( 
       <>
-        <Result tx={tx} />
+        <Result swapInfo={swapInfo} tx={tx} />
         <div id={PREVIEW_MODAL} className="modal" tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                      <div className="text-center border rounded fs-3 py-4 px-3 mb-2">
-                        {bnumf(priceInfo?.amounts?.amountIn)} {swapInfo?.tokenIn?.symbol} <i className="bi bi-arrow-right"></i> {bnumf(priceInfo?.amounts?.amountOut)} {swapInfo?.tokenOut?.symbol} 
+                      <div className="text-center border rounded py-4 px-3 mb-2">
+                        <div className="fs-3 mb-2">{ this.tradeAmount() }</div> 
+                        <div className="text-muted">{ this.effectivePrice() }</div>
                       </div>
                       <div className="d-flex small mb-4">
-                        <span className="me-auto">Price impact : {bnumf(priceInfo?.priceImpact, 3)}%</span>
+                        <span className="me-auto">Price impact : { this.priceImpact() }</span>
                         Max slippage : { this.maxSlippage() }
                       </div>
                       {!this.context.account ? (
@@ -127,7 +158,7 @@ export class Preview extends React.Component {
                           }
                           {mode === Mode.Approve &&
                             <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
-                              Approve token transfer
+                              Approve {tokens?.tokenIn?.symbol}
                             </button>
                           }
                           {mode === Mode.Swap &&
