@@ -16,7 +16,11 @@ class Layout extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { ...this.initState(), theme: currentTheme() };
+    const theme = currentTheme();
+    const chainId = defaultChainId();
+    const nativeCoin = this.coin(chainId);
+    this.state = { chainId, nativeCoin, theme };
+    this.reconnect = debounce(this.reconnect.bind(this), 10);
   }
 
   componentDidMount() {
@@ -28,8 +32,13 @@ class Layout extends React.Component {
   reconnect() {
     console.log('reconnect');
     if (web3Modal.cachedProvider) {
+      console.log('cached');
       this.connect()
         .catch(e => console.warn('Reconnect failure', e));
+    } else {
+      console.log('not cached');
+      const chainId = defaultChainId();
+      this.setState({ balancer: new BalancerHelper(chainId) });
     }
   }
 
@@ -40,7 +49,7 @@ class Layout extends React.Component {
 
   handleDisconnect() {
     web3Modal.clearCachedProvider();
-    const state = this.initState();
+    const state = this.resetState();
     this.setState(state);
   }
 
@@ -71,7 +80,7 @@ class Layout extends React.Component {
     const network = await web3Provider.getNetwork();
     const account = await web3Account(web3Provider);
     const chainId = await checkChain(network.chainId, web3Provider);
-    const nativeCoin = await this.nativeCoin(chainId, web3Provider);
+    const nativeCoin = await this.coinWithBalance(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);
     this.setState({ web3Provider, chainId, nativeCoin, balancer, account });
     provider.on('chainChanged', e => this.onNetworkChanged(e));
@@ -79,13 +88,10 @@ class Layout extends React.Component {
     balancer.loadPortfolio(account, this.setState.bind(this));
   }
 
-  initState() {
+  resetState() {
     const chainId = defaultChainId();
     const balancer = new BalancerHelper(chainId);
-    const nativeCoin = { 
-      coin: nativeAsset(chainId),
-      balance: ZERO,
-    };
+    const nativeCoin = this.coin(chainId);
     return {
       chainId, nativeCoin, balancer,
       web3Provider: undefined,
@@ -100,18 +106,22 @@ class Layout extends React.Component {
     };
   }
 
-  async nativeCoin(chainId, web3Provider) {
-    let balance;
-    if (web3Provider) {
-      const account = await web3Account(web3Provider);
-      balance = await web3Provider.getBalance(account);
-      balance = fromEthersBnum(balance);
-    } else {
-      balance = ZERO;
-    }
+  async coinWithBalance(chainId, web3Provider) {
+    if (!web3Provider) return this.coin(chainId);
+
+    const account = await web3Account(web3Provider);
+    const balance = await web3Provider.getBalance(account);
+
     return { 
       coin: nativeAsset(chainId),
-      balance,
+      balance: fromEthersBnum(balance),
+    };
+  }
+
+  coin(chainId) {
+    return {
+      coin: nativeAsset(chainId),
+      balance: ZERO,
     };
   }
 

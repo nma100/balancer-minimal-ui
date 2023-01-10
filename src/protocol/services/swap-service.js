@@ -9,33 +9,22 @@ const Given = { In: 0, Out: 1 }
 
 export class SwapService {
 
-    poolsLoaded = false;
+    poolsPromise = null;
   
     constructor(swapper) {
         this.swapper = swapper;
-        this.initPools()
-            .then(loaded => { 
-                console.log('Pools loaded');
-                this.poolsLoaded = loaded; 
-            });
-    }
-
-    async initPools() {
-        return await this.swapper.fetchPools();
+        this.poolsPromise = this.swapper.fetchPools();
+        this.poolsPromise.then(() => console.log('Pools loaded'));
     }
 
     async findRoute(kind, tokens, value) {
 
         const { tokenIn, tokenOut } = tokens;
-        
-        if (this.poolsLoaded === false) {
-            console.time('Fetch pools');
-            this.poolsLoaded = await this.initPools();
-            console.timeEnd('Fetch pools');
-        } else {
-            console.log('Pools already loaded');
-        }
-        
+
+        console.time('Pools promise');
+        await this.poolsPromise;
+        console.timeEnd('Pools promise');
+
         const params = { 
             tokenIn: tokenIn.address, 
             tokenOut: tokenOut.address, 
@@ -57,6 +46,7 @@ export class SwapService {
         const {route, kind, maxSlippage } = swapInfo;
         const signer = web3Provider.getSigner();
         const userAddress = await web3Account(web3Provider);
+
         const deadline = BigNumber.from(`${Math.ceil(Date.now() / 1000) + 600}`); 
 
         const { to, data, value } = this.swapper.buildSwap({

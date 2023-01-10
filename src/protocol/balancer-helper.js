@@ -37,10 +37,6 @@ export class BalancerHelper {
     return await this.liquidityService.liquidity(pool);
   }
 
-  async initPools() {
-    return await this.swapService.initPools();
-  }
-
   async findRoute(kind, tokens, amount) {
     return await this.swapService.findRoute(kind, tokens, amount);
   }
