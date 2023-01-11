@@ -6,14 +6,15 @@ import {
 import { isEthNetwork, nativeAsset } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
-import { bnum, ZERO } from "../utils/bnum";
+import { bnum, fromEthersBnum, ONE, ZERO } from "../utils/bnum";
 import { AprService } from "./services/apr-service";
-import { SwapService } from "./services/swap-service";
+import { SwapService, Given } from "./services/swap-service";
 import { LiquidityService } from "./services/liquidity-service";
 import { TokenListService } from "./services/token-list-service";
 import { TokenPriceService } from "./services/token-price-service";
+import { constants } from "ethers";
 
-export class BalancerHelper {
+class BalancerHelper {
   
   constructor(chainId) {
     console.log('BalancerHelper', chainId);
@@ -43,6 +44,53 @@ export class BalancerHelper {
 
   async swap(swapInfo, web3Provider) {
     return await this.swapService.swap(swapInfo, web3Provider);
+  }
+
+  async initSwapPools() {
+    return await this.swapService.initPools();
+  }
+
+  async userBalance(user, asset) {
+    const { provider } = this.sdk;
+
+    let balance;
+    if (asset.address === constants.AddressZero) {
+      balance = await provider.getBalance(user);
+    } else {
+      balance = await this.ERC20(asset.address, provider).balanceOf(user);
+    }
+
+    return fromEthersBnum(balance, asset.decimals);
+  }
+
+  async allowance(owner, spender, token) {
+    const { provider } = this.sdk;
+
+    const allowance = await this
+      .ERC20(token.address, provider)
+      .allowance(owner, spender);
+
+    return fromEthersBnum(allowance, token.decimals);
+  }
+
+
+  priceInfo(route, kind, tokens) {
+    const { tokenIn, tokenOut } = tokens;
+    let amountIn, amountOut;
+    if (kind === Given.In) {
+      amountIn  = fromEthersBnum(route.swapAmount, tokenIn.decimals);
+      amountOut = fromEthersBnum(route.returnAmount, tokenOut.decimals);
+    } else {
+      amountIn  = fromEthersBnum(route.returnAmount, tokenIn.decimals);
+      amountOut = fromEthersBnum(route.swapAmount, tokenOut.decimals);
+    }
+    const spotPrice = ONE.div(bnum(route.marketSp));
+    const effectivePrice = amountOut.div(amountIn);
+    const priceImpact = spotPrice.minus(effectivePrice).div(spotPrice).times(100);
+    return { 
+      spotPrice, effectivePrice, priceImpact, 
+      amounts: { amountIn, amountOut }, 
+    };
   }
 
   async loadGaugeShares(account) {
@@ -330,3 +378,6 @@ export class BalancerHelper {
     );
   }
 }
+
+export { BalancerHelper, Given };
+

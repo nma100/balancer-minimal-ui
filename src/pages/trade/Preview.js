@@ -11,12 +11,14 @@ export const PREVIEW_MODAL = 'preview';
 
 const { MaxUint256, AddressZero } = constants;
 
-
 const Mode = {
   Init: 'init',
+  NoBalance: 'blce',
+  Allowance: 'allow',
   Approve: 'appr',
   Swap : 'swap',
-  Executed : 'exec'
+  Validate : 'valid',
+  Executed : 'exec',
 }
 
 const MIN_PI = 0.01;
@@ -37,18 +39,24 @@ export class Preview extends React.Component {
   }
   
   async onShow() {
-    const { account, balancer, web3Provider } = this.context;
-    const { tokenIn, swapAmount } = this.props.swapInfo.route;
+    const { account, balancer } = this.context;
+    const { tokenIn }  = this.props.swapInfo.tokens;
+    const { amountIn } = this.props.swapInfo.priceInfo.amounts;
     const { vault } = balancer.networkConfig().addresses.contracts;
 
+    if (!account) return;
+
+    const balanceIn = await balancer.userBalance(account, tokenIn);
+
     let mode;
-    if (tokenIn === AddressZero) {
+
+    if (balanceIn.lt(amountIn)) {
+      mode = Mode.NoBalance;
+    } else if (tokenIn.address === AddressZero) {
       mode = Mode.Swap;
     } else {
-      const allowance = await balancer
-        .ERC20(tokenIn, web3Provider)
-        .allowance(account, vault);
-      mode = allowance.gte(swapAmount) ? Mode.Swap : Mode.Approve;
+      const allowance = await balancer.allowance(account, vault, tokenIn);
+      mode = allowance.gte(amountIn) ? Mode.Swap : Mode.Allowance;
     }
 
     this.setState({ mode });
@@ -68,6 +76,8 @@ export class Preview extends React.Component {
     const { vault } = balancer.networkConfig().addresses.contracts;
     const signer = web3Provider.getSigner();
 
+    this.setState({ mode: Mode.Approve });
+
     const tx = await balancer
       .ERC20(tokenIn, signer)
       .approve(vault, MaxUint256);
@@ -80,8 +90,11 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const { balancer, web3Provider } = this.context;
 
+    this.setState({ mode: Mode.Validate });
+
     const tx = await balancer.swap(swapInfo, web3Provider);
     const callback = () => hideModal(PREVIEW_MODAL);
+    
     this.setState({ mode: Mode.Executed, tx }, callback);
   }
 
@@ -122,6 +135,14 @@ export class Preview extends React.Component {
     return { contentClass };
   }
 
+  spinner() {
+    return (
+      <div className="spinner-border spinner-border-sm ms-2" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    );
+  }
+
   render() {
     const { contentClass } = this.css();
     const { mode, tx } = this.state;
@@ -150,20 +171,32 @@ export class Preview extends React.Component {
                         <>
                           {mode === Mode.Init &&
                             <button type="button" className="btn btn-secondary" disabled>
-                                Initialisation
-                                <div className="spinner-border spinner-border-sm ms-2" role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
+                              Initialisation {this.spinner()}
+                            </button>
+                          }
+                          {mode === Mode.NoBalance &&
+                            <button type="button" className="btn btn-secondary" disabled>
+                              Insufficient {tokens?.tokenIn?.symbol} balance
+                            </button>
+                          }
+                          {mode === Mode.Allowance &&
+                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
+                              Approve {tokens?.tokenIn?.symbol}
                             </button>
                           }
                           {mode === Mode.Approve &&
-                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
-                              Approve {tokens?.tokenIn?.symbol}
+                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)} disabled>
+                              Approving {tokens?.tokenIn?.symbol} {this.spinner()}
                             </button>
                           }
                           {mode === Mode.Swap &&
                             <button type="button" className="btn btn-secondary" onClick={e => this.handleSwap(e)}>
                               Swap
+                            </button>
+                          }
+                          {mode === Mode.Validate &&
+                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)} disabled>
+                              Swap {this.spinner()}
                             </button>
                           }
                         </>

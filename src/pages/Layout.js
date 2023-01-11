@@ -75,15 +75,12 @@ class Layout extends React.Component {
   }
 
   async connect() {
-    console.log('connect 0');
+    console.log('web3Modal prompting');
     const provider = await web3Modal.connect();
-    console.log('connect 1');
+    console.log('web3Modal connected');
     const web3Provider = new ethers.providers.Web3Provider(provider);
-    console.log('connect 2');
     const network = await web3Provider.getNetwork();
-    console.log('connect 3');
     const account = await web3Account(web3Provider);
-    console.log('connect 4');
     const chainId = await checkChain(network.chainId, web3Provider);
     const nativeCoin = await this.coinWithBalance(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);

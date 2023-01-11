@@ -6,9 +6,8 @@ import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
 import { dollar, openModal } from '../../utils/page';
-import { bnum, bnumf, fromEthersBnum, ONE, ZERO } from '../../utils/bnum';
+import { bnum, bnumf, fromEthersBnum, ROUND_DOWN, ZERO } from '../../utils/bnum';
 import { debounce } from 'lodash';
-import { constants } from 'ethers';
 
 const IN = 0, OUT = 1;
 const DEBOUNCE = 1000;
@@ -33,8 +32,8 @@ class Trade extends React.Component {
       mode: Mode.Init, 
       maxSlippage: SLIPPAGE, 
     };
-    this.fetchPrice = debounce(
-      this.fetchPrice.bind(this),
+    this.findRoute = debounce(
+      this.findRoute.bind(this),
       DEBOUNCE
     );
   }
@@ -83,7 +82,7 @@ class Trade extends React.Component {
 
     const usdValue = await balancer.fetchPrice(token.address, amount);
 
-    if (kind === IN ) {
+    if (kind === IN) {
       this.setState({ usdValueIn:  usdValue })
     } else {
       this.setState({ usdValueOut: usdValue })
@@ -91,27 +90,23 @@ class Trade extends React.Component {
   }
 
   async updateBalance(kind) {
-    const { balancer, account, web3Provider } = this.context;
+    const { balancer, account } = this.context;
     const { tokenIn, tokenOut } = this.tokens();
 
     if (!account) return;
     const token = kind === IN ? tokenIn : tokenOut;
 
-    let balance;
-    if (token.address === constants.AddressZero) {
-      balance = await web3Provider.getBalance(account);
-    } else {
-      balance = await balancer.ERC20(token.address, web3Provider).balanceOf(account);
-    }
+    const balance = await balancer.userBalance(account, token);
 
-    if (kind === IN ) {
-      this.setState({ balanceIn:  this.bnum(balance, token.decimals) })
+    if (kind === IN) {
+      this.setState({ balanceIn:  balance })
     } else {
-      this.setState({ balanceOut: this.bnum(balance, token.decimals) })
+      this.setState({ balanceOut: balance })
     }
   }
 
   async handleAmountChange(kind) {
+    console.time('handleAmountChange');
     const { mode} = this.state;
 
     let enteredAmount, calculatedAmount;
@@ -128,37 +123,39 @@ class Trade extends React.Component {
         this.setState({ mode: Mode.TokensSelected });
       }
       calculatedAmount.value = '';
-      this.setState({ usdValueIn: ZERO, usdValueOut: ZERO })
+      this.setState({ usdValueIn: ZERO, usdValueOut: ZERO });
     } else {
       if (mode >= Mode.TokensSelected) {
         this.setState({ mode: Mode.FetchPrice });
-        this.fetchPrice(kind, enteredAmount, calculatedAmount); 
+        this.findRoute(kind, enteredAmount, calculatedAmount); 
       }
     }
+    console.timeEnd('handleAmountChange');
   }
 
-  async fetchPrice(kind, enteredAmount, calculatedAmount) {
+  async findRoute(kind, enteredAmount, calculatedAmount) {
     const tokens = this.tokens();
     const { balancer } = this.context;
     const { tokenIn, tokenOut } = tokens;
     this.updateUsdValue(kind);
     const route = await balancer.findRoute(kind, tokens, enteredAmount.value);
+    console.log('found route', route, route.swapAmount.toString());
     if (route.returnAmount.isZero()) {
       this.setState({ mode: Mode.NoRoute });
       calculatedAmount.value = '';
-      if (kind === IN ) {
+      if (kind === IN) {
         this.setState({ usdValueOut: ZERO })
       } else {
         this.setState({ usdValueIn: ZERO })
       }
     } else {
-      const priceInfo = this.priceInfo(route, kind, tokens);
+      const priceInfo = balancer.priceInfo(route, kind, tokens);
       this.setState({ mode: Mode.SwapReady, route, kind, priceInfo });
       let calculated;
       if (kind === IN) {
-        calculated = this.bnum(route.returnAmount, tokenOut.decimals);
+        calculated = fromEthersBnum(route.returnAmount, tokenOut.decimals);
       } else {
-        calculated = this.bnum(route.returnAmount, tokenIn.decimals);
+        calculated = fromEthersBnum(route.returnAmount, tokenIn.decimals);
       }
       calculatedAmount.value = bnumf(calculated, PRECISION);
       this.updateUsdValue(kind === IN ? OUT : IN);
@@ -168,7 +165,7 @@ class Trade extends React.Component {
   handleMaxBalance(event) {
     event.preventDefault();
     const { balanceIn: max } = this.balances();
-    this.amountElement(IN).value = bnumf(max, PRECISION);
+    this.amountElement(IN).value = bnumf(max, PRECISION, ROUND_DOWN);
     this.handleAmountChange(IN);
   }
 
@@ -185,10 +182,10 @@ class Trade extends React.Component {
         kind:  state.kind,
         priceInfo: state.priceInfo,
         maxSlippage: state.maxSlippage,
+        onSwapped: this.resetAmounts.bind(this),
       }
     }), callback);
   }
-
 
   tokens() {
     const { coin } = this.context.nativeCoin;
@@ -201,29 +198,20 @@ class Trade extends React.Component {
     const { balanceIn, balanceOut } = this.state;
     return { balanceIn: balanceIn ?? balance, balanceOut };
   }
-
-  amountElement(kind) {
-    const suffix = kind === IN  ? 'in' : 'out';
-    return document.getElementById(`amount-${suffix}`);
+  
+  resetAmounts() {
+    const { mode } = this.state;
+    if (mode > Mode.TokensSelected) {
+      this.setState({ mode: Mode.TokensSelected });
+    }
+    this.amountElement(IN).value  = '';
+    this.amountElement(OUT).value = '';
+    this.setState({ usdValueIn: ZERO, usdValueOut: ZERO });
   }
 
-  priceInfo(route, kind, tokens) {
-    const { tokenIn, tokenOut } = tokens;
-    let amountIn, amountOut;
-    if (kind === IN) {
-      amountIn  = this.bnum(route.swapAmount, tokenIn.decimals);
-      amountOut = this.bnum(route.returnAmount, tokenOut.decimals);
-    } else {
-      amountIn  = this.bnum(route.returnAmount, tokenIn.decimals);
-      amountOut = this.bnum(route.swapAmount, tokenOut.decimals);
-    }
-    const spotPrice = ONE.div(bnum(route.marketSp));
-    const effectivePrice = amountOut.div(amountIn);
-    const priceImpact = spotPrice.minus(effectivePrice).div(spotPrice).times(100);
-    return { 
-      spotPrice, effectivePrice, priceImpact, 
-      amounts: { amountIn, amountOut }, 
-    };
+  amountElement(kind) {
+    const suffix = kind === IN ? 'in' : 'out';
+    return document.getElementById(`amount-${suffix}`);
   }
 
   effectivePrice() {
@@ -231,10 +219,6 @@ class Trade extends React.Component {
     const { effectivePrice } = this.state.priceInfo;
     if (effectivePrice.lt(0.01)) return '';
     return `1 ${tokenIn.symbol} = ${bnumf(effectivePrice)} ${tokenOut.symbol}`;
-  }
-
-  bnum(amount, decimals)  {
-    return fromEthersBnum(amount, decimals);
   }
 
   render() {
