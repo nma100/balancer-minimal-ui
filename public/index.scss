@@ -45,10 +45,16 @@ $sidebar-pt: 100px;
     }
 }
 
+.form-select { 
+    cursor: pointer; 
+}
+
 #main-col { 
     padding-top: 2.5rem;
     padding-bottom: 2.5rem;
-    #select-chain { width: 8rem; }    
+    #select-chain { 
+        width: 8rem; 
+    }    
 }
 
 /* PORTFOLIO */

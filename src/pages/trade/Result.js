@@ -1,6 +1,6 @@
 import React from 'react';
 import { transactionUrl } from '../../networks';
-import { bnumf } from '../../utils/bnum';
+import { bnum, bnumf } from '../../utils/bnum';
 import { OutletContext } from '../Layout';
 
 export const RESULT_TOAST  = 'result';
@@ -21,9 +21,11 @@ export class Result extends React.Component {
     
   async onShow() {
     const { swapInfo, tx } = this.props;
+
     this.setState({ waiting: true });
     await tx.wait();
     this.setState({ waiting: false });
+    
     swapInfo.onSwapped();
   }
 
@@ -33,9 +35,9 @@ export class Result extends React.Component {
     const priceInfo = swapInfo?.priceInfo;
     return ( 
         <>
-          {bnumf(priceInfo?.amounts?.amountIn)} {tokens?.tokenIn?.symbol} 
+          {bnum(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
           <i className="bi bi-arrow-right mx-3"></i> 
-          {bnumf(priceInfo?.amounts?.amountOut)} {tokens?.tokenOut?.symbol}
+          {bnumf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
         </>
       );
   }
@@ -56,7 +58,7 @@ export class Result extends React.Component {
               (
                 <>Swap pending. Wait please.</>
               ) : (
-                <>Success : <a href={transactionUrl(chainId, txHash)}>Transaction</a></>
+                <>Success : <a href={transactionUrl(chainId, txHash)} target="_blank" rel="noreferrer" >Transaction</a></>
               ) 
             }
           </div>

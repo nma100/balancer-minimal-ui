@@ -10,6 +10,7 @@ import { bnum, bnumf, fromEthersBnum, ROUND_DOWN, ZERO } from '../../utils/bnum'
 import { debounce } from 'lodash';
 
 const IN = 0, OUT = 1;
+
 const DEBOUNCE = 1000;
 const PRECISION = 5;
 const SLIPPAGE = 50;
@@ -70,17 +71,18 @@ class Trade extends React.Component {
 
   onSaveSettings(settings) {
     const { maxSlippage } = settings;
-    this.setState({ maxSlippage});
+    this.setState({ maxSlippage });
   }
 
   async updateUsdValue(kind) {
     const { balancer } = this.context;
     const { tokenIn, tokenOut } = this.tokens();
+    const { amountIn, amountOut } = this.amounts();
 
-    const token = kind === IN ? tokenIn : tokenOut;
-    const amount = bnum(this.amountElement(kind).value);
+    const token  = kind === IN ? tokenIn : tokenOut;
+    const amount = kind === IN ? amountIn.value : amountOut.value;
 
-    const usdValue = await balancer.fetchPrice(token.address, amount);
+    const usdValue = await balancer.fetchPrice(token.address, bnum(amount));
 
     if (kind === IN) {
       this.setState({ usdValueIn:  usdValue })
@@ -94,78 +96,74 @@ class Trade extends React.Component {
     const { tokenIn, tokenOut } = this.tokens();
 
     if (!account) return;
-    const token = kind === IN ? tokenIn : tokenOut;
 
+    const token = kind === IN ? tokenIn : tokenOut;
     const balance = await balancer.userBalance(account, token);
 
     if (kind === IN) {
-      this.setState({ balanceIn:  balance })
+      this.setState({ balanceIn:  balance });
     } else {
-      this.setState({ balanceOut: balance })
+      this.setState({ balanceOut: balance });
     }
   }
 
   async handleAmountChange(kind) {
     console.time('handleAmountChange');
     const { mode} = this.state;
+    const { amountIn, amountOut } = this.amounts();
 
-    let enteredAmount, calculatedAmount;
-    if (kind === IN) {
-      enteredAmount = this.amountElement(IN);
-      calculatedAmount = this.amountElement(OUT);
-    } else {
-      enteredAmount = this.amountElement(OUT);
-      calculatedAmount = this.amountElement(IN);
-    }
+    const entered = kind === IN ? amountIn : amountOut;
+    const calculated = kind === IN ? amountOut : amountIn;
 
-    if (bnum(enteredAmount.value).isZero()) {
+    if (bnum(entered.value).isZero()) {
       if (mode > Mode.TokensSelected) {
         this.setState({ mode: Mode.TokensSelected });
       }
-      calculatedAmount.value = '';
+      calculated.value = '';
       this.setState({ usdValueIn: ZERO, usdValueOut: ZERO });
     } else {
       if (mode >= Mode.TokensSelected) {
         this.setState({ mode: Mode.FetchPrice });
-        this.findRoute(kind, enteredAmount, calculatedAmount); 
+        this.findRoute(kind, entered, calculated); 
       }
     }
     console.timeEnd('handleAmountChange');
   }
 
-  async findRoute(kind, enteredAmount, calculatedAmount) {
+  async findRoute(kind, entered, calculated) {
     const tokens = this.tokens();
     const { balancer } = this.context;
     const { tokenIn, tokenOut } = tokens;
     this.updateUsdValue(kind);
-    const route = await balancer.findRoute(kind, tokens, enteredAmount.value);
-    console.log('found route', route, route.swapAmount.toString());
+    const route = await balancer.findRoute(kind, tokens, entered.value);
+    console.log('Route', route);
     if (route.returnAmount.isZero()) {
       this.setState({ mode: Mode.NoRoute });
-      calculatedAmount.value = '';
+      calculated.value = '';
       if (kind === IN) {
-        this.setState({ usdValueOut: ZERO })
+        this.setState({ usdValueOut: ZERO });
       } else {
-        this.setState({ usdValueIn: ZERO })
+        this.setState({ usdValueIn: ZERO });
       }
     } else {
       const priceInfo = balancer.priceInfo(route, kind, tokens);
       this.setState({ mode: Mode.SwapReady, route, kind, priceInfo });
-      let calculated;
+      let returned;
       if (kind === IN) {
-        calculated = fromEthersBnum(route.returnAmount, tokenOut.decimals);
+        returned = fromEthersBnum(route.returnAmount, tokenOut.decimals);
       } else {
-        calculated = fromEthersBnum(route.returnAmount, tokenIn.decimals);
+        returned = fromEthersBnum(route.returnAmount, tokenIn.decimals);
       }
-      calculatedAmount.value = bnumf(calculated, PRECISION);
+      calculated.value = bnumf(returned, PRECISION);
       this.updateUsdValue(kind === IN ? OUT : IN);
     }
   }
 
   handleMaxBalance(event) {
     event.preventDefault();
-    const { balanceIn: max } = this.balances();
-    this.amountElement(IN).value = bnumf(max, PRECISION, ROUND_DOWN);
+    const { balanceIn } = this.balances();
+    const { amountIn  } = this.amounts();
+    amountIn.value = bnumf(balanceIn, PRECISION, ROUND_DOWN);
     this.handleAmountChange(IN);
   }
 
@@ -188,37 +186,37 @@ class Trade extends React.Component {
   }
 
   tokens() {
-    const { coin } = this.context.nativeCoin;
+    const coin = this.context.nativeCoin?.coin;
     const { tokenIn, tokenOut } = this.state;
     return { tokenIn: tokenIn ?? coin, tokenOut };
   }
 
   balances() {
-    const { balance } = this.context.nativeCoin;
+    const balance = this.context.nativeCoin?.balance;
     const { balanceIn, balanceOut } = this.state;
     return { balanceIn: balanceIn ?? balance, balanceOut };
   }
-  
+
+  amounts() {
+    const amountIn  = document.getElementById('amount-in');
+    const amountOut = document.getElementById('amount-out');
+    return { amountIn, amountOut };
+  }
+
   resetAmounts() {
     const { mode } = this.state;
+    const { amountIn, amountOut } = this.amounts();
     if (mode > Mode.TokensSelected) {
       this.setState({ mode: Mode.TokensSelected });
     }
-    this.amountElement(IN).value  = '';
-    this.amountElement(OUT).value = '';
+    amountIn.value = amountOut.value  = '';
     this.setState({ usdValueIn: ZERO, usdValueOut: ZERO });
-  }
-
-  amountElement(kind) {
-    const suffix = kind === IN ? 'in' : 'out';
-    return document.getElementById(`amount-${suffix}`);
   }
 
   effectivePrice() {
     const { tokenIn, tokenOut } = this.tokens();
     const { effectivePrice } = this.state.priceInfo;
-    if (effectivePrice.lt(0.01)) return '';
-    return `1 ${tokenIn.symbol} = ${bnumf(effectivePrice)} ${tokenOut.symbol}`;
+    return `1 ${tokenIn.symbol} = ${bnumf(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
   }
 
   render() {
@@ -254,11 +252,21 @@ class Trade extends React.Component {
                   <div className="text-light text-opacity-75">{dollar(usdValueIn)}</div>
                 </div>
                 <div>
-                  <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(IN)}>
-                    <CryptoIcon key={tokenIn.symbol} name={tokenIn.symbol} cssClass="me-3" /> 
-                    <span className="fs-5 me-3">{tokenIn.symbol}</span> 
-                    <i className="bi bi-chevron-down align-self-center"></i>
-                  </div>
+                {tokenIn ? 
+                    ( 
+                      <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(IN)}>
+                        <CryptoIcon key={tokenIn.symbol} name={tokenIn.symbol} cssClass="me-3" /> 
+                        <span className="fs-5 me-3">{tokenIn.symbol}</span> 
+                        <i className="bi bi-chevron-down align-self-center"></i>
+                      </div>
+                    ) : (
+                      <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2">
+                        <CryptoIcon key="ETH" name="ETH" cssClass="me-3" /> 
+                        <span className="fs-5 me-3">ETH</span> 
+                        <i className="bi bi-chevron-down align-self-center"></i>
+                      </div>
+                    ) 
+                  } 
                   <div className="text-center small">
                     <span className="">Balance : {bnumf(balanceIn)}</span> {balanceIn?.gt(0) && ( 
                       <>

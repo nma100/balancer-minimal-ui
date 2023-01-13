@@ -5,7 +5,7 @@ import { web3Account } from "../../web3-connect";
 const MAX_POOLS = 4;
 const GAS_PRICE = parseUnits('1', 9);
 
-export const Given = { In: 0, Out: 1 }
+export const Given = { In: 0, Out: 1 };
 
 export class SwapService {
 

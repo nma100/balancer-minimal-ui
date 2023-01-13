@@ -1,5 +1,5 @@
 import { constants } from "ethers";
-import { bnum, ONE } from "../../utils/bnum";
+import { bnum, ZERO, ONE } from "../../utils/bnum";
 
 const NATIVE_ASSET = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -12,6 +12,7 @@ export class TokenPriceService {
     }
 
     async fetch(token, amount = ONE) {
+        if (!token || !amount || amount.isZero()) return ZERO;
         
         const address = (token === AddressZero) ? NATIVE_ASSET : token;
 

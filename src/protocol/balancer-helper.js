@@ -14,7 +14,7 @@ import { TokenListService } from "./services/token-list-service";
 import { TokenPriceService } from "./services/token-price-service";
 import { constants } from "ethers";
 
-class BalancerHelper {
+export class BalancerHelper {
   
   constructor(chainId) {
     console.log('BalancerHelper', chainId);
@@ -284,7 +284,6 @@ class BalancerHelper {
   }
 
   async fetchPrice(token, amount) {
-    if (!token || !amount || amount.isZero()) return ZERO;
     return await this.tokenPriceService.fetch(token, amount);
   }
 
@@ -378,6 +377,4 @@ class BalancerHelper {
     );
   }
 }
-
-export { BalancerHelper, Given };
 

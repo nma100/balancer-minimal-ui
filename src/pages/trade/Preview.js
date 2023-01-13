@@ -3,7 +3,7 @@ import { isDark } from '../../theme';
 import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
 import { constants } from 'ethers';
-import { bnumf } from '../../utils/bnum';
+import { bnum, bnumf } from '../../utils/bnum';
 import { numf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 
@@ -12,13 +12,13 @@ export const PREVIEW_MODAL = 'preview';
 const { MaxUint256, AddressZero } = constants;
 
 const Mode = {
-  Init: 'init',
-  NoBalance: 'blce',
-  Allowance: 'allow',
-  Approve: 'appr',
-  Swap : 'swap',
-  Validate : 'valid',
-  Executed : 'exec',
+  Init: 0,
+  NoBalance: 1,
+  Allowance: 2,
+  Approve: 3,
+  Swap : 4,
+  Confirm : 5,
+  Executed : 6,
 }
 
 const MIN_PI = 0.01;
@@ -90,7 +90,7 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const { balancer, web3Provider } = this.context;
 
-    this.setState({ mode: Mode.Validate });
+    this.setState({ mode: Mode.Confirm });
 
     const tx = await balancer.swap(swapInfo, web3Provider);
     const callback = () => hideModal(PREVIEW_MODAL);
@@ -104,9 +104,9 @@ export class Preview extends React.Component {
     const priceInfo = swapInfo?.priceInfo;
     return ( 
         <>
-          {bnumf(priceInfo?.amounts?.amountIn)} {tokens?.tokenIn?.symbol} 
+          {bnum(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
           <i className="bi bi-arrow-right mx-3"></i> 
-          {bnumf(priceInfo?.amounts?.amountOut)} {tokens?.tokenOut?.symbol}
+          {bnumf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
         </>
       );
   }
@@ -115,7 +115,7 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
     const effectivePrice = swapInfo?.priceInfo?.effectivePrice;
-    return `1 ${tokens?.tokenIn.symbol} = ${bnumf(effectivePrice)} ${tokens?.tokenOut.symbol}`;
+    return `1 ${tokens?.tokenIn.symbol} = ${bnumf(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
   }
 
   maxSlippage() {
@@ -185,7 +185,7 @@ export class Preview extends React.Component {
                             </button>
                           }
                           {mode === Mode.Approve &&
-                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)} disabled>
+                            <button type="button" className="btn btn-secondary" disabled>
                               Approving {tokens?.tokenIn?.symbol} {this.spinner()}
                             </button>
                           }
@@ -194,9 +194,9 @@ export class Preview extends React.Component {
                               Swap
                             </button>
                           }
-                          {mode === Mode.Validate &&
-                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)} disabled>
-                              Swap {this.spinner()}
+                          {mode === Mode.Confirm &&
+                            <button type="button" className="btn btn-secondary" disabled>
+                              Confirmation {this.spinner()}
                             </button>
                           }
                         </>

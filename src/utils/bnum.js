@@ -16,7 +16,7 @@ export function bnum(val) {
     return new BigNumber(val);
 }
 
-export function bnumf(value, precision = 2, rm = ROUND_HALF_UP) {
+export function bnumf(value, precision = 2, rm = ROUND_UP) {
     let val;
     if (BigNumber.isBigNumber(value) && !value.isNaN() && value.isFinite()) {
         val = value;

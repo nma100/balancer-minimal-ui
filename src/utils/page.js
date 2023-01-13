@@ -14,6 +14,10 @@ export function openToast(id) {
   Toast.getOrCreateInstance(`#${id}`).show();
 }
 
+export function reload() {
+  window.location.reload();
+}
+
 export const truncateAddress = (address) => {
     if (!address) return 'No Account';
     const match = address.match(

@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from "ethers";
-import { truncateAddress } from "../utils/page";
+import { reload, truncateAddress } from "../utils/page";
 import { web3Modal, switchChain, web3Account } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
@@ -10,16 +10,15 @@ import { currentTheme, switchTheme, isDark } from "../theme";
 import { fromEthersBnum, ZERO } from "../utils/bnum";
 import { debounce } from "lodash";
 
+const RELOAD_CHAIN = 'reload-chain';
+
 export const OutletContext = React.createContext();
 
 class Layout extends React.Component {
 
   constructor(props) {
     super(props);
-    const theme = currentTheme();
-    const chainId = defaultChainId();
-    const nativeCoin = this.coin(chainId);
-    this.state = { chainId, nativeCoin, theme };
+    this.state = { theme: currentTheme() };
     this.reconnect = debounce(this.reconnect.bind(this), 10);
   }
 
@@ -31,9 +30,10 @@ class Layout extends React.Component {
 
   reconnect() {
     console.log('Reconnect');
-    const chainId = defaultChainId();
-    const balancer = new BalancerHelper(chainId)
-    this.setState({ balancer });
+    const chainId = this.getChainToReload();
+    const nativeCoin = this.coin(chainId);
+    const balancer = new BalancerHelper(chainId);
+    this.setState({ chainId, nativeCoin, balancer });
 
     if (web3Modal.cachedProvider) {
       console.log('Cached provider');
@@ -54,30 +54,37 @@ class Layout extends React.Component {
   }
 
   handleChangeNetwork(e) {
-    if (!this.state.account) return;
     const chainId = e.target.value;
-    const web3Provider = this.state.web3Provider;
-    switchChain(chainId, web3Provider);
+    if (this.state.account) {
+      const { web3Provider } = this.state;
+      switchChain(chainId, web3Provider);
+    } else {
+      this.setChainToReload(chainId);
+    }
+  }
+
+  setChainToReload(chainId) {
+    localStorage.setItem(RELOAD_CHAIN, chainId);
+    reload();
+  }
+
+  getChainToReload() {
+    const chainId = localStorage.getItem(RELOAD_CHAIN) || defaultChainId();
+    localStorage.removeItem(RELOAD_CHAIN);
+    return chainId;
   }
 
   handleToggleTheme() {
     switchTheme();
-    window.location.reload()
-  }
-
-  onNetworkChanged() {
-    this.connect();
-  }
-
-  onAccountChanged(accounts) {
-    const { balancer } = this.state;
-    balancer.loadPortfolio(accounts[0], this.setState.bind(this));
+    reload();
   }
 
   async connect() {
     console.log('web3Modal prompting');
     const provider = await web3Modal.connect();
     console.log('web3Modal connected');
+    provider.on('chainChanged', reload);
+    provider.on('accountsChanged', reload);
     const web3Provider = new ethers.providers.Web3Provider(provider);
     const network = await web3Provider.getNetwork();
     const account = await web3Account(web3Provider);
@@ -85,8 +92,6 @@ class Layout extends React.Component {
     const nativeCoin = await this.coinWithBalance(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);
     this.setState({ web3Provider, chainId, nativeCoin, balancer, account });
-    provider.on('chainChanged', e => this.onNetworkChanged(e));
-    provider.on('accountsChanged', e => this.onAccountChanged(e));
     balancer.loadPortfolio(account, this.setState.bind(this));
   }
 
@@ -95,7 +100,7 @@ class Layout extends React.Component {
     const balancer = new BalancerHelper(chainId);
     const nativeCoin = this.coin(chainId);
     return {
-      chainId, nativeCoin, balancer,
+      chainId, balancer, nativeCoin,
       web3Provider: undefined,
       account: undefined,
       portfolio: undefined,
@@ -110,10 +115,8 @@ class Layout extends React.Component {
 
   async coinWithBalance(chainId, web3Provider) {
     if (!web3Provider) return this.coin(chainId);
-
     const account = await web3Account(web3Provider);
     const balance = await web3Provider.getBalance(account);
-
     return { 
       coin: nativeAsset(chainId),
       balance: fromEthersBnum(balance),
