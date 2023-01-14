@@ -1,4 +1,4 @@
-import { bnum } from "../../utils/bnum";
+import { bn } from "../../utils/bn";
 
 export class LiquidityService {
   
@@ -17,8 +17,8 @@ export class LiquidityService {
       }
     
     check(pool, liquidity) {
-        const bn = bnum(liquidity);
-        if (bn.isNaN() || !bn.isFinite() || bn.isZero()) {
+        const n = bn(liquidity);
+        if (n.isNaN() || !n.isFinite() || n.isZero()) {
             const msg = `Incorrect liquidity value (${pool.name}) : ${liquidity}`;
             console.error(msg);
             throw new Error(msg);

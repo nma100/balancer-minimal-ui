@@ -6,7 +6,7 @@ import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
 import { dollar, openModal } from '../../utils/page';
-import { bnum, bnumf, fromEthersBnum, ROUND_DOWN, ZERO } from '../../utils/bnum';
+import { bn, bnf, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
 import { debounce } from 'lodash';
 
 const IN = 0, OUT = 1;
@@ -82,7 +82,7 @@ class Trade extends React.Component {
     const token  = kind === IN ? tokenIn : tokenOut;
     const amount = kind === IN ? amountIn.value : amountOut.value;
 
-    const usdValue = await balancer.fetchPrice(token.address, bnum(amount));
+    const usdValue = await balancer.fetchPrice(token.address, bn(amount));
 
     if (kind === IN) {
       this.setState({ usdValueIn:  usdValue })
@@ -115,7 +115,7 @@ class Trade extends React.Component {
     const entered = kind === IN ? amountIn : amountOut;
     const calculated = kind === IN ? amountOut : amountIn;
 
-    if (bnum(entered.value).isZero()) {
+    if (bn(entered.value).isZero()) {
       if (mode > Mode.TokensSelected) {
         this.setState({ mode: Mode.TokensSelected });
       }
@@ -150,11 +150,11 @@ class Trade extends React.Component {
       this.setState({ mode: Mode.SwapReady, route, kind, priceInfo });
       let returned;
       if (kind === IN) {
-        returned = fromEthersBnum(route.returnAmount, tokenOut.decimals);
+        returned = fromEthersBN(route.returnAmount, tokenOut.decimals);
       } else {
-        returned = fromEthersBnum(route.returnAmount, tokenIn.decimals);
+        returned = fromEthersBN(route.returnAmount, tokenIn.decimals);
       }
-      calculated.value = bnumf(returned, PRECISION);
+      calculated.value = bnf(returned, PRECISION);
       this.updateUsdValue(kind === IN ? OUT : IN);
     }
   }
@@ -163,7 +163,7 @@ class Trade extends React.Component {
     event.preventDefault();
     const { balanceIn } = this.balances();
     const { amountIn  } = this.amounts();
-    amountIn.value = bnumf(balanceIn, PRECISION, ROUND_DOWN);
+    amountIn.value = bnf(balanceIn, PRECISION, ROUND_DOWN);
     this.handleAmountChange(IN);
   }
 
@@ -216,7 +216,7 @@ class Trade extends React.Component {
   effectivePrice() {
     const { tokenIn, tokenOut } = this.tokens();
     const { effectivePrice } = this.state.priceInfo;
-    return `1 ${tokenIn.symbol} = ${bnumf(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
+    return `1 ${tokenIn.symbol} = ${bnf(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
   }
 
   render() {
@@ -268,7 +268,7 @@ class Trade extends React.Component {
                     ) 
                   } 
                   <div className="text-center small">
-                    <span className="">Balance : {bnumf(balanceIn)}</span> {balanceIn?.gt(0) && ( 
+                    <span>Balance : {bnt(balanceIn, 3, ROUND_UP)}</span> {balanceIn?.gt(0) && ( 
                       <>
                         <span className="px-1">·</span> <a href="#" className="link-light" onClick={(e) => this.handleMaxBalance(e)}>Max</a>
                       </> 
@@ -307,7 +307,7 @@ class Trade extends React.Component {
                       ) 
                     } <i className="bi bi-chevron-down align-self-center"></i>               
                   </div>
-                  <div className="text-center small">Balance : {bnumf(balanceOut)}</div>
+                  <div className="text-center small">Balance : {bnt(balanceOut, 3, ROUND_UP)}</div>
                 </div>
               </div>
               <div className="d-grid">

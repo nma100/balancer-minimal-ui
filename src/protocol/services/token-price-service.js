@@ -1,5 +1,5 @@
 import { constants } from "ethers";
-import { bnum, ZERO, ONE } from "../../utils/bnum";
+import { bn, ZERO, ONE } from "../../utils/bn";
 
 const NATIVE_ASSET = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -19,7 +19,7 @@ export class TokenPriceService {
         const price = await this.tokenPrices.find(address);
         if (!price?.usd) return undefined;
 
-        return bnum(price.usd).times(amount);
+        return bn(price.usd).times(amount);
     }
    
 }

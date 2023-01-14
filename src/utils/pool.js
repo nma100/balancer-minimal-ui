@@ -1,8 +1,8 @@
-import { bnum, ZERO } from "./bnum";
+import { bn, ZERO } from "./bn";
 
 export function getBptPrice(pool) {
     if (!pool) return ZERO;
-    return bnum(pool.totalLiquidity).div(pool.totalShares);
+    return bn(pool.totalLiquidity).div(pool.totalShares);
 }
 
 export function getBptBalanceFiatValue(pool, balance) {

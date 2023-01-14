@@ -1,6 +1,6 @@
 import React from 'react';
 import { transactionUrl } from '../../networks';
-import { bnum, bnumf } from '../../utils/bnum';
+import { bn, bnf } from '../../utils/bn';
 import { OutletContext } from '../Layout';
 
 export const RESULT_TOAST  = 'result';
@@ -35,9 +35,9 @@ export class Result extends React.Component {
     const priceInfo = swapInfo?.priceInfo;
     return ( 
         <>
-          {bnum(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
+          {bn(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
           <i className="bi bi-arrow-right mx-3"></i> 
-          {bnumf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
+          {bnf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
         </>
       );
   }

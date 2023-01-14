@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { GOERLI_ID, POLYGON_ID, ETHEREUM_ID } from '../networks';
-import { bnum, bnumf } from '../utils/bnum';
+import { bn, bnf } from '../utils/bn';
 import { BalancerHelper } from './balancer-helper';
 
 const USER = "0x91F450602455564A64207414c7Fbd1F1F0EbB425";
@@ -97,13 +97,13 @@ it('Token price', async () => {
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
     const balancer = new BalancerHelper(ETHEREUM_ID);
     const oneEthPrice = await balancer.fetchPrice(ETH);
-    const tenDaiPrice = await balancer.fetchPrice(DAI, bnum(10));
-    console.log(bnumf(oneEthPrice), bnumf(tenDaiPrice));
+    const tenDaiPrice = await balancer.fetchPrice(DAI, bn(10));
+    console.log(bnf(oneEthPrice), bnf(tenDaiPrice));
 });
 
 function logShares(pool) {
     const tokens = pool.tokens.map(t => t.symbol);
-    const shares = bnumf(pool.shares);
+    const shares = bnf(pool.shares);
     console.log(tokens, shares);
 }
 

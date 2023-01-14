@@ -1,3 +1,3 @@
-export function numf(value, precision = 2) {
+export function nf(value, precision = 2) {
     return value?.toFixed(precision);
 }

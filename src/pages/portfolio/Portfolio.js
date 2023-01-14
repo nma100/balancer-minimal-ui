@@ -6,7 +6,7 @@ import PoolApr from "../../components/PoolApr";
 import PoolShares from "../../components/PoolShares";
 import PoolIcons from "../../components/PoolIcons";
 import UserBoost from "../../components/UserBoost";
-import { bnum } from "../../utils/bnum"
+import { bn } from "../../utils/bn"
 import { dollar, openModal } from "../../utils/page";
 import { format } from "date-fns";
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
@@ -51,7 +51,7 @@ class Portfolio extends React.Component {
         (this.isEthereum() && veBal === false)) {
       total = false;
     } else {
-      total = bnum(staked).plus(unstaked).plus(veBal);
+      total = bn(staked).plus(unstaked).plus(veBal);
     }
     return total;
   }

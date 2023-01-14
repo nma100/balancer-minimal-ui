@@ -3,8 +3,8 @@ import { isDark } from '../../theme';
 import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
 import { constants } from 'ethers';
-import { bnum, bnumf } from '../../utils/bnum';
-import { numf } from '../../utils/number';
+import { bn, bnf } from '../../utils/bn';
+import { nf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 
 export const PREVIEW_MODAL = 'preview';
@@ -104,9 +104,9 @@ export class Preview extends React.Component {
     const priceInfo = swapInfo?.priceInfo;
     return ( 
         <>
-          {bnum(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
+          {bn(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
           <i className="bi bi-arrow-right mx-3"></i> 
-          {bnumf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
+          {bnf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
         </>
       );
   }
@@ -115,18 +115,18 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
     const effectivePrice = swapInfo?.priceInfo?.effectivePrice;
-    return `1 ${tokens?.tokenIn.symbol} = ${bnumf(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
+    return `1 ${tokens?.tokenIn.symbol} = ${bnf(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
   }
 
   maxSlippage() {
     const ms = this.props.swapInfo?.maxSlippage;
-    return ms ? `${numf(ms / 100)}%` : '—';
+    return ms ? `${nf(ms / 100)}%` : '—';
   }
 
   priceImpact() {
     const { swapInfo } = this.props;
     const pi = swapInfo?.priceInfo?.priceImpact
-    return pi < MIN_PI ?  `< ${numf(MIN_PI)}%` : `${numf(pi)}%`;
+    return pi < MIN_PI ?  `< ${nf(MIN_PI)}%` : `${nf(pi)}%`;
   }
 
   css() {

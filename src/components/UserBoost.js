@@ -1,5 +1,5 @@
 import React from 'react';
-import { bnumf } from '../utils/bnum';
+import { bnf } from '../utils/bn';
 import { OutletContext } from '../pages/Layout';
 
 const PRECISION = 3, UNKNOWN = 'N/A';
@@ -21,7 +21,7 @@ export default class UserBoost extends React.Component {
 
         let boost = UNKNOWN;
         if (userBoosts && userBoosts[pool.id]) {
-            boost = bnumf(userBoosts[pool.id], PRECISION);
+            boost = bnf(userBoosts[pool.id], PRECISION);
         } 
 
         this.setState({ boost });

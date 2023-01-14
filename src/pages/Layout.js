@@ -7,7 +7,7 @@ import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
-import { fromEthersBnum, ZERO } from "../utils/bnum";
+import { fromEthersBN, ZERO } from "../utils/bn";
 import { debounce } from "lodash";
 
 const RELOAD_CHAIN = 'reload-chain';
@@ -29,28 +29,28 @@ class Layout extends React.Component {
   }
 
   reconnect() {
-    console.log('Reconnect');
+    const state = this.setState.bind(this);
     const chainId = this.getChainToReload();
     const nativeCoin = this.coin(chainId);
     const balancer = new BalancerHelper(chainId);
-    this.setState({ chainId, nativeCoin, balancer });
+    state({ chainId, nativeCoin, balancer });
 
     if (web3Modal.cachedProvider) {
-      console.log('Cached provider');
-      this.connect()
+      this.web3Connect()
+        .then(({ balancer, account }) => balancer.loadPortfolio(account, state))
         .catch(e => console.warn('Reconnect failure', e));
     }
   }
 
   handleConnect() {
-    this.connect()
+    this.web3Connect()
+      .then(() => reload())
       .catch(e => console.error('Connect error', e));
   }
 
   handleDisconnect() {
     web3Modal.clearCachedProvider();
-    const state = this.resetState();
-    this.setState(state);
+    reload();
   }
 
   handleChangeNetwork(e) {
@@ -79,10 +79,8 @@ class Layout extends React.Component {
     reload();
   }
 
-  async connect() {
-    console.log('web3Modal prompting');
+  async web3Connect() {
     const provider = await web3Modal.connect();
-    console.log('web3Modal connected');
     provider.on('chainChanged', reload);
     provider.on('accountsChanged', reload);
     const web3Provider = new ethers.providers.Web3Provider(provider);
@@ -92,25 +90,7 @@ class Layout extends React.Component {
     const nativeCoin = await this.coinWithBalance(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);
     this.setState({ web3Provider, chainId, nativeCoin, balancer, account });
-    balancer.loadPortfolio(account, this.setState.bind(this));
-  }
-
-  resetState() {
-    const chainId = defaultChainId();
-    const balancer = new BalancerHelper(chainId);
-    const nativeCoin = this.coin(chainId);
-    return {
-      chainId, balancer, nativeCoin,
-      web3Provider: undefined,
-      account: undefined,
-      portfolio: undefined,
-      stakedPools: undefined,
-      unstakedPools: undefined,
-      veBalPool: undefined,
-      stakedAmount: undefined,
-      unstakedAmount: undefined,
-      veBalAmount: undefined,
-    };
+    return { balancer, account };
   }
 
   async coinWithBalance(chainId, web3Provider) {
@@ -119,7 +99,7 @@ class Layout extends React.Component {
     const balance = await web3Provider.getBalance(account);
     return { 
       coin: nativeAsset(chainId),
-      balance: fromEthersBnum(balance),
+      balance: fromEthersBN(balance),
     };
   }
 

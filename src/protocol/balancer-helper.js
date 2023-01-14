@@ -6,7 +6,7 @@ import {
 import { isEthNetwork, nativeAsset } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
-import { bnum, fromEthersBnum, ONE, ZERO } from "../utils/bnum";
+import { bn, fromEthersBN, ONE, ZERO } from "../utils/bn";
 import { AprService } from "./services/apr-service";
 import { SwapService, Given } from "./services/swap-service";
 import { LiquidityService } from "./services/liquidity-service";
@@ -60,7 +60,7 @@ export class BalancerHelper {
       balance = await this.ERC20(asset.address, provider).balanceOf(user);
     }
 
-    return fromEthersBnum(balance, asset.decimals);
+    return fromEthersBN(balance, asset.decimals);
   }
 
   async allowance(owner, spender, token) {
@@ -70,7 +70,7 @@ export class BalancerHelper {
       .ERC20(token.address, provider)
       .allowance(owner, spender);
 
-    return fromEthersBnum(allowance, token.decimals);
+    return fromEthersBN(allowance, token.decimals);
   }
 
 
@@ -78,13 +78,13 @@ export class BalancerHelper {
     const { tokenIn, tokenOut } = tokens;
     let amountIn, amountOut;
     if (kind === Given.In) {
-      amountIn  = fromEthersBnum(route.swapAmount, tokenIn.decimals);
-      amountOut = fromEthersBnum(route.returnAmount, tokenOut.decimals);
+      amountIn  = fromEthersBN(route.swapAmount, tokenIn.decimals);
+      amountOut = fromEthersBN(route.returnAmount, tokenOut.decimals);
     } else {
-      amountIn  = fromEthersBnum(route.returnAmount, tokenIn.decimals);
-      amountOut = fromEthersBnum(route.swapAmount, tokenOut.decimals);
+      amountIn  = fromEthersBN(route.returnAmount, tokenIn.decimals);
+      amountOut = fromEthersBN(route.swapAmount, tokenOut.decimals);
     }
-    const spotPrice = ONE.div(bnum(route.marketSp));
+    const spotPrice = ONE.div(bn(route.marketSp));
     const effectivePrice = amountOut.div(amountIn);
     const priceImpact = spotPrice.minus(effectivePrice).div(spotPrice).times(100);
     return { 
@@ -235,14 +235,14 @@ export class BalancerHelper {
 
     const boosts = gaugeShares.map((gaugeShare) => {
       const gaugeAddress = gaugeShare.gauge.id;
-      const gaugeWorkingSupply = bnum(workingSupplies[gaugeAddress]);
-      const gaugeBalance = bnum(gaugeShare.balance);
+      const gaugeWorkingSupply = bn(workingSupplies[gaugeAddress]);
+      const gaugeBalance = bn(gaugeShare.balance);
 
-      const adjustedGaugeBalance = bnum(0.4)
+      const adjustedGaugeBalance = bn(0.4)
         .times(gaugeBalance)
         .plus(
-          bnum(0.6).times(
-            bnum(veBALBalance)
+          bn(0.6).times(
+            bn(veBALBalance)
               .div(veBALInfo.totalSupply)
               .times(gaugeShare.gauge.totalSupply)
           )
@@ -252,7 +252,7 @@ export class BalancerHelper {
         ? gaugeBalance
         : adjustedGaugeBalance;
 
-      const zeroBoostWorkingBalance = bnum(0.4).times(gaugeBalance);
+      const zeroBoostWorkingBalance = bn(0.4).times(gaugeBalance);
       const zeroBoostWorkingSupply = gaugeWorkingSupply
         .minus(workingBalance)
         .plus(zeroBoostWorkingBalance);
