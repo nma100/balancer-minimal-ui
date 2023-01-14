@@ -42,4 +42,17 @@ it('bnt', () => {
     assert.strictEqual(bnt(n, 5), '12.345');
 });
 
+it('cfg',() => {
+    BigNumber.set({ DECIMAL_PLACES: 10 });
+
+    const BN = BigNumber.clone({ DECIMAL_PLACES: 3 });
+
+    const x = new BigNumber(1);
+    const y = new BN(1);
+
+    console.log(x.div(3).toString());    
+    console.log(y.div(3).toString());    
+});
+
 // npm run test .\src\utils\bn.test.js 
+// npm run test .\src\utils\bn.test.js -- -t 'cfg'

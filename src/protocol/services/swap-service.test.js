@@ -1,5 +1,4 @@
 import { assert } from 'chai';
-import { SwapService } from './swap-service';
 import { GOERLI_ID } from '../../networks';
 import { BalancerHelper } from '../balancer-helper';
 import { constants } from 'ethers';

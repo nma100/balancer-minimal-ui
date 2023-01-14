@@ -18,6 +18,7 @@ export class TokenSelector extends React.Component {
   componentDidMount() { 
     const modal = document.getElementById(SELECT_TOKEN_MODAL);
     modal.addEventListener('show.bs.modal', this.onShow.bind(this));
+    modal.addEventListener('shown.bs.modal', this.onShown.bind(this));
     modal.addEventListener('hide.bs.modal', this.onHide.bind(this));
   }
   
@@ -41,9 +42,13 @@ export class TokenSelector extends React.Component {
     this.setState({ allTokens: tokens, displayedTokens: tokens });
   }
 
+  onShown() {
+    document.getElementById('search-input').focus();
+  }
+
   onHide() {
-    document.getElementById('search-input').value = '';
     this.setState({ allTokens: undefined, displayedTokens: undefined });
+    document.getElementById('search-input').value = '';
   }
 
   css() {

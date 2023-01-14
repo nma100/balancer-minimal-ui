@@ -6,7 +6,7 @@ import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
 import { dollar, openModal } from '../../utils/page';
-import { bn, bnf, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
+import { bn, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
 import { debounce } from 'lodash';
 
 const IN = 0, OUT = 1;
@@ -154,7 +154,7 @@ class Trade extends React.Component {
       } else {
         returned = fromEthersBN(route.returnAmount, tokenIn.decimals);
       }
-      calculated.value = bnf(returned, PRECISION);
+      calculated.value = bnt(returned, PRECISION);
       this.updateUsdValue(kind === IN ? OUT : IN);
     }
   }
@@ -163,7 +163,7 @@ class Trade extends React.Component {
     event.preventDefault();
     const { balanceIn } = this.balances();
     const { amountIn  } = this.amounts();
-    amountIn.value = bnf(balanceIn, PRECISION, ROUND_DOWN);
+    amountIn.value = bnt(balanceIn, PRECISION, ROUND_DOWN);
     this.handleAmountChange(IN);
   }
 
@@ -216,7 +216,7 @@ class Trade extends React.Component {
   effectivePrice() {
     const { tokenIn, tokenOut } = this.tokens();
     const { effectivePrice } = this.state.priceInfo;
-    return `1 ${tokenIn.symbol} = ${bnf(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
+    return `1 ${tokenIn.symbol} = ${bnt(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
   }
 
   render() {

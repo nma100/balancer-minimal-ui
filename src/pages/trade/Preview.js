@@ -3,7 +3,7 @@ import { isDark } from '../../theme';
 import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
 import { constants } from 'ethers';
-import { bn, bnf } from '../../utils/bn';
+import { bn, bnt } from '../../utils/bn';
 import { nf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 
@@ -106,7 +106,7 @@ export class Preview extends React.Component {
         <>
           {bn(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
           <i className="bi bi-arrow-right mx-3"></i> 
-          {bnf(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
+          {bnt(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
         </>
       );
   }
@@ -115,7 +115,7 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
     const effectivePrice = swapInfo?.priceInfo?.effectivePrice;
-    return `1 ${tokens?.tokenIn.symbol} = ${bnf(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
+    return `1 ${tokens?.tokenIn.symbol} = ${bnt(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
   }
 
   maxSlippage() {
