@@ -53,8 +53,15 @@ export class Settings extends React.Component {
                           <input type="number" min="1" step="1" autoComplete="off" className="form-control mb-1" id="max-slippage" />
                           <div className="small text-muted">1 bps = 0.01%</div>
                         </div>
-                        <div className="d-grid">
-                          <button type="button" className={btnClass} onClick={() => this.handleSave()}>Save</button>
+                        <div className="container-fluid p-0">
+                          <div className="row gx-2 gy-0">
+                            <div className="col d-grid">
+                              <button type="button" className={btnClass} onClick={() => this.handleSave()}>Save</button>
+                            </div>
+                            <div className="col d-grid">
+                              <button type="button" className={btnClass} data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                          </div>
                         </div>
                     </div>
                 </div>
