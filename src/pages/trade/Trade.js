@@ -135,6 +135,7 @@ class Trade extends React.Component {
         this.setState({ mode: Mode.FetchPrice });
         this.findRoute(kind, entered, calculated); 
       }
+      this.updateUsdValue(kind);
     }
   }
 
@@ -142,7 +143,6 @@ class Trade extends React.Component {
     const tokens = this.tokens();
     const { balancer } = this.context;
     const { tokenIn, tokenOut } = tokens;
-    this.updateUsdValue(kind);
     const route = await balancer.findRoute(kind, tokens, entered.value);
     console.log('Route', route);
     if (route.returnAmount.isZero()) {
