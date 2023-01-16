@@ -1,6 +1,6 @@
 import React from 'react';
 import { OutletContext } from '../pages/Layout';
-import { dollar } from '../utils/page';
+import { usd } from '../utils/page';
 
 export default class PoolShares extends React.Component {
 
@@ -17,6 +17,6 @@ export default class PoolShares extends React.Component {
             <span className='placeholder-glow'>
                 <span className='shares placeholder'></span>
             </span>
-        ) : <>{dollar(shares)}</>;
+        ) : <>{usd(shares)}</>;
     }
 }

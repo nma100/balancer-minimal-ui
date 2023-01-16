@@ -3,7 +3,7 @@ import { OutletContext } from '../Layout';
 import { parseUnits } from 'ethers/lib/utils';
 import { constants } from 'ethers';
 import { isDark } from '../../theme';
-import { fdollar } from '../../utils/page';
+import { fusd } from '../../utils/page';
 
 export const STAKING_MODAL = 'staking-bpt-modal';
 
@@ -113,7 +113,7 @@ export class StakingModal extends React.Component {
                         </div>
                         <div className="modal-body">
                             <h4 className='mt-2 mb-4 text-break'>{ poolName }</h4>
-                            <p className='mb-4'>Value to stake : { fdollar(poolShares) }</p>
+                            <p className='mb-4'>Value to stake : { fusd(poolShares) }</p>
                             {mode === Mode.Init &&
                                 <>
                                     <button type="button" className="btn btn-secondary  my-1">

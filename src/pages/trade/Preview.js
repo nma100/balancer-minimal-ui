@@ -3,9 +3,10 @@ import { isDark } from '../../theme';
 import { hideModal, openToast } from '../../utils/page';
 import { OutletContext } from '../Layout';
 import { constants } from 'ethers';
-import { bn, bnt } from '../../utils/bn';
+import { bnt } from '../../utils/bn';
 import { nf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
+import Amounts from './Amounts';
 
 export const PREVIEW_MODAL = 'preview';
 
@@ -98,19 +99,6 @@ export class Preview extends React.Component {
     this.setState({ mode: Mode.Executed, tx }, callback);
   }
 
-  tradeAmount() {
-    const { swapInfo } = this.props;
-    const tokens = swapInfo?.tokens;
-    const priceInfo = swapInfo?.priceInfo;
-    return ( 
-        <>
-          {bn(priceInfo?.amounts?.amountIn).toString()} {tokens?.tokenIn?.symbol} 
-          <i className="bi bi-arrow-right mx-3"></i> 
-          {bnt(priceInfo?.amounts?.amountOut, 5)} {tokens?.tokenOut?.symbol}
-        </>
-      );
-  }
-
   effectivePrice() {
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
@@ -131,8 +119,12 @@ export class Preview extends React.Component {
 
   css() {
     const { theme } = this.context;
-    const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
-    return { contentClass };
+    const amountsClass  = isDark(theme) ? 'bg-light' : 'bg-dark';
+    const btnCloseClass = isDark(theme) ? 'btn-close-white' : '';
+    const contentClass  = isDark(theme) ? 'bg-dark text-light' : 'bg-white text-dark';
+    const effPriceClass = isDark(theme) ? 'text-light text-opacity-50' : 'text-dark text-opacity-75';
+    const btnClass = isDark(theme) ? 'btn btn-secondary btn-lg ' : 'btn btn-light btn-lg border shadow-sm';
+    return { contentClass, amountsClass, effPriceClass, btnClass, btnCloseClass };
   }
 
   spinner() {
@@ -144,7 +136,10 @@ export class Preview extends React.Component {
   }
 
   render() {
-    const { contentClass } = this.css();
+    const { 
+      contentClass, amountsClass, effPriceClass, 
+      btnClass, btnCloseClass 
+    } = this.css();
     const { mode, tx } = this.state;
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
@@ -155,52 +150,58 @@ export class Preview extends React.Component {
             <div className="modal-dialog modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                      <div className="text-center border rounded py-4 px-3 mb-2">
-                        <div className="fs-3 mb-2">{ this.tradeAmount() }</div> 
-                        <div className="text-muted">{ this.effectivePrice() }</div>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h3 className="mb-2">Preview</h3> 
+                        <button type="button" className={`btn-close ${btnCloseClass}`} data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div className={`text-center rounded py-4 px-3 mb-2 ${amountsClass} bg-opacity-10`}>
+                        <div className="fs-3 mb-2"><Amounts swapInfo={swapInfo} /></div> 
+                        <div className={effPriceClass}>{ this.effectivePrice() }</div>
                       </div>
                       <div className="d-flex small mb-4">
                         <span className="me-auto">Price impact : { this.priceImpact() }</span>
                         Max slippage : { this.maxSlippage() }
                       </div>
+                      <div className="d-grid pt-1">
                       {!this.context.account ? (
-                        <button type="button" className="btn btn-secondary" disabled>
-                          Connect wallet
+                        <button type="button" className={btnClass} disabled>
+                          Connect your wallet
                         </button>
                       ) : (
                         <>
                           {mode === Mode.Init &&
-                            <button type="button" className="btn btn-secondary" disabled>
+                            <button type="button" className={btnClass} disabled>
                               Initialisation {this.spinner()}
                             </button>
                           }
                           {mode === Mode.NoBalance &&
-                            <button type="button" className="btn btn-secondary" disabled>
+                            <button type="button" className={btnClass} disabled>
                               Insufficient {tokens?.tokenIn?.symbol} balance
                             </button>
                           }
                           {mode === Mode.Allowance &&
-                            <button type="button" className="btn btn-secondary" onClick={e => this.handleApprove(e)}>
+                            <button type="button" className={btnClass} onClick={e => this.handleApprove(e)}>
                               Approve {tokens?.tokenIn?.symbol}
                             </button>
                           }
                           {mode === Mode.Approve &&
-                            <button type="button" className="btn btn-secondary" disabled>
+                            <button type="button" className={btnClass} disabled>
                               Approving {tokens?.tokenIn?.symbol} {this.spinner()}
                             </button>
                           }
                           {mode === Mode.Swap &&
-                            <button type="button" className="btn btn-secondary" onClick={e => this.handleSwap(e)}>
+                            <button type="button" className={btnClass} onClick={e => this.handleSwap(e)}>
                               Swap
                             </button>
                           }
                           {mode === Mode.Confirm &&
-                            <button type="button" className="btn btn-secondary" disabled>
+                            <button type="button" className={btnClass} disabled>
                               Confirmation {this.spinner()}
                             </button>
                           }
                         </>
                       )}
+                      </div>
                     </div>
                 </div>
             </div>

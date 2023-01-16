@@ -17,7 +17,6 @@ import { constants } from "ethers";
 export class BalancerHelper {
   
   constructor(chainId) {
-    console.log('BalancerHelper', chainId);
     this.chainId = chainId;
     this.sdk = new BalancerSDK({
       network: Number(chainId),
@@ -213,10 +212,8 @@ export class BalancerHelper {
     if (!pools) return ZERO;
 
     return pools.find((pool) => pool.shares === false)
-      ? false
-      : pools
-          .map((pool) => pool.shares)
-          .reduce((total, shares) => total.plus(shares), ZERO);
+      ? false : pools.map((pool) => pool.shares)
+            .reduce((total, shares) => total.plus(shares), ZERO);
   }
 
   async userBoosts(account) {
@@ -371,10 +368,7 @@ export class BalancerHelper {
   }
 
   async getSpotPrice(tokenIn, tokenOut) {
-    return await this.sdk.pricing.getSpotPrice(
-      tokenIn,
-      tokenOut
-    );
+    return await this.sdk.pricing.getSpotPrice(tokenIn, tokenOut);
   }
 }
 

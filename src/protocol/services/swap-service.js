@@ -9,7 +9,7 @@ export const Given = { In: 0, Out: 1 };
 
 export class SwapService {
 
-    poolsPromise = null;
+    poolsPromise;
   
     constructor(swapper) {
         this.swapper = swapper;
@@ -18,16 +18,14 @@ export class SwapService {
 
     initPools() {
         this.poolsPromise = this.swapper.fetchPools();
-        this.poolsPromise.then(() => console.log('Pools loaded'));
+        this.poolsPromise.then(() => console.log('Pools loaded.'));
     }
 
     async findRoute(kind, tokens, value) {
 
         const { tokenIn, tokenOut } = tokens;
 
-        console.time('Pools promise');
         await this.poolsPromise;
-        console.timeEnd('Pools promise');
 
         const params = { 
             tokenIn: tokenIn.address, 

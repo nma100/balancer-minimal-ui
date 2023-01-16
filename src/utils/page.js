@@ -6,6 +6,10 @@ export function reload() {
   window.location.reload();
 }
 
+export function blur() {
+  document.querySelector('body').style.opacity = 0.75;
+}
+
 export function openModal(id) {
   Modal.getOrCreateInstance(`#${id}`).show();
 }
@@ -27,5 +31,5 @@ export const truncateAddress = (address) => {
     return `${match[1]}....${match[2]}`;
 };
 
-export const dollar = bn => bn === false ? 'N/A' : `$${bnf(bn)}`;
-export const fdollar = n => `$${ nf(n || 0) }`;
+export const usd = bn => bn === false ? 'N/A' : `$${bnf(bn)}`;
+export const fusd = n => `$${ nf(n || 0) }`;

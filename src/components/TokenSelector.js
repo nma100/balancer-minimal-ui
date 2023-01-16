@@ -53,12 +53,13 @@ export class TokenSelector extends React.Component {
 
   css() {
     const { theme } = this.context;
-    const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
-    return { contentClass };
+    const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-white  text-dark';
+    const mutedClass = isDark(theme) ? 'text-light text-opacity-50' : 'text-muted';
+    return { contentClass, mutedClass };
   }
 
   render() {
-    const { contentClass } = this.css();
+    const { contentClass, mutedClass } = this.css();
 
     return ( 
       <div id={SELECT_TOKEN_MODAL} className="modal" tabIndex="-1">
@@ -71,12 +72,16 @@ export class TokenSelector extends React.Component {
                         <input type="text" id="search-input" className="form-control" onChange={e => this.handleSearch(e)} placeholder="Search ..." autoComplete="off" />
                       </div>
                       <hr className="my-4" />
-                      <div id="token-list">
+                      <div id="token-list">                     
                       {this.state.displayedTokens === undefined &&
-                        <div className="fs-4 text-muted text-center">Loading ...</div>
+                        <div className={`fs-4 text-center ${mutedClass}`}>Loading
+                          <div className="spinner-border spinner ms-3" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
                       }
                       {this.state.displayedTokens?.length === 0 &&
-                        <div className="fs-4 text-muted text-center">No result</div>
+                        <div className={`fs-4 text-center ${mutedClass}`}>No result</div>
                       }
                       {this.state.displayedTokens?.map((token, index) =>
                         <div key={index} className="token py-1" onClick={() => this.handleSelectToken(index)}>

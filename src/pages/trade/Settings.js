@@ -34,12 +34,13 @@ export class Settings extends React.Component {
 
   css() {
     const { theme } = this.context;
-    const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
-    return { contentClass };
+    const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-white text-dark';
+    const btnClass = isDark(theme) ? 'btn btn-secondary' : 'btn btn-light border shadow-sm';
+    return { contentClass, btnClass };
   }
 
   render() {
-    const { contentClass } = this.css();
+    const { contentClass, btnClass } = this.css();
     return ( 
       <>
         <div id={SETTINGS_MODAL} className="modal" tabIndex="-1">
@@ -53,7 +54,7 @@ export class Settings extends React.Component {
                           <div className="small text-muted">1 bps = 0.01%</div>
                         </div>
                         <div className="d-grid">
-                          <button type="button" className="btn btn-secondary" onClick={() => this.handleSave()}>Save</button>
+                          <button type="button" className={btnClass} onClick={() => this.handleSave()}>Save</button>
                         </div>
                     </div>
                 </div>

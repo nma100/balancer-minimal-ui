@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { ethers } from "ethers";
-import { reload, truncateAddress } from "../utils/page";
+import { blur, reload, truncateAddress } from "../utils/page";
 import { web3Modal, switchChain, web3Account } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
@@ -44,7 +44,7 @@ class Layout extends React.Component {
 
   handleConnect() {
     this.web3Connect()
-      .then(() => reload())
+      .then(() => { blur(); reload(); })
       .catch(e => console.error('Connect error', e));
   }
 
@@ -69,9 +69,7 @@ class Layout extends React.Component {
   }
 
   getChainToReload() {
-    const chainId = localStorage.getItem(RELOAD_CHAIN) || defaultChainId();
-    localStorage.removeItem(RELOAD_CHAIN);
-    return chainId;
+    return localStorage.getItem(RELOAD_CHAIN) || defaultChainId();
   }
 
   handleToggleTheme() {
@@ -112,10 +110,9 @@ class Layout extends React.Component {
 
   css() {
     const { theme } = this.state;
-
     const bodyClass = isDark(theme) ? [ 'bg-dark', 'text-light', 'bg-opacity-75' ] : [ 'bg-light',  'text-dark' ];
     const hrClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
-    const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'shadow-sm' ]);
+    const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'border', 'shadow-sm' ]);
     const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'shadow-sm' ]);
     const themeIcoClass = [ 'bi' ].concat(isDark(theme) ?  [ 'bi-sun' ] : [ 'bi-moon' ]);
     const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow', 'py-3' ]

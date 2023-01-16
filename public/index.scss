@@ -57,12 +57,13 @@ $sidebar-pt: 100px;
     }    
 }
 
-/* PORTFOLIO */
-
-.veBAL { color: $teal; }
-.veBAL-light { color: $green; }
+.veBAL, .success-dark { color: $teal; }
+.veBAL-light, .success-light { color: $green; }
 
 .spinner { width: 1.5rem; height: 1.5rem; }
+
+/* PORTFOLIO */
+
 .amount  { width: 5rem; }
 .boost, .shares  { width: 2rem; }
 
@@ -95,10 +96,9 @@ $sidebar-pt: 100px;
             margin: 0;
         }
     }
+    
     .select-token { cursor: pointer; }
-}
 
-#swap {
     .separator-line {
         margin-top: 0.8rem; 
         margin-bottom: 0.8rem;
@@ -114,6 +114,16 @@ $sidebar-pt: 100px;
             }
         }
     }
+
+    .amount-dark::placeholder {
+        color: $light;
+        opacity: 0.5;
+    }
+    .amount-light::placeholder {
+        color: $dark;
+        opacity: 0.5;
+    }
+
 }
 
 #token-selector {

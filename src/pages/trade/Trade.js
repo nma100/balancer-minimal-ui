@@ -5,12 +5,12 @@ import { TokenSelector, SELECT_TOKEN_MODAL } from '../../components/TokenSelecto
 import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
-import { dollar, openModal } from '../../utils/page';
+import { usd, openModal } from '../../utils/page';
 import { bn, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
 import { debounce } from 'lodash';
+import { Theme } from '../../theme';
 
 const IN = 0, OUT = 1;
-
 const DEBOUNCE = 1000;
 const PRECISION = 5;
 const SLIPPAGE = 50;
@@ -46,9 +46,14 @@ class Trade extends React.Component {
 
   onTokenSelect(token) {
     const { mode, tokenSelect } = this.state;
+    const { amountOutBN } = this.amounts();
     const callBack = () => { 
       this.updateBalance(tokenSelect);
-      this.handleAmountChange(IN);
+      if (tokenSelect === OUT && amountOutBN.gt(0)) {
+        this.handleAmountChange(OUT);
+      } else {
+        this.handleAmountChange(IN);
+      }
     }
     if (tokenSelect === IN) {
       this.setState({ tokenIn: token }, callBack);
@@ -74,15 +79,20 @@ class Trade extends React.Component {
     this.setState({ maxSlippage });
   }
 
+  onSwapped() {
+    this.resetAmounts();
+    [IN, OUT].forEach(kind => this.updateBalance(kind));
+  }
+
   async updateUsdValue(kind) {
     const { balancer } = this.context;
     const { tokenIn, tokenOut } = this.tokens();
-    const { amountIn, amountOut } = this.amounts();
+    const { amountInBN, amountOutBN } = this.amounts();
 
     const token  = kind === IN ? tokenIn : tokenOut;
-    const amount = kind === IN ? amountIn.value : amountOut.value;
+    const amount = kind === IN ? amountInBN : amountOutBN;
 
-    const usdValue = await balancer.fetchPrice(token.address, bn(amount));
+    const usdValue = await balancer.fetchPrice(token.address, amount);
 
     if (kind === IN) {
       this.setState({ usdValueIn:  usdValue })
@@ -108,7 +118,6 @@ class Trade extends React.Component {
   }
 
   async handleAmountChange(kind) {
-    console.time('handleAmountChange');
     const { mode} = this.state;
     const { amountIn, amountOut } = this.amounts();
 
@@ -127,7 +136,6 @@ class Trade extends React.Component {
         this.findRoute(kind, entered, calculated); 
       }
     }
-    console.timeEnd('handleAmountChange');
   }
 
   async findRoute(kind, entered, calculated) {
@@ -180,7 +188,7 @@ class Trade extends React.Component {
         kind:  state.kind,
         priceInfo: state.priceInfo,
         maxSlippage: state.maxSlippage,
-        onSwapped: this.resetAmounts.bind(this),
+        onSwapped: this.onSwapped.bind(this),
       }
     }), callback);
   }
@@ -200,7 +208,9 @@ class Trade extends React.Component {
   amounts() {
     const amountIn  = document.getElementById('amount-in');
     const amountOut = document.getElementById('amount-out');
-    return { amountIn, amountOut };
+    const amountInBN  = bn(amountIn.value);
+    const amountOutBN = bn(amountOut.value);
+    return { amountIn, amountOut, amountInBN, amountOutBN };
   }
 
   resetAmounts() {
@@ -219,10 +229,23 @@ class Trade extends React.Component {
     return `1 ${tokenIn.symbol} = ${bnt(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
   }
 
+  css() {
+    const isDark = (this.context.theme === Theme.Dark);
+    const amountClass = isDark ? 'amount-dark' : 'amount-light';
+    const bgClass = isDark ? 'bg-dark' : 'bg-white bg-opacity-75';
+    const textClass = isDark ? 'text-light' : 'text-dark';
+    const bgAmClass = isDark ? 'bg-light' : 'bg-dark';
+    const linkClass = isDark ? 'link-light' : 'link-dark';
+    const arrowClass = isDark ? 'bg-secondary' : 'bg-light shadow';
+    const btnClass = isDark ? 'btn-secondary' : 'btn-light border shadow-sm';
+    return { amountClass, bgClass, textClass, bgAmClass, linkClass, arrowClass, btnClass };
+  }
+
   render() {
     const { 
       mode, usdValueIn, usdValueOut, swapInfo, settingsInfo 
     } = this.state;
+    const { amountClass, bgClass, textClass, bgAmClass, linkClass, arrowClass, btnClass } = this.css();
     const { tokenIn, tokenOut } = this.tokens();
     const { balanceIn, balanceOut }  = this.balances();
     return (
@@ -232,24 +255,24 @@ class Trade extends React.Component {
         <Preview swapInfo={swapInfo} />
         <div id="swap" className="row">
           <div className="col-12 col-lg-8 col-xxl-6">
-            <div className="bg-dark bg-gradient rounded shadow p-3 pt-2">
+            <div className={`${bgClass} bg-gradient rounded shadow p-3 pt-2`}>
               <div className="pb-4 d-flex justify-content-between align-items-center">
                 <div className="fs-1">Swap tokens</div>
                 <div className="d-flex align-items-center">
                   {mode === Mode.SwapReady &&
-                    <span className="text-light text-opacity-50 me-3">{this.effectivePrice()}</span>
+                    <span className={`${textClass} text-opacity-50 d-none d-sm-inline me-3`}>{this.effectivePrice()}</span>
                   }
                   <div id="settings" className="fs-4 me-1" onClick={() => this.openSettings()}>
                     <i className="bi bi-gear"></i>
                   </div>
                 </div>
               </div>
-              <div className="d-flex justify-content-between align-items-center bg-light bg-opacity-10 rounded px-4 py-2">
+              <div className={`d-flex justify-content-between align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2`}>
                 <div className="amount-block">
                   <div className="fs-1 mb-1">
-                    <input id="amount-in" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(IN)} />
+                    <input id="amount-in" className={amountClass} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(IN)} />
                   </div>
-                  <div className="text-light text-opacity-75">{dollar(usdValueIn)}</div>
+                  <div className={`${textClass} text-opacity-75`}>{usd(usdValueIn)}</div>
                 </div>
                 <div>
                 {tokenIn ? 
@@ -270,7 +293,7 @@ class Trade extends React.Component {
                   <div className="text-center small">
                     <span>Balance : {bnt(balanceIn, 3, ROUND_UP)}</span> {balanceIn?.gt(0) && ( 
                       <>
-                        <span className="px-1">·</span> <a href="#" className="link-light" onClick={(e) => this.handleMaxBalance(e)}>Max</a>
+                        <span className="px-1">·</span> <a href="#" className={linkClass} onClick={(e) => this.handleMaxBalance(e)}>Max</a>
                       </> 
                     )}
                   </div>
@@ -280,21 +303,21 @@ class Trade extends React.Component {
                 <div className="progress">
                   <div className="progress-bar" role="progressbar" aria-label="Progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div className="arrow position-absolute top-0 start-50 translate-middle bg-secondary rounded-5 d-none d-sm-flex justify-content-center align-items-center">
+                <div className={`arrow position-absolute top-0 start-50 translate-middle ${arrowClass} rounded-5 d-none d-sm-flex justify-content-center align-items-center`}>
                   <i className="bi bi-arrow-down"></i>
                 </div>
               </div>
-              <div className="d-flex justify-content-between align-items-center bg-light bg-opacity-10 rounded px-4 py-2 mb-3">
+              <div className={`d-flex justify-content-between align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2 mb-3`}>
                 <div className="amount-block">
                   <div className="fs-1 mb-1">
-                    <input id="amount-out" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(OUT)} />
+                    <input id="amount-out" className={amountClass} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(OUT)} />
                   </div>
-                  <div className="text-light text-opacity-75">{dollar(usdValueOut)}</div>
+                  <div className={`${textClass} text-opacity-75`}>{usd(usdValueOut)}</div>
                 </div>
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(OUT)}>
                     {mode === Mode.Init 
-                      ? <span className="fs-5 me-3">Select token</span>
+                      ? <span className="fs-5 me-3">Select <span className="d-none d-sm-inline">token</span></span>
                       : (
                         <>
                           {tokenOut && (
@@ -314,23 +337,23 @@ class Trade extends React.Component {
               {
                 <>
                   {mode === Mode.Init &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Select token</button>
+                    <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Select token</button>
                   }
                   {mode === Mode.TokensSelected &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Enter amount</button>
+                    <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Enter amount</button>
                   }
                   {mode === Mode.FetchPrice &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Fetching best price
+                    <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Fetching best price
                       <div className="spinner-border ms-3" style={{width: '1.5rem', height: '1.5rem'}} role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
                     </button>
                   }
                   {mode === Mode.NoRoute &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" disabled>Insufficient liquidity for this trade</button>
+                    <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Insufficient liquidity for this trade</button>
                   }
                   {mode === Mode.SwapReady &&
-                    <button className="btn btn-secondary btn-lg fs-4" type="button" onClick={() => this.handleSwap()}>Swap</button>
+                    <button className={`btn ${btnClass} btn-lg fs-4`} type="button" onClick={() => this.handleSwap()}>Swap</button>
                   }
                 </>
               }  
