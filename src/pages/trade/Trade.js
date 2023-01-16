@@ -92,7 +92,7 @@ class Trade extends React.Component {
     const token  = kind === IN ? tokenIn : tokenOut;
     const amount = kind === IN ? amountInBN : amountOutBN;
 
-    const usdValue = await balancer.fetchPrice(token.address, amount);
+    const usdValue = await balancer.fetchPrice(token?.address, amount);
 
     if (kind === IN) {
       this.setState({ usdValueIn:  usdValue })
