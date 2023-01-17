@@ -150,8 +150,8 @@ export class Preview extends React.Component {
             <div className="modal-dialog modal-dialog-centered">
                 <div className={`modal-content ${contentClass}`}>
                     <div className="modal-body">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h3 className="mb-2">Preview</h3> 
+                      <div className="d-flex justify-content-between align-items-center mb-4">
+                        <h3 className="m-0">Preview</h3> 
                         <button type="button" className={`btn-close ${btnCloseClass}`} data-bs-dismiss="modal" aria-label="Close"></button>
                       </div>
                       <div className={`text-center rounded py-4 px-3 mb-2 ${amountsClass} bg-opacity-10`}>
