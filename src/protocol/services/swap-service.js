@@ -21,7 +21,7 @@ export class SwapService {
         this.poolsPromise.then(() => console.log('Pools loaded.'));
     }
 
-    async findRoute(kind, tokens, value) {
+    async findRoute(kind, tokens, amount) {
 
         const { tokenIn, tokenOut } = tokens;
 
@@ -35,10 +35,10 @@ export class SwapService {
         };
 
         if (kind === Given.In) {
-            params.amount = parseUnits(value, tokenIn.decimals);
+            params.amount = parseUnits(amount, tokenIn.decimals);
             return await this.swapper.findRouteGivenIn(params);
         } else {
-            params.amount = parseUnits(value, tokenOut.decimals);
+            params.amount = parseUnits(amount, tokenOut.decimals);
             return await this.swapper.findRouteGivenOut(params);
         }
     }

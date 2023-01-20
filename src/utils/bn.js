@@ -1,10 +1,10 @@
 import BigNumber from 'bignumber.js';
 import { formatUnits } from 'ethers/lib/utils';
 
-const PRECISION = 2;
-
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
+
+const PRECISION = 2;
 
 export const { 
     ROUND_UP, 
