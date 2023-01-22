@@ -46,7 +46,10 @@ class Trade extends React.Component {
 
   onTokenSelect(token) {
     const { mode, tokenSelect } = this.state;
-    const callBack = () => this.handleAmountChange(IN);
+    const callBack = () => { 
+      this.updateBalance(tokenSelect);
+      this.handleAmountChange(IN);
+    }
     if (tokenSelect === IN) {
       this.setState({ tokenIn: token }, callBack);
     } else {
