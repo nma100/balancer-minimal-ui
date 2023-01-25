@@ -221,7 +221,7 @@ class Trade extends React.Component {
   effectivePrice() {
     const { tokenIn, tokenOut } = this.tokens();
     const { effectivePrice } = this.state.priceInfo;
-    return `1 ${tokenIn.symbol} = ${bnt(effectivePrice, PRECISION)} ${tokenOut.symbol}`;
+    return `1 ${tokenOut.symbol} = ${bnt(effectivePrice, PRECISION)} ${tokenIn.symbol}`;
   }
 
   css() {

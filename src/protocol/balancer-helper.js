@@ -6,7 +6,7 @@ import {
 import { isEthNetwork, nativeAsset } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
 import { getBptBalanceFiatValue } from "../utils/pool";
-import { bn, fromEthersBN, ONE, ZERO } from "../utils/bn";
+import { bn, fromEthersBN, ZERO } from "../utils/bn";
 import { AprService } from "./services/apr-service";
 import { SwapService, Given } from "./services/swap-service";
 import { LiquidityService } from "./services/liquidity-service";
@@ -83,9 +83,9 @@ export class BalancerHelper {
       amountIn  = fromEthersBN(route.returnAmount, tokenIn.decimals);
       amountOut = fromEthersBN(route.swapAmount, tokenOut.decimals);
     }
-    const spotPrice = ONE.div(bn(route.marketSp));
-    const effectivePrice = amountOut.div(amountIn);
-    const priceImpact = spotPrice.minus(effectivePrice).div(spotPrice).times(100);
+    const spotPrice = bn(route.marketSp);
+    const effectivePrice = amountIn.div(amountOut);
+    const priceImpact = effectivePrice.minus(spotPrice).div(spotPrice).times(100);
     return { 
       spotPrice, effectivePrice, priceImpact, 
       amounts: { amountIn, amountOut }, 

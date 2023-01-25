@@ -1,3 +1,4 @@
+import { BalancerSDK } from '@balancer-labs/sdk';
 import { assert } from 'chai';
 import { GOERLI_ID, POLYGON_ID, ETHEREUM_ID } from '../networks';
 import { bn, bnf } from '../utils/bn';
@@ -100,6 +101,22 @@ it('Token price', async () => {
     const tenDaiPrice = await balancer.fetchPrice(DAI, bn(10));
     console.log(bnf(oneEthPrice), bnf(tenDaiPrice));
 });
+
+it('Spot price', async () => {
+
+    const INFURA = '';
+
+    const sdk = new BalancerSDK({
+        network: 1,
+        rpcUrl: `https://mainnet.infura.io/v3/${INFURA}`,
+    });
+
+    const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f';
+    const BAL = '0xba100000625a3754423978a60c9317c58a424e3d';
+    const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+    const spotPrice = await sdk.pricing.getSpotPrice(DAI, WETH);
+    console.log('Spot price', spotPrice);
+}, TIMEOUT);
 
 function logShares(pool) {
     const tokens = pool.tokens.map(t => t.symbol);

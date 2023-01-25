@@ -103,7 +103,7 @@ export class Preview extends React.Component {
     const { swapInfo } = this.props;
     const tokens = swapInfo?.tokens;
     const effectivePrice = swapInfo?.priceInfo?.effectivePrice;
-    return `1 ${tokens?.tokenIn.symbol} = ${bnt(effectivePrice, 5)} ${tokens?.tokenOut.symbol}`;
+    return `1 ${tokens?.tokenOut.symbol} = ${bnt(effectivePrice, 5)} ${tokens?.tokenIn.symbol}`;
   }
 
   maxSlippage() {
