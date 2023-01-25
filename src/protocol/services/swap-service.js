@@ -3,7 +3,7 @@ import { BigNumber } from "ethers";
 import { web3Account } from "../../web3-connect";
 
 const MAX_POOLS = 4;
-const GAS_PRICE = parseUnits('1', 9);
+const GAS_PRICE = BigNumber.from('14000000000');
 
 export const Given = { In: 0, Out: 1 };
 
