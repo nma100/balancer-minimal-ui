@@ -22,6 +22,9 @@ export function getInfuraUrl(chainId) {
     case ETHEREUM_ID:
       subdomain = 'mainnet';
       break;
+    case POLYGON_ID:
+      subdomain = 'polygon-mainnet';
+      break;
     case GOERLI_ID:
       subdomain = 'goerli';
       break;
