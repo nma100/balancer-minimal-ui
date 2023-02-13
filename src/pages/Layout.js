@@ -1,6 +1,5 @@
 import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { ethers } from "ethers";
 import { blur, reload, truncateAddress } from "../utils/page";
 import { web3Modal, switchChain, web3Account } from "../web3-connect";
 import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
@@ -8,6 +7,7 @@ import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
 import { fromEthersBN, ZERO } from "../utils/bn";
+import { ethers } from "ethers";
 import { debounce } from "lodash";
 
 const RELOAD_CHAIN = 'reload-chain';

@@ -66,11 +66,16 @@ export default class PoolApr extends React.Component {
           <strong>Total APR</strong> : {totalApr}
         </p>
         <p>Swap fees : {p(swapFees)}</p>
-        {stakingApr > 0 && (
+        {stakingApr?.min > 0 && 
           <p>
-            Staking APR : {p(stakingApr.min)} - {p(stakingApr.max)}
+            Staking APR : 
+            { stakingApr.min === stakingApr.max ?
+              <span className="ps-1">{ p(stakingApr.min) }</span>
+              :
+              <span className="ps-1">{ p(stakingApr.min)} - {p(stakingApr.max)}</span>
+            }
           </p>
-        )}
+        }
         {rewardApr > 0 && <p>Reward APR : {p(rewardApr)}</p>}
         {tokenApr > 0 && <p>Token APR : {p(tokenApr)}</p>}
         {protocolApr > 0 && <p>Protocol APR : {p(protocolApr)}</p>}
@@ -82,7 +87,7 @@ export default class PoolApr extends React.Component {
     let icon;
     if (this.context.balancer.veBalPoolId() === pool.id) {
       icon = <i className="bi bi-stars text-primary"></i>;
-    } else if (stakingApr > 0 || rewardApr > 0 || tokenApr > 0 || protocolApr > 0) {
+    } else if (stakingApr?.min > 0 || rewardApr > 0 || tokenApr > 0 || protocolApr > 0) {
       icon = <i className="bi bi-stars text-warning"></i>;
     } else {
       icon = <i className={`bi bi-info-circle ${textClass} text-opacity-75`}></i>;

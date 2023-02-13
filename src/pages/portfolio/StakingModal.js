@@ -8,10 +8,10 @@ import { fusd } from '../../utils/page';
 export const STAKING_MODAL = 'staking-bpt-modal';
 
 export const Mode = {
-    Init: 'init',
-    Approval: 'approval',
-    Stake: 'stake',
-    Result : 'result'
+    Init: 0,
+    Approval: 1,
+    Stake: 2,
+    Result : 3,
 }
 
 export class StakingModal extends React.Component {
@@ -96,23 +96,24 @@ export class StakingModal extends React.Component {
         const contentClass = isDark(theme) ? 'bg-dark text-light' : 'bg-light text-dark';
         const textClass = isDark(theme) ? 'text-white' : 'text-dark';
         const veBalClass = isDark(theme) ? 'veBAL' : 'veBAL-light';
-        return { contentClass, textClass, veBalClass };
+        const btnCloseClass = isDark(theme) ? 'btn-close-white' : '';
+        return { contentClass, textClass, veBalClass, btnCloseClass };
     }
 
     render() {
         const { poolName, poolShares, mode, waiting, txId } = this.state;   
-        const { contentClass, textClass, veBalClass } = this.css();
+        const { contentClass, textClass, veBalClass, btnCloseClass } = this.css();
 
         return (
             <div id={STAKING_MODAL} className="modal" tabIndex="-1">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className={`modal-content ${contentClass}`}>
-                        <div className="modal-header">
-                            <h6 className="modal-title">Stake LP tokens</h6>
-                            <button type="button" className="btn btn-sm btn-secondary" data-bs-dismiss="modal" aria-label="Close">X</button>
-                        </div>
                         <div className="modal-body">
-                            <h4 className='mt-2 mb-4 text-break'>{ poolName }</h4>
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <h3 className="m-0">Stake LP tokens</h3> 
+                                <button type="button" className={`btn-close ${btnCloseClass}`} data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <h5 className='mt-2 mb-3 text-break'>{ poolName }</h5>
                             <p className='mb-4'>Value to stake : { fusd(poolShares) }</p>
                             {mode === Mode.Init &&
                                 <>
@@ -151,7 +152,7 @@ export class StakingModal extends React.Component {
                             {mode === Mode.Result &&
                                 <>
                                     <div className={`${veBalClass} mb-3`}>
-                                        Successful deposit !
+                                        Success !
                                     </div>
                                     <p>Transaction : <small className={`${textClass} text-opacity-75 text-break text-muted`}>{txId}</small></p>
                                     <button type="button" className="btn btn-secondary my-1" onClick={e => this.handleClose(e)}>Close</button>

@@ -5,9 +5,9 @@ export const Theme = { Dark: 'dark', Light: 'light' };
 export const isDark = theme => theme === Theme.Dark;
 
 export function switchTheme() {
-    const oldTheme = localStorage.getItem(KEY);
-    const newTheme = isDark(oldTheme) ? Theme.Light : Theme.Dark;
-    localStorage.setItem(KEY, newTheme);
+    const prevTheme = localStorage.getItem(KEY);
+    const nextTheme = isDark(prevTheme) ? Theme.Light : Theme.Dark;
+    localStorage.setItem(KEY, nextTheme);
 }
 
 export function currentTheme() {
