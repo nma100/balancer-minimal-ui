@@ -1,5 +1,5 @@
 import { bn } from "../../utils/bn";
-import { GaugeShareRepo } from "../repository/GaugeShareRepo";
+import { GaugeShareRepo } from "../repository/gauge-share-repo";
 
 export class RewardService {
   

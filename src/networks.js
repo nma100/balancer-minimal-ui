@@ -1,26 +1,6 @@
 import { switchChain } from "./web3-connect";
 import { constants } from "ethers";
-
-export class BlockExplorer {
-  constructor(url, addrUri, txUri) {
-    this.url = url;
-    this.addrUri = addrUri;
-    this.txUri = txUri;
-  }
-}
-
-export class Chain {
-  constructor(id, name, decimal, explorerUrl, 
-    explorerAddr, explorerTx) {
-    this.id = id;
-    this.name = name;
-    this.decimal = decimal;
-    this.blockExplorer = new BlockExplorer(
-      explorerUrl, 
-      explorerAddr, 
-      explorerTx);
-  }
-}
+import { Chain } from "./model/chain";
 
 export const ETHEREUM_ID = '1', POLYGON_ID = '137', ARBITRUM_ID = '42161', GOERLI_ID = '5', SEPOLIA_ID = '11155111';
 

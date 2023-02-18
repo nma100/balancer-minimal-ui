@@ -28,12 +28,13 @@ class Layout extends React.Component {
       .className = this.css().bodyClass;
   }
 
-  reconnect() {
+  async reconnect() {
     const state = this.setState.bind(this);
     const chainId = this.getChainToReload();
     const nativeCoin = this.coin(chainId);
     const balancer = new BalancerHelper(chainId);
-    state({ chainId, nativeCoin, balancer });
+    const pools = await balancer.fetchPools();
+    state({ chainId, nativeCoin, balancer, pools });
 
     if (web3Modal.cachedProvider) {
       this.web3Connect()
@@ -87,7 +88,8 @@ class Layout extends React.Component {
     const chainId = await checkChain(network.chainId, web3Provider);
     const nativeCoin = await this.coinWithBalance(chainId, web3Provider);
     const balancer = new BalancerHelper(chainId);
-    this.setState({ web3Provider, chainId, nativeCoin, balancer, account });
+    const pools = await balancer.fetchPools()
+    this.setState({ web3Provider, account, chainId, nativeCoin, balancer, pools });
     return { balancer, account };
   }
 
@@ -111,7 +113,7 @@ class Layout extends React.Component {
   css() {
     const { theme } = this.state;
     const bodyClass = isDark(theme) ? [ 'bg-dark', 'text-light', 'bg-opacity-75' ] : [ 'bg-light',  'text-dark' ];
-    const hrClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
+    const hrClass = isDark(theme) ? [ 'text-white', 'text-opacity-75' ] : [];
     const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'border', 'shadow-sm' ]);
     const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'shadow-sm' ]);
     const themeIcoClass = [ 'bi' ].concat(isDark(theme) ?  [ 'bi-sun' ] : [ 'bi-moon' ]);
@@ -168,17 +170,17 @@ class Layout extends React.Component {
               <ul className="navbar-nav d-flex d-lg-none fs-5 mt-2">
                 <li className="nav-item">
                   <NavLink to="/" className="nav-link" end>
-                    Portfolio
+                    Invest
                   </NavLink>
                 </li>
                 <li className="nav-item">
                   <NavLink to="/trade" className="nav-link">
                     Trade
                   </NavLink>
-                </li>
+                </li>                
                 <li className="nav-item">
-                  <NavLink to="/invest" className="nav-link">
-                    Invest
+                  <NavLink to="/portfolio" className="nav-link">
+                    Portfolio
                   </NavLink>
                 </li>
               </ul>
@@ -241,27 +243,27 @@ class Layout extends React.Component {
                     </option>
                   ))}
                 </select>
-                <hr className={hrClass} />
+                <hr className={`${hrClass} my-4`} />
                 <ul className="nav nav-pills flex-column mb-auto">
                   <li className="nav-item">
                     <NavLink to="/" className="nav-link" end>
-                      <i className="bi bi-list-task me-1"></i> Portfolio
+                      <i className="bi bi-stars me-2"></i> Invest
                     </NavLink>
                   </li>
                   <li className="nav-item">
                     <NavLink to="/trade" className="nav-link">
-                      <i className="bi bi-arrow-down-up me-1"></i> Trade
+                      <i className="bi bi-arrow-down-up me-2"></i> Trade
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink to="/invest" className="nav-link">
-                      <i className="bi bi-cash-stack me-1"></i> Invest
+                    <NavLink to="/portfolio" className="nav-link">
+                      <i className="bi bi-list-task me-2"></i> Portfolio
                     </NavLink>
                   </li>
                 </ul>
 
                 <hr className={hrClass} />
-                <div className="d-flex justify-content-around fs-5">
+                <div className="d-flex justify-content-around fs-4">
                   <a
                     href={BalancerUrls.github}
                     className={`link-${isDark(theme) ? "light" : "dark"}`}

@@ -11,6 +11,7 @@ import { StakingService } from "./services/staking-service";
 import { RewardService } from "./services/reward-service";
 import { constants } from "ethers";
 import { PortfolioLoader } from "./portfolio-loader";
+import { PoolService } from "./services/pool-service";
 
 export class BalancerHelper {
   
@@ -27,6 +28,7 @@ export class BalancerHelper {
     this.tokenListService = new TokenListService(chainId);
     this.stakingService = new StakingService(this.sdk);
     this.rewardService = new RewardService(this.sdk); 
+    this.poolService = new PoolService(this.sdk);
   }
 
   async loadApr(pool) {
@@ -100,6 +102,10 @@ export class BalancerHelper {
 
   async userBoosts(account) {
     return await this.rewardService.userBoosts(account);
+  }
+
+  async fetchPools() {
+    return await this.poolService.fetchPools();
   }
 
   async fetchTokens() {

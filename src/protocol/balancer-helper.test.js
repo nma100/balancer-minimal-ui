@@ -21,7 +21,6 @@ it('User boosts', async () => {
     assert.isNotNull(boosts);
 }, TIMEOUT);
 
-
 it('Token price', async () => {
     const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f';
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
@@ -46,6 +45,12 @@ it('Spot price', async () => {
     const spotPrice = await sdk.pricing.getSpotPrice(DAI, WETH);
     console.log('Spot price', spotPrice);
 }, TIMEOUT);
+
+it('Fetch pools', async () => {
+    const balancer = new BalancerHelper(ETHEREUM_ID);
+    const pools = await balancer.fetchPools();
+    pools.slice(0, 5).forEach(pool => console.log(pool.name));
+});
 
 // npm run test .\src\protocol\balancer-helper.test.js
 // npm run test .\src\protocol\balancer-helper.test.js -- -t 'Total investments'

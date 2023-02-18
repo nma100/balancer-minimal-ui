@@ -3,58 +3,47 @@
 @import "bootstrap/scss/bootstrap";
 
 $sidebar-pt: 100px;
+$sidebar-font-size: $font-size-base * 1.075;
 
 #brand-text {
     font-family: 'Ubuntu'; 
     padding-bottom: 5px;
 }
 
-#sidebar-container {
+@mixin sidebar($sidebar-pt, $sidebar-font-size, $bg-color, $text-color, $gray-color) {
     position: fixed; 
     top: 0; 
     bottom: 0; 
     left: 0; 
     padding: #{$sidebar-pt} 0 0;
-    
+  
     > #sidebar-inner {
         height: calc(100vh - #{$sidebar-pt});
+        > select { font-size: #{$sidebar-font-size}; }
         > .nav-pills {
-            --bs-nav-pills-link-active-color: #{$dark}; 
-            --bs-nav-pills-link-active-bg: #{$light}; 
-            --bs-nav-link-color: #{$light}; 
-            --bs-nav-link-hover-color: #{$gray-400};
+            --bs-nav-link-font-size: #{$sidebar-font-size};
+            --bs-nav-pills-link-active-color: #{$bg-color}; 
+            --bs-nav-pills-link-active-bg: #{$text-color}; 
+            --bs-nav-link-color: #{$text-color}; 
+            --bs-nav-link-hover-color: #{$gray-color};
         }
     }
+}
+  
+#sidebar-container { 
+    @include sidebar($sidebar-pt, $sidebar-font-size, $dark, $light, $gray-400);
 }
 
 #sidebar-container-light {
-    position: fixed; 
-    top: 0; 
-    bottom: 0; 
-    left: 0; 
-    padding: #{$sidebar-pt} 0 0;
-    
-    > #sidebar-inner {
-        height: calc(100vh - #{$sidebar-pt});
-        > .nav-pills {
-            --bs-nav-pills-link-active-color: #{$light}; 
-            --bs-nav-pills-link-active-bg: #{$dark}; 
-            --bs-nav-link-color: #{$dark}; 
-            --bs-nav-link-hover-color: #{$gray-600};
-        }
-    }
+    @include sidebar($sidebar-pt, $sidebar-font-size, $light, $dark, $gray-600);
 }
 
-.form-select { 
-    cursor: pointer; 
-}
+.form-select { cursor: pointer; }
 
 #main-col { 
     padding-top: 2.5rem;
     padding-bottom: 2.5rem;
-    #select-chain { 
-        width: 8rem; 
-    }    
+    #select-chain { width: 8rem; }    
 }
 
 .veBAL, .success-dark { color: $teal; }
@@ -134,6 +123,17 @@ $sidebar-pt: 100px;
     }
 }
 
-#settings {
-    cursor: pointer;
+#settings { cursor: pointer; }
+
+/* INVEST */
+
+table#pools {
+    th { padding: 1rem;}
+    td { padding: 0.7rem 0.9rem; }
+    .pool-icons > div { padding: 0.15rem; }
+    .pool-tokens > div { 
+        margin: 0.4rem 0.35rem; 
+        font-size: $font-size-base; 
+        white-space: nowrap;
+    }
 }

@@ -2,9 +2,9 @@ import { POOLS } from "@balancer-labs/sdk";
 import { isEthNetwork } from "../../networks";
 import { ZERO } from "../../utils/bn";
 import { getBptBalanceFiatValue } from "../../utils/pool";
-import { GaugeShareRepo } from "../repository/GaugeShareRepo";
-import { PoolRepo } from "../repository/PoolRepo";
-import { PoolShareRepo } from "../repository/PoolShareRepo";
+import { GaugeShareRepo } from "../repository/gauge-share-repo";
+import { PoolRepo } from "../repository/pool-repo";
+import { PoolShareRepo } from "../repository/pool-share-repo";
 import { LiquidityService } from "./liquidity-service";
 
 export class StakingService {
