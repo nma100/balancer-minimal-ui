@@ -12,6 +12,7 @@ import { RewardService } from "./services/reward-service";
 import { constants } from "ethers";
 import { PortfolioLoader } from "./portfolio-loader";
 import { PoolService } from "./services/pool-service";
+import { VolumeService } from "./services/volume-service";
 
 export class BalancerHelper {
   
@@ -22,8 +23,9 @@ export class BalancerHelper {
       rpcUrl: getRpcUrl(chainId),
     });
     this.aprService = new AprService(this.sdk.pools);
-    this.swapService = new SwapService(this.sdk.swaps);
+    this.volumeService = new VolumeService(this.sdk.pools);
     this.liquidityService = new LiquidityService(this.sdk.pools);
+    this.swapService = new SwapService(this.sdk.swaps);
     this.tokenPriceService = new TokenPriceService(this.sdk.data);
     this.tokenListService = new TokenListService(chainId);
     this.stakingService = new StakingService(this.sdk);
@@ -33,6 +35,10 @@ export class BalancerHelper {
 
   async loadApr(pool) {
     return await this.aprService.apr(pool);
+  }
+
+  async loadVolume(pool) {
+    return await this.volumeService.volume(pool);
   }
 
   async loadLiquidity(pool) {
@@ -104,8 +110,8 @@ export class BalancerHelper {
     return await this.rewardService.userBoosts(account);
   }
 
-  async fetchPools() {
-    return await this.poolService.fetchPools();
+  async fetchPools(first = 10, skip = 0) {
+    return await this.poolService.fetchPools(first, skip);
   }
 
   async fetchTokens() {
@@ -155,5 +161,4 @@ export class BalancerHelper {
   stakablePoolIds() {
     return this.stakingService.stakablePoolIds();
   }
-
 }

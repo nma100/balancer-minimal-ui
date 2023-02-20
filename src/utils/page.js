@@ -1,4 +1,4 @@
-import { bnf } from "../utils/bn";
+import { bnf, bnc } from "../utils/bn";
 import { nf } from "./number";
 import { Modal, Toast } from 'bootstrap';
 
@@ -31,5 +31,9 @@ export const truncateAddress = (address) => {
     return `${match[1]}....${match[2]}`;
 };
 
-export const usd = bn => bn === false ? 'N/A' : `$${bnf(bn)}`;
+export const usd = (bn, compact = false) => {
+    if (bn === false) return 'N/A';
+    return `$${compact ? bnc(bn) : bnf(bn)}`;
+} 
+
 export const fusd = n => `$${ nf(n || 0) }`;

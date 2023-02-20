@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { expect,  assert } from 'chai';
-import { bn, bnf, bnt, ZERO } from "./bn";
+import { bn, bnf, bnc, bnt, ZERO } from "./bn";
 
 it('bn', () => {
     expect(bn(null).isEqualTo(ZERO)).to.be.true;
@@ -40,6 +40,17 @@ it('bnt', () => {
     let n = bn(12.345);
     assert.strictEqual(bnf(n, 5), '12.34500');
     assert.strictEqual(bnt(n, 5), '12.345');
+});
+
+it('bnc', () => {
+    let n = bn(-12.345);
+    console.log(bnc(n));                    
+    n = bn(1200);
+    console.log(bnc(n));                    
+    n = bn(1000000);
+    console.log(bnc(n));                    
+    n = bn(54120123889);
+    console.log(bnc(n));                    
 });
 
 it('cfg',() => {

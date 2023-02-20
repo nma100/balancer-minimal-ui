@@ -11,6 +11,7 @@ import { ethers } from "ethers";
 import { debounce } from "lodash";
 
 const RELOAD_CHAIN = 'reload-chain';
+export const POOLS_PER_PAGE = 10;
 
 export const OutletContext = React.createContext();
 
@@ -33,7 +34,7 @@ class Layout extends React.Component {
     const chainId = this.getChainToReload();
     const nativeCoin = this.coin(chainId);
     const balancer = new BalancerHelper(chainId);
-    const pools = await balancer.fetchPools();
+    const pools = await balancer.fetchPools(POOLS_PER_PAGE);
     state({ chainId, nativeCoin, balancer, pools });
 
     if (web3Modal.cachedProvider) {

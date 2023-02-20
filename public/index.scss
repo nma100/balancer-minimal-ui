@@ -65,8 +65,8 @@ $sidebar-font-size: $font-size-base * 1.075;
     > .bi { font-size: 90%; } 
 }
 
-.apr-placeholder {
-    > .placeholder { width: 2rem; }
+.placeholder-glow {
+    > .volume, .apr { width: 2rem; }
 }
 
 /* TRADE */

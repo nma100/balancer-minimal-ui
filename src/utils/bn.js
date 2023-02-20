@@ -19,13 +19,22 @@ export function bn(val) {
 }
 
 export function bnf(value, dp = PRECISION, rm = ROUND_HALF_UP) {
-    let val;
-    if (BigNumber.isBigNumber(value) && !value.isNaN() && value.isFinite()) {
-        val = value;
+    return validate(value).toFixed(dp, rm);
+}
+
+export function bnc(value, dp = PRECISION, rm = ROUND_HALF_UP) {
+
+    let val = validate(value);
+
+    if (val.abs().gte('1e+9')) {
+        return `${bnf(val.div('1e+9'), dp, rm)}B`;
+    } else if (val.abs().gte('1e+6')) {
+        return `${bnf(val.div('1e+6'), dp, rm)}M`;
+    } else if (val.abs().gte('1e+3')) {
+        return `${bnf(val.div('1e+3'), dp, rm)}K`;
     } else {
-        val = ZERO;
+        return bnf(val, dp, rm);
     }
-    return val.toFixed(dp, rm);
 }
 
 export function bnt(value, dp = PRECISION, rm = ROUND_HALF_UP) {
@@ -40,4 +49,14 @@ export function bnt(value, dp = PRECISION, rm = ROUND_HALF_UP) {
 export function fromEthersBN(value, decimals = 18) {
     const formatted = formatUnits(value, decimals);
     return bn(formatted);
+}
+
+function validate(value) {
+    let val;
+    if (BigNumber.isBigNumber(value) && !value.isNaN() && value.isFinite()) {
+        val = value;
+    } else {
+        val = ZERO;
+    }
+    return val;
 }

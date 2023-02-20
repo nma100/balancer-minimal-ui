@@ -6,8 +6,8 @@ import { OutletContext } from "../pages/Layout";
 import { isDark } from "../theme";
 
 const LOADING = (
-  <span className="apr-placeholder placeholder-glow">
-    <span className="placeholder"></span>
+  <span className="placeholder-glow">
+    <span className="apr placeholder"></span>
   </span>
 );
 const UNAVAILABLE = 'N/A';
