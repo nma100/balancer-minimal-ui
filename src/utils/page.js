@@ -2,6 +2,8 @@ import { bnf, bnc } from "../utils/bn";
 import { nf } from "./number";
 import { Modal, Toast } from 'bootstrap';
 
+export const UNAVAILABLE = 'N/A';
+
 export function reload() {
   window.location.reload();
 }
@@ -32,7 +34,7 @@ export const truncateAddress = (address) => {
 };
 
 export const usd = (bn, compact = false) => {
-    if (bn === false) return 'N/A';
+    if (bn === false) return UNAVAILABLE;
     return `$${compact ? bnc(bn) : bnf(bn)}`;
 } 
 

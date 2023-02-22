@@ -66,7 +66,10 @@ $sidebar-font-size: $font-size-base * 1.075;
 }
 
 .placeholder-glow {
-    > .volume, .apr { width: 2rem; }
+    > .volume { width: 4rem; }
+    > .shares { width: 4.5rem; }
+    > .apr { width: 4.5rem; }
+    > .apr-eth { width: 8rem; }
 }
 
 /* TRADE */

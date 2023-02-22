@@ -4,6 +4,7 @@ import PoolIconsFlex from '../../components/PoolIconsFlex';
 import PoolTokensFlex from '../../components/PoolTokensFlex';
 import PoolTvl from '../../components/PoolTvl';
 import PoolVolume from '../../components/PoolVolume';
+import { Theme } from '../../theme';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
 
 class Invest extends React.Component {
@@ -15,15 +16,24 @@ class Invest extends React.Component {
     this.state = { page: 0 };
   }
 
-  async handleLoadMore() {
+  async loadMore() {
     const { balancer, pools: contextPools } = this.context;
     let { page, pools: statePools } = this.state;
+    this.setState({ loading: true });
     const more = await balancer.fetchPools(POOLS_PER_PAGE, ++page * POOLS_PER_PAGE);
     const pools = (statePools || contextPools).concat(more);
-    this.setState({ pools, page });
+    this.setState({ loading: false, pools, page });
+  }
+
+  
+  css() {
+    const isDark = (this.context.theme === Theme.Dark);
+    const textClass  = isDark ? 'text-light' : 'text-dark';
+    return { textClass };
   }
 
   render() {
+    const { textClass } = this.css();
     const { pools: contextPools } = this.context;
     const { pools: statePools } = this.state;
     const pools = statePools || contextPools;
@@ -53,36 +63,54 @@ class Invest extends React.Component {
               </tr>
             </thead>
             <tbody>
-            {pools?.map(pool =>
-              <tr key={pool.id}>
-                <td className="d-none d-md-table-cell ">
-                  <PoolIconsFlex pool={pool} />
-                </td>
-                <td><PoolTokensFlex pool={pool} /></td>
-                <td className="d-none d-md-table-cell text-center">
-                  <PoolTvl pool={pool} />
-                </td>
-                <td className="d-none d-md-table-cell text-center">
-                  <PoolVolume pool={pool} />
-                </td>
-                <td className="text-center text-nowrap">
-                  <PoolApr pool={pool} />
-                </td>
-                <td>
-                  <div className="d-flex">
-                    <button type="button" className="btn btn-outline-light me-1">Deposit</button>
-                    <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
-                  </div>
-                </td>
-              </tr>
-            )}
-              <tr>
-                <td className="text-center py-2" colSpan="6">
-                  <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.handleLoadMore()}>
-                      <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
-                  </button>
-                </td>
-              </tr>
+            {pools === undefined ? (
+                <tr>
+                  <td className={`${textClass}  text-opacity-75 text-center p-3 fs-4`} colSpan="6">Loading pools
+                    <div className={`spinner ${textClass} text-opacity-75 spinner-border ms-3`} role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  {pools.map(pool =>
+                    <tr key={pool.id}>
+                      <td className="d-none d-md-table-cell ">
+                        <PoolIconsFlex pool={pool} />
+                      </td>
+                      <td><PoolTokensFlex pool={pool} /></td>
+                      <td className="d-none d-md-table-cell text-center">
+                        <PoolTvl pool={pool} />
+                      </td>
+                      <td className="d-none d-md-table-cell text-center">
+                        <PoolVolume pool={pool} />
+                      </td>
+                      <td className="text-center text-nowrap">
+                        <PoolApr pool={pool} />
+                      </td>
+                      <td>
+                        <div className="d-flex">
+                          <button type="button" className="btn btn-outline-light me-1">Deposit</button>
+                          <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td className="text-center py-2" colSpan="6">
+                      {this.state.loading ? (
+                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
+                          Loading ...
+                        </button>
+                      ) : (
+                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
+                          <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                </>
+              )}
             </tbody>
           </table>
         </div>

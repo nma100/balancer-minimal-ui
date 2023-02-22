@@ -52,5 +52,21 @@ it('Fetch pools', async () => {
     pools.slice(0, 5).forEach(pool => console.log(pool.name));
 });
 
+it('Apr', async () => {
+
+    const INFURA = '';
+
+    const sdk = new BalancerSDK({
+        network: 1,
+        rpcUrl: `https://mainnet.infura.io/v3/${INFURA}`,
+    });
+
+    const poolId = '0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080';
+    const pool = await sdk.pools.find(poolId);
+    const apr = await sdk.pools.apr(pool);
+    console.log('Apr', pool.name, apr);
+
+}, TIMEOUT);
+
 // npm run test .\src\protocol\balancer-helper.test.js
 // npm run test .\src\protocol\balancer-helper.test.js -- -t 'Total investments'

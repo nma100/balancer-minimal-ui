@@ -4,13 +4,8 @@ import * as ReactDOMServer from "react-dom/server";
 import { Tooltip } from "bootstrap";
 import { OutletContext } from "../pages/Layout";
 import { isDark } from "../theme";
-
-const LOADING = (
-  <span className="placeholder-glow">
-    <span className="apr placeholder"></span>
-  </span>
-);
-const UNAVAILABLE = 'N/A';
+import { isEthNetwork } from "../networks";
+import { UNAVAILABLE } from "../utils/page";
 
 export default class PoolApr extends React.Component {
   
@@ -38,11 +33,21 @@ export default class PoolApr extends React.Component {
       .forEach(el => new Tooltip(el, { html: true }));
   }
 
+  loading() {
+    const { chainId } = this.context;
+    const css = isEthNetwork(chainId) ? 'apr-eth' : 'apr';
+    return (
+      <span className="placeholder-glow">
+        <span className={`${css} placeholder`}></span>
+      </span>
+    );
+  }
+
   render() {
     const { pool } = this.props;
     const { apr  } = this.state;
 
-    if (apr === undefined) return LOADING;
+    if (apr === undefined) return this.loading();
     if (apr === false) return UNAVAILABLE;
 
     const swapFees = apr?.swapFees;
