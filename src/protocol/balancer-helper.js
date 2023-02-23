@@ -114,6 +114,10 @@ export class BalancerHelper {
     return await this.poolService.fetchPools(first, skip);
   }
 
+  async findPoolsByToken(token) {
+    return await this.poolService.findPoolsByToken(token);
+  }
+
   async fetchTokens() {
     const nativeCoin = nativeAsset(this.chainId);
     const approved = this.tokenListService.approvedTokens();

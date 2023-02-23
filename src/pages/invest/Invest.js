@@ -4,7 +4,9 @@ import PoolIconsFlex from '../../components/PoolIconsFlex';
 import PoolTokensFlex from '../../components/PoolTokensFlex';
 import PoolTvl from '../../components/PoolTvl';
 import PoolVolume from '../../components/PoolVolume';
+import { SELECT_TOKEN_MODAL, TokenSelector } from '../../components/TokenSelector';
 import { Theme } from '../../theme';
+import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
 
 class Invest extends React.Component {
@@ -25,6 +27,17 @@ class Invest extends React.Component {
     this.setState({ loading: false, pools, page });
   }
 
+  async searchPools(token) {
+    this.setState({ poolSearch: token });
+    const pools = await this.context.balancer.findPoolsByToken(token.address);
+    this.setState({ pools });
+  }
+
+  async resetSearch() {
+    this.setState({ poolSearch: undefined });
+    const pools = await this.context.balancer.fetchPools(POOLS_PER_PAGE);
+    this.setState({ pools });
+  }
   
   css() {
     const isDark = (this.context.theme === Theme.Dark);
@@ -35,18 +48,24 @@ class Invest extends React.Component {
   render() {
     const { textClass } = this.css();
     const { pools: contextPools } = this.context;
-    const { pools: statePools } = this.state;
+    const { pools: statePools, poolSearch } = this.state;
     const pools = statePools || contextPools;
 
     return (
       <>
+        <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
         <div className="d-flex justify-content-between align-items-center bg-dark rounded shadow p-4 mb-4">
           <div className="fs-2">Deposit assets and earn yield</div>
-          <div>
-            <div className="input-group">
-              <input type="text" className="form-control" placeholder="Search pool" aria-label="Search pool" aria-describedby="Search pool" />
-              <button className="btn btn-outline-light" type="button" id="button-search"><i className="bi bi-search"></i></button>
-            </div>            
+          <div className="d-flex">
+            {poolSearch !== undefined &&
+              <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 rounded me-3">
+                <div className="me-2">{poolSearch.symbol}</div>
+                <div className="reset-search text-light text-opacity-75" onClick={() => this.resetSearch()}><i className="bi bi-x-square"></i></div>
+              </div>
+            }
+            <button type="button" className="btn btn-outline-light" onClick={() => openModal(SELECT_TOKEN_MODAL)}>
+              Search pool <i className="bi bi-search ms-1"></i>
+            </button>
           </div>
         </div>
 
@@ -96,19 +115,21 @@ class Invest extends React.Component {
                       </td>
                     </tr>
                   )}
-                  <tr>
-                    <td className="text-center py-2" colSpan="6">
-                      {this.state.loading ? (
-                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
-                          Loading ...
-                        </button>
-                      ) : (
-                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
-                          <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  {poolSearch === undefined &&
+                    <tr>
+                      <td className="text-center py-2" colSpan="6">
+                        {this.state.loading ? (
+                          <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
+                            Loading ...
+                          </button>
+                        ) : (
+                          <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
+                            <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  }
                 </>
               )}
             </tbody>
