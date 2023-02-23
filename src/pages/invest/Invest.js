@@ -33,10 +33,8 @@ class Invest extends React.Component {
     this.setState({ pools });
   }
 
-  async resetSearch() {
-    this.setState({ poolSearch: undefined });
-    const pools = await this.context.balancer.fetchPools(POOLS_PER_PAGE);
-    this.setState({ pools });
+  resetSearch() {
+    this.setState({  poolSearch: undefined, pools: undefined, page: 0 });
   }
   
   css() {
