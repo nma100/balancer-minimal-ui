@@ -9,6 +9,8 @@ import { Theme } from '../../theme';
 import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
 
+const Mode = { Init: 0, Search: 1, Display : 2 }
+
 class Invest extends React.Component {
 
   static contextType = OutletContext;
@@ -28,7 +30,7 @@ class Invest extends React.Component {
   }
 
   async searchPools(token) {
-    this.setState({ poolSearch: token });
+    this.setState({ poolSearch: token , pools: undefined });
     const pools = await this.context.balancer.findPoolsByToken(token.address);
     this.setState({ pools });
   }
@@ -36,7 +38,21 @@ class Invest extends React.Component {
   resetSearch() {
     this.setState({  poolSearch: undefined, pools: undefined, page: 0 });
   }
-  
+
+  mode() {
+    const { pools: contextPools } = this.context;
+    const { pools: statePools, poolSearch } = this.state;
+    let mode;
+    if (statePools === undefined && contextPools === undefined) {
+      mode = Mode.Init;
+    } else if (statePools === undefined && poolSearch !== undefined) {
+      mode = Mode.Search;
+    } else {
+      mode = Mode.Display;
+    }
+    return mode;
+  }
+
   css() {
     const isDark = (this.context.theme === Theme.Dark);
     const textClass  = isDark ? 'text-light' : 'text-dark';
@@ -47,8 +63,7 @@ class Invest extends React.Component {
     const { textClass } = this.css();
     const { pools: contextPools } = this.context;
     const { pools: statePools, poolSearch } = this.state;
-    const pools = statePools || contextPools;
-
+    const mode = this.mode();
     return (
       <>
         <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
@@ -80,7 +95,7 @@ class Invest extends React.Component {
               </tr>
             </thead>
             <tbody>
-            {pools === undefined ? (
+            {mode === Mode.Init &&
                 <tr>
                   <td className={`${textClass}  text-opacity-75 text-center p-3 fs-4`} colSpan="6">Loading pools
                     <div className={`spinner ${textClass} text-opacity-75 spinner-border ms-3`} role="status">
@@ -88,48 +103,58 @@ class Invest extends React.Component {
                     </div>
                   </td>
                 </tr>
-              ) : (
-                <>
-                  {pools.map(pool =>
-                    <tr key={pool.id}>
-                      <td className="d-none d-md-table-cell ">
-                        <PoolIconsFlex pool={pool} />
-                      </td>
-                      <td><PoolTokensFlex pool={pool} /></td>
-                      <td className="d-none d-md-table-cell text-center">
-                        <PoolTvl pool={pool} />
-                      </td>
-                      <td className="d-none d-md-table-cell text-center">
-                        <PoolVolume pool={pool} />
-                      </td>
-                      <td className="text-center text-nowrap">
-                        <PoolApr pool={pool} />
-                      </td>
-                      <td>
-                        <div className="d-flex">
-                          <button type="button" className="btn btn-outline-light me-1">Deposit</button>
-                          <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  {poolSearch === undefined &&
-                    <tr>
-                      <td className="text-center py-2" colSpan="6">
-                        {this.state.loading ? (
-                          <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
-                            Loading ...
-                          </button>
-                        ) : (
-                          <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
-                            <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  }
-                </>
-              )}
+            }
+            {mode === Mode.Search &&
+                <tr>
+                  <td className={`${textClass}  text-opacity-75 text-center p-3 fs-4`} colSpan="6">Searching
+                    <div className={`spinner ${textClass} text-opacity-75 spinner-border ms-3`} role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+            }
+            {mode === Mode.Display &&
+              <>
+                {(statePools || contextPools).map(pool =>
+                  <tr key={pool.id}>
+                    <td className="d-none d-md-table-cell ">
+                      <PoolIconsFlex pool={pool} />
+                    </td>
+                    <td><PoolTokensFlex pool={pool} /></td>
+                    <td className="d-none d-md-table-cell text-center">
+                      <PoolTvl pool={pool} />
+                    </td>
+                    <td className="d-none d-md-table-cell text-center">
+                      <PoolVolume pool={pool} />
+                    </td>
+                    <td className="text-center text-nowrap">
+                      <PoolApr pool={pool} />
+                    </td>
+                    <td>
+                      <div className="d-flex">
+                        <button type="button" className="btn btn-outline-light me-1">Deposit</button>
+                        <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {poolSearch === undefined &&
+                  <tr>
+                    <td className="text-center py-2" colSpan="6">
+                      {this.state.loading ? (
+                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
+                          Loading ...
+                        </button>
+                      ) : (
+                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
+                          <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                }
+              </>
+            }
             </tbody>
           </table>
         </div>

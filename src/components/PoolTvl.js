@@ -13,14 +13,12 @@ export default class PoolTvl  extends React.Component {
     }
 
     componentDidMount() {
-        try {
-          const { pool } = this.props;
-          const { balancer } = this.context;
-          this.setState({ tvl: bn(pool.totalLiquidity) }); 
-          balancer.loadLiquidity(pool).then(l => this.setState({ tvl: bn(l)}));
-        } catch (e) {
-          this.setState({ tvl: false }); 
-        } 
+        const { pool } = this.props;
+        const { balancer } = this.context;
+        this.setState({ tvl: bn(pool.totalLiquidity) }); 
+        balancer.loadLiquidity(pool)
+          .then(l => this.setState({ tvl: bn(l)}))
+          .catch(e => console.warn(e));
       }
 
     render() {
