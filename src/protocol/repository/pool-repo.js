@@ -13,24 +13,21 @@ export class PoolRepo {
     }
 
     async findPools(poolIds) {
-        const { chainId, url } = this.config;
         const query = { args: { where: { id: { in: poolIds } } } };
-        const subgraph = new PoolsSubgraphRepository({ chainId, url, query });
+        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
         return await subgraph.fetch();
     }
     
     async findPoolsByToken(address) {
-        const { chainId, url } = this.config;
         let query = this.fetchArgs();
         query.args.where.tokensList = { contains: [ address.toLowerCase() ] };
-        const subgraph = new PoolsSubgraphRepository({ chainId, url, query });
+        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
         return await subgraph.fetch();   
     }
 
     async fetchPools(first, skip) {
-        const { chainId, url } = this.config;
         const query = this.fetchArgs();
-        const subgraph = new PoolsSubgraphRepository({ chainId, url, query });
+        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
         return await subgraph.fetch({ first, skip });    
     }
 
