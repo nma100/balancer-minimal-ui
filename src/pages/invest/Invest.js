@@ -8,6 +8,7 @@ import { SELECT_TOKEN_MODAL, TokenSelector } from '../../components/TokenSelecto
 import { Theme } from '../../theme';
 import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
+import { JoinPool, JOIN_POOL_MODAL } from './JoinPool';
 
 const Mode = { Init: 0, Search: 1, Display : 2 }
 
@@ -33,6 +34,11 @@ class Invest extends React.Component {
     this.setState({ poolSearch: token , pools: undefined });
     const pools = await this.context.balancer.findPoolsByToken(token.address);
     this.setState({ pools });
+  }
+
+  deposit(pool) {
+    const callback = () => openModal(JOIN_POOL_MODAL);
+    this.setState({ poolToJoin: pool }, callback);
   }
 
   resetSearch() {
@@ -62,11 +68,12 @@ class Invest extends React.Component {
   render() {
     const { textClass } = this.css();
     const { pools: contextPools } = this.context;
-    const { pools: statePools, poolSearch } = this.state;
+    const { pools: statePools, poolSearch, poolToJoin } = this.state;
     const mode = this.mode();
     return (
       <>
         <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
+        <JoinPool pool={poolToJoin} />
         <div className="d-flex justify-content-between align-items-center bg-dark rounded shadow p-4 mb-4">
           <div className="fs-2">Deposit assets and earn yield</div>
           <div className="d-flex">
@@ -132,7 +139,7 @@ class Invest extends React.Component {
                     </td>
                     <td>
                       <div className="d-flex">
-                        <button type="button" className="btn btn-outline-light me-1">Deposit</button>
+                        <button type="button" className="btn btn-outline-light me-1" onClick={() => this.deposit(pool)}>Deposit</button>
                         <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
                       </div>
                     </td>

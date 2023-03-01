@@ -7,6 +7,11 @@ export class PoolRepo {
         this.config = { chainId, url };
         this.pools  = sdk.pools;
     }
+    
+    async fetchPools(first, skip) {
+        const query = this.defaultArgs();
+        return await this.subgraph({ query, first, skip });
+    }
 
     async findPool(poolId) {
         return await this.pools.find(poolId);
@@ -14,24 +19,21 @@ export class PoolRepo {
 
     async findPools(poolIds) {
         const query = { args: { where: { id: { in: poolIds } } } };
-        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
-        return await subgraph.fetch();
+        return await this.subgraph({ query });
     }
     
     async findPoolsByToken(address) {
-        let query = this.fetchArgs();
+        let query = this.defaultArgs();
         query.args.where.tokensList = { contains: [ address.toLowerCase() ] };
-        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
-        return await subgraph.fetch();   
+        return await this.subgraph({ query });
     }
 
-    async fetchPools(first, skip) {
-        const query = this.fetchArgs();
-        const subgraph = new PoolsSubgraphRepository({ ...this.config, query });
-        return await subgraph.fetch({ first, skip });    
+    async subgraph({ query, first, skip }) {
+        const repo = new PoolsSubgraphRepository({ ...this.config, query });
+        return await repo.fetch({ first, skip });    
     }
 
-    fetchArgs() {
+    defaultArgs() {
         const { chainId } = this.config;
         return {
             args: { 

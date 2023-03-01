@@ -5,6 +5,8 @@
 $sidebar-pt: 100px;
 $sidebar-font-size: $font-size-base * 1.075;
 
+body { overflow-y: scroll; }
+
 #brand-text {
     font-family: 'Ubuntu'; 
     padding-bottom: 5px;

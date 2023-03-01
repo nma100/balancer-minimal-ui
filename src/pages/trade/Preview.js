@@ -22,7 +22,7 @@ const Mode = {
   Executed : 6,
 }
 
-const MIN_PI = 0.01;
+const MIN_PI = 0.001;
 
 export class Preview extends React.Component {
       
@@ -114,7 +114,7 @@ export class Preview extends React.Component {
   priceImpact() {
     const { swapInfo } = this.props;
     const pi = swapInfo?.priceInfo?.priceImpact
-    return pi < MIN_PI ?  `< ${nf(MIN_PI)}%` : `${nf(pi)}%`;
+    return pi < MIN_PI ?  `< ${nf(MIN_PI, 3)}%` : `${nf(pi, 3)}%`;
   }
 
   css() {

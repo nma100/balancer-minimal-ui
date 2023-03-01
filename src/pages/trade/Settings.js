@@ -42,32 +42,30 @@ export class Settings extends React.Component {
   render() {
     const { contentClass, btnClass } = this.css();
     return ( 
-      <>
-        <div id={SETTINGS_MODAL} className="modal" tabIndex="-1">
-            <div className="modal-dialog modal-sm modal-dialog-centered">
-                <div className={`modal-content ${contentClass}`}>
-                    <div className="modal-body">
-                        <h3 className="mb-4">Settings</h3>
-                        <div className="mb-4">
-                          <label htmlFor="max-slippage" className="form-label">Max. slippage (in bps)</label>
-                          <input type="number" min="1" step="1" autoComplete="off" className="form-control mb-1" id="max-slippage" />
-                          <div className="small text-muted">1 bps = 0.01%</div>
-                        </div>
-                        <div className="container-fluid p-0">
-                          <div className="row gx-2 gy-0">
-                            <div className="col d-grid">
-                              <button type="button" className={btnClass} onClick={() => this.handleSave()}>Save</button>
-                            </div>
-                            <div className="col d-grid">
-                              <button type="button" className={btnClass} data-bs-dismiss="modal">Cancel</button>
-                            </div>
+      <div id={SETTINGS_MODAL} className="modal" tabIndex="-1">
+          <div className="modal-dialog modal-sm modal-dialog-centered">
+              <div className={`modal-content ${contentClass}`}>
+                  <div className="modal-body">
+                      <h3 className="mb-4">Settings</h3>
+                      <div className="mb-4">
+                        <label htmlFor="max-slippage" className="form-label">Max. slippage (in bps)</label>
+                        <input type="number" min="1" step="1" autoComplete="off" className="form-control mb-1" id="max-slippage" />
+                        <div className="small text-muted">1 bps = 0.01%</div>
+                      </div>
+                      <div className="container-fluid p-0">
+                        <div className="row gx-2 gy-0">
+                          <div className="col d-grid">
+                            <button type="button" className={btnClass} onClick={() => this.handleSave()}>Save</button>
+                          </div>
+                          <div className="col d-grid">
+                            <button type="button" className={btnClass} data-bs-dismiss="modal">Cancel</button>
                           </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-      </>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
     );
   }
 }
