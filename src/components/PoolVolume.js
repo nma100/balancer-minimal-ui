@@ -12,16 +12,20 @@ export default class PoolVolume  extends React.Component {
         this.state = {};
     }
 
-    async componentDidMount() {
-        try {
-          const { pool } = this.props;
-          const { balancer } = this.context;
-          const volume = await balancer.loadVolume(pool);
-          this.setState({ volume: bn(volume) }); 
-        } catch (e) {
-          this.setState({ volume: false }); 
-        } 
-      }
+    componentDidMount() {
+        this.setState({ volume: undefined }); 
+    }
+
+    componentDidUpdate() {
+        const { balancer } = this.context;
+        const { pool } = this.props;
+        const { volume }  = this.state;
+        if (balancer !== undefined && volume === undefined) {
+            balancer.loadVolume(pool)
+                .then((v) => this.setState({ volume: bn(v) }))
+                .catch(() => this.setState({ volume: false }));
+        }
+    }
 
     render() {
         const { volume } = this.state;

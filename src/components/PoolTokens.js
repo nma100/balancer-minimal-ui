@@ -1,6 +1,7 @@
 import React from 'react';
 import { OutletContext } from '../pages/Layout';
 import { isDark } from '../theme';
+import { weight } from '../utils/page';
 
 export default class PoolTokens extends React.Component {
 
@@ -21,12 +22,11 @@ export default class PoolTokens extends React.Component {
     render() {
         const { pool } = this.props;
         const { bgClass, textClass } = this.css();
-        const format = val => (parseFloat(val) * 100).toFixed();
         return pool.tokens
                 .filter(token => token.address !== pool.address)
                 .map(token => token.weight ?
                     <div key={token.id} className={`d-inline-flex align-items-center ${bgClass} bg-opacity-10 text-nowrap px-2 py-1 me-2 rounded`}>
-                        <div className="me-1">{token.symbol}</div><div className={`${textClass} text-opacity-75`} style={{ fontSize: '70%' }}>{format(token.weight)}%</div>
+                        <div className="me-1">{token.symbol}</div><div className={`${textClass} text-opacity-75`} style={{ fontSize: '70%' }}>{weight(token.weight)}</div>
                     </div>
                     : <span key={token.id} className={`${bgClass} bg-opacity-10 px-2 py-1 me-1 rounded-pill`}>{token.symbol}</span>
                 );

@@ -8,7 +8,6 @@ import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
 import { fromEthersBN, ZERO } from "../utils/bn";
 import { ethers } from "ethers";
-import { debounce } from "lodash";
 
 const RELOAD_CHAIN = 'reload-chain';
 export const POOLS_PER_PAGE = 10;
@@ -20,7 +19,6 @@ class Layout extends React.Component {
   constructor(props) {
     super(props);
     this.state = { theme: currentTheme() };
-    this.reconnect = debounce(this.reconnect.bind(this), 10);
   }
 
   componentDidMount() {
@@ -52,11 +50,13 @@ class Layout extends React.Component {
 
   handleDisconnect() {
     web3Modal.clearCachedProvider();
+    sessionStorage.clear();
     reload();
   }
 
   handleChangeNetwork(e) {
     const chainId = e.target.value;
+    sessionStorage.clear();
     if (this.state.account) {
       const { web3Provider } = this.state;
       switchChain(chainId, web3Provider);
@@ -170,7 +170,7 @@ class Layout extends React.Component {
             >
               <ul className="navbar-nav d-flex d-lg-none fs-5 mt-2">
                 <li className="nav-item">
-                  <NavLink to="/" className="nav-link" end>
+                  <NavLink to="/" className="nav-link invest" end>
                     Invest
                   </NavLink>
                 </li>
@@ -247,7 +247,7 @@ class Layout extends React.Component {
                 <hr className={`${hrClass} my-4`} />
                 <ul className="nav nav-pills flex-column mb-auto">
                   <li className="nav-item">
-                    <NavLink to="/" className="nav-link" end>
+                    <NavLink to="/" className="nav-link invest" end>
                       <i className="bi bi-stars me-2"></i> Invest
                     </NavLink>
                   </li>

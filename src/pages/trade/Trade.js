@@ -5,7 +5,7 @@ import { TokenSelector, SELECT_TOKEN_MODAL } from '../../components/TokenSelecto
 import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
-import { usd, openModal } from '../../utils/page';
+import { usd, openModal, activeInvest } from '../../utils/page';
 import { bn, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
 import { debounce } from 'lodash';
 import { Theme } from '../../theme';
@@ -37,6 +37,10 @@ class Trade extends React.Component {
       this.findRoute.bind(this),
       DEBOUNCE
     );
+  }
+
+  componentDidMount() { 
+    activeInvest(false);
   }
 
   openTokenSelector(type) {

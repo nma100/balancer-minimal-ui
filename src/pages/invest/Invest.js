@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import PoolApr from '../../components/PoolApr';
 import PoolIconsFlex from '../../components/PoolIconsFlex';
 import PoolTokensFlex from '../../components/PoolTokensFlex';
@@ -8,7 +9,10 @@ import { SELECT_TOKEN_MODAL, TokenSelector } from '../../components/TokenSelecto
 import { Theme } from '../../theme';
 import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
-import { JoinPool, JOIN_POOL_MODAL } from './JoinPool';
+
+const SESSION_POOLS = 'pools';
+const SESSION_POOLS_SCROLL = 'pools-scroll';
+const SESSION_POOL_SEARCH = 'pool-search';
 
 const Mode = { Init: 0, Search: 1, Display : 2 }
 
@@ -18,45 +22,87 @@ class Invest extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { page: 0 };
+    this.state = {};
+    this.onScroll = this.onScroll.bind(this); 
   }
 
+  componentDidMount() {
+    document.addEventListener('scroll', this.onScroll);
+    const scrollRestoration = this.getSession(SESSION_POOLS_SCROLL) || 0;
+    window.scroll({ top: scrollRestoration, left: 0, behavior: 'instant' });
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('scroll', this.onScroll);
+  }
+
+  onScroll(e) {
+    const { scrollTop } = e.target.documentElement;
+    this.setSession(SESSION_POOLS_SCROLL, scrollTop);
+  };
+
   async loadMore() {
-    const { balancer, pools: contextPools } = this.context;
-    let { page, pools: statePools } = this.state;
+    const { balancer } = this.context;
+    const { pools, page } = this.getPoolsData();
     this.setState({ loading: true });
-    const more = await balancer.fetchPools(POOLS_PER_PAGE, ++page * POOLS_PER_PAGE);
-    const pools = (statePools || contextPools).concat(more);
-    this.setState({ loading: false, pools, page });
+    const more = await balancer.fetchPools(POOLS_PER_PAGE, (page + 1) * POOLS_PER_PAGE);
+    this.setPoolsData(pools.concat(more));
+    this.setState({ loading: false });
   }
 
   async searchPools(token) {
-    this.setState({ poolSearch: token , pools: undefined });
+    this.setState({ searching: true });
     const pools = await this.context.balancer.findPoolsByToken(token.address);
-    this.setState({ pools });
+    this.setPoolsData(pools, token);
+    this.setState({ searching: false });
   }
 
-  deposit(pool) {
-    const callback = () => openModal(JOIN_POOL_MODAL);
-    this.setState({ poolToJoin: pool }, callback);
+  getPoolsData() {
+    const { pools: contextPools } = this.context;
+    const sessionPools = this.getSession(SESSION_POOLS);
+    const poolSearch = this.getSession(SESSION_POOL_SEARCH);
+    const pools = sessionPools || contextPools;
+    const page = Math.floor(pools?.length / POOLS_PER_PAGE);
+    return { pools, page, poolSearch };
+  }
+
+  setPoolsData(pools, poolSearch) {
+    this.setSession(SESSION_POOLS, pools);
+    this.setSession(SESSION_POOL_SEARCH, poolSearch);
   }
 
   resetSearch() {
-    this.setState({  poolSearch: undefined, pools: undefined, page: 0 });
+    this.setPoolsData(undefined, undefined);
+    this.setState({ mode: Mode.Display });
   }
 
   mode() {
-    const { pools: contextPools } = this.context;
-    const { pools: statePools, poolSearch } = this.state;
+    const { searching } = this.state;
+    const poolsData = this.getPoolsData();
     let mode;
-    if (statePools === undefined && contextPools === undefined) {
+    if (poolsData?.pools === undefined) {
       mode = Mode.Init;
-    } else if (statePools === undefined && poolSearch !== undefined) {
+    } else if (searching === true) {
       mode = Mode.Search;
     } else {
       mode = Mode.Display;
     }
     return mode;
+  }
+  
+  getSession(key) {
+    const { chainId } = this.context;
+    const item = sessionStorage.getItem(chainId + key);
+    return item ? JSON.parse(item) : undefined;
+  }
+
+  setSession(key, item) {
+    const { chainId } = this.context;
+    if (item) {
+      sessionStorage.setItem(chainId + key, JSON.stringify(item));
+    } else {
+      sessionStorage.removeItem(chainId + key);
+    }
   }
 
   css() {
@@ -67,19 +113,17 @@ class Invest extends React.Component {
 
   render() {
     const { textClass } = this.css();
-    const { pools: contextPools } = this.context;
-    const { pools: statePools, poolSearch, poolToJoin } = this.state;
+    const poolsData = this.getPoolsData();
     const mode = this.mode();
     return (
       <>
         <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
-        <JoinPool pool={poolToJoin} />
         <div className="d-flex justify-content-between align-items-center bg-dark rounded shadow p-4 mb-4">
           <div className="fs-2">Deposit assets and earn yield</div>
           <div className="d-flex">
-            {poolSearch !== undefined &&
+            {poolsData?.poolSearch !== undefined &&
               <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 rounded me-3">
-                <div className="me-2">{poolSearch.symbol}</div>
+                <div className="me-2">{poolsData.poolSearch.symbol}</div>
                 <div className="reset-search text-light text-opacity-75" onClick={() => this.resetSearch()}><i className="bi bi-x-square"></i></div>
               </div>
             }
@@ -88,7 +132,6 @@ class Invest extends React.Component {
             </button>
           </div>
         </div>
-
         <div className="table-responsive">
           <table id="pools" className="table table-dark align-middle m-0">
             <thead>
@@ -115,14 +158,14 @@ class Invest extends React.Component {
                 <tr>
                   <td className={`${textClass}  text-opacity-75 text-center p-3 fs-4`} colSpan="6">Searching
                     <div className={`spinner ${textClass} text-opacity-75 spinner-border ms-3`} role="status">
-                      <span className="visually-hidden">Loading...</span>
+                      <span className="visually-hidden">Searching...</span>
                     </div>
                   </td>
                 </tr>
             }
             {mode === Mode.Display &&
               <>
-                {(statePools || contextPools).map(pool =>
+                {(poolsData?.pools || []).map(pool =>
                   <tr key={pool.id}>
                     <td className="d-none d-md-table-cell ">
                       <PoolIconsFlex pool={pool} />
@@ -139,13 +182,13 @@ class Invest extends React.Component {
                     </td>
                     <td>
                       <div className="d-flex">
-                        <button type="button" className="btn btn-outline-light me-1" onClick={() => this.deposit(pool)}>Deposit</button>
-                        <button type="button" className="btn btn-outline-light ms-1" disabled="">Withdraw</button>
+                        <NavLink className="btn btn-outline-light me-1" to={`/join-pool/${pool.id}`} state={pool}>Deposit</NavLink>
+                        <NavLink className="btn btn-outline-light ms-1" to={`/exit-pool/${pool.id}`} state={pool}>Withdraw</NavLink>
                       </div>
                     </td>
                   </tr>
                 )}
-                {poolSearch === undefined &&
+                {poolsData?.poolSearch === undefined &&
                   <tr>
                     <td className="text-center py-2" colSpan="6">
                       {this.state.loading ? (

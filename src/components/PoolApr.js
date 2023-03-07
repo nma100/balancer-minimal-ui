@@ -16,18 +16,19 @@ export default class PoolApr extends React.Component {
     this.state = {};
   }
 
-  async componentDidMount() {
-    try {
-      const { pool } = this.props;
-      const { balancer } = this.context;
-      const apr = await balancer.loadApr(pool);
-      this.setState({ apr: apr }); 
-    } catch (e) {
-      this.setState({ apr: false }); 
-    } 
+  componentDidMount() {
+    this.setState({ apr: undefined }); 
   }
 
   componentDidUpdate() {
+    const { balancer } = this.context;
+    const { pool } = this.props;
+    const { apr }  = this.state;
+    if (balancer !== undefined && apr === undefined) {
+        balancer.loadApr(pool)
+            .then(apr => this.setState({ apr }))
+            .catch(() => this.setState({ apr: false }));
+    }
     document
       .querySelectorAll('.apr-breakdown')
       .forEach(el => new Tooltip(el, { html: true }));

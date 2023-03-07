@@ -12,6 +12,14 @@ export function blur() {
   document.querySelector('body').style.opacity = 0.75;
 }
 
+export function activeInvest(active = true) {
+  document
+    .querySelectorAll('.nav-item > .invest')
+    .forEach(elem => active 
+      ? elem.classList.add('active') 
+      : elem.classList.remove('active'));
+}
+
 export function openModal(id) {
   Modal.getOrCreateInstance(`#${id}`).show();
 }
@@ -39,3 +47,6 @@ export const usd = (bn, compact = false) => {
 } 
 
 export const fusd = n => `$${ nf(n || 0) }`;
+
+export const weight = w => `${(parseFloat(w) * 100).toFixed()}%`;
+

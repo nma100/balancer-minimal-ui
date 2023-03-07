@@ -146,3 +146,24 @@ table#pools {
 .reset-search { cursor: pointer; }
 
 
+/* Join pool */
+
+#join-pool {
+    .amount-block { 
+        width: 50%; 
+        padding-right: 0.25rem;
+        font-size: $font-size-base * 2.6;
+        input { 
+            all: inherit;
+            width: 100%;
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
+}
+
+
