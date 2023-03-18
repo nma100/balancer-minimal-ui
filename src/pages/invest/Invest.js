@@ -10,8 +10,8 @@ import { Theme } from '../../theme';
 import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
 
-const SESSION_POOLS = 'pools';
-const SESSION_POOLS_SCROLL = 'pools-scroll';
+const SESSION_POOL_LIST = 'pool-list';
+const SESSION_POOL_SCROLL = 'pool-scroll';
 const SESSION_POOL_SEARCH = 'pool-search';
 
 const Mode = { Init: 0, Search: 1, Display : 2 }
@@ -28,7 +28,7 @@ class Invest extends React.Component {
 
   componentDidMount() {
     document.addEventListener('scroll', this.onScroll);
-    const scrollRestoration = this.getSession(SESSION_POOLS_SCROLL) || 0;
+    const scrollRestoration = this.getSession(SESSION_POOL_SCROLL) || 0;
     window.scroll({ top: scrollRestoration, left: 0, behavior: 'instant' });
   }
 
@@ -38,7 +38,7 @@ class Invest extends React.Component {
 
   onScroll(e) {
     const { scrollTop } = e.target.documentElement;
-    this.setSession(SESSION_POOLS_SCROLL, scrollTop);
+    this.setSession(SESSION_POOL_SCROLL, scrollTop);
   };
 
   async loadMore() {
@@ -59,7 +59,7 @@ class Invest extends React.Component {
 
   getPoolsData() {
     const { pools: contextPools } = this.context;
-    const sessionPools = this.getSession(SESSION_POOLS);
+    const sessionPools = this.getSession(SESSION_POOL_LIST);
     const poolSearch = this.getSession(SESSION_POOL_SEARCH);
     const pools = sessionPools || contextPools;
     const page = Math.floor(pools?.length / POOLS_PER_PAGE);
@@ -67,7 +67,7 @@ class Invest extends React.Component {
   }
 
   setPoolsData(pools, poolSearch) {
-    this.setSession(SESSION_POOLS, pools);
+    this.setSession(SESSION_POOL_LIST, pools);
     this.setSession(SESSION_POOL_SEARCH, poolSearch);
   }
 

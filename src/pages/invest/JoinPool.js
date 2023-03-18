@@ -20,7 +20,6 @@ export default function JoinPool() {
         getLeafTokens(pool).forEach(async token => {
             //token.userBalance = account ? (await balancer.userBalance(account, token)) : ZERO;
             tokensArray.push(token);
-
         });
         setTokens(tokensArray);
     }, [ pool ]);
