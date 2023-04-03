@@ -5,7 +5,7 @@ import { TokenSelector, SELECT_TOKEN_MODAL } from '../../components/TokenSelecto
 import { Preview, PREVIEW_MODAL } from './Preview';
 import { Settings, SETTINGS_MODAL } from './Settings';
 import { OutletContext } from '../Layout';
-import { usd, openModal, activeInvest } from '../../utils/page';
+import { usd, openModal, activeInvestMenu } from '../../utils/page';
 import { bn, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
 import { debounce } from 'lodash';
 import { Theme } from '../../theme';
@@ -18,8 +18,8 @@ const SLIPPAGE = 50;
 const Mode = {
   Init: 0,
   TokensSelected: 1,
-  FetchPrice : 2,
-  NoRoute: 3,
+  FetchingPrice : 2,
+  NoRouteFound: 3,
   SwapReady: 4,
 }
 
@@ -40,7 +40,7 @@ class Trade extends React.Component {
   }
 
   componentDidMount() { 
-    activeInvest(false);
+    activeInvestMenu(false);
   }
 
   openTokenSelector(type) {
@@ -131,7 +131,7 @@ class Trade extends React.Component {
       this.setState({ usdValueIn: ZERO, usdValueOut: ZERO });
     } else {
       if (mode >= Mode.TokensSelected) {
-        this.setState({ mode: Mode.FetchPrice });
+        this.setState({ mode: Mode.FetchingPrice });
         this.findRoute(kind, entered, calculated); 
       }
       this.updateUsdValue(kind);
@@ -145,7 +145,7 @@ class Trade extends React.Component {
     const route = await balancer.findRoute(kind, tokens, entered.value);
     console.log('Route', route);
     if (route.returnAmount.isZero()) {
-      this.setState({ mode: Mode.NoRoute });
+      this.setState({ mode: Mode.NoRouteFound });
       calculated.value = '';
       if (kind === IN) {
         this.setState({ usdValueOut: ZERO });
@@ -341,14 +341,14 @@ class Trade extends React.Component {
                   {mode === Mode.TokensSelected &&
                     <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Enter amount</button>
                   }
-                  {mode === Mode.FetchPrice &&
+                  {mode === Mode.FetchingPrice &&
                     <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Fetching best price
                       <div className="spinner-border ms-3" style={{width: '1.5rem', height: '1.5rem'}} role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
                     </button>
                   }
-                  {mode === Mode.NoRoute &&
+                  {mode === Mode.NoRouteFound &&
                     <button className={`btn ${btnClass} btn-lg fs-4`} type="button" disabled>Insufficient liquidity for this trade</button>
                   }
                   {mode === Mode.SwapReady &&

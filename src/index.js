@@ -3,8 +3,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import {
   Route, RouterProvider,
-  createBrowserRouter,
   createRoutesFromElements,
+  createHashRouter,
 } from "react-router-dom";
 import Layout from "./pages/Layout";
 import Portfolio from "./pages/portfolio/Portfolio";
@@ -23,7 +23,7 @@ export const RoutePath = {
   ExitPool: 'exit-pool',
 };
 
-const router = createBrowserRouter(
+const router = createHashRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
       <Route index element={<Invest />} />

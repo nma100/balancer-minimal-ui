@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { formatUnits } from 'ethers/lib/utils';
+import { formatUnits, parseUnits } from 'ethers/lib/utils';
 
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
@@ -46,11 +46,6 @@ export function bnt(value, dp = PRECISION, rm = ROUND_HALF_UP) {
     return val;
 }
 
-export function fromEthersBN(value, decimals = 18) {
-    const formatted = formatUnits(value, decimals);
-    return bn(formatted);
-}
-
 function validate(value) {
     let val;
     if (BigNumber.isBigNumber(value) && !value.isNaN() && value.isFinite()) {
@@ -59,4 +54,14 @@ function validate(value) {
         val = ZERO;
     }
     return val;
+}
+
+export function fromEthersBN(value, decimals = 18) {
+    const formatted = formatUnits(value, decimals);
+    return bn(formatted);
+}
+
+export function toEthersBN(value, decimals = 18) {
+    const validated = validate(value).toFixed();
+    return parseUnits(validated, decimals);
 }

@@ -1,3 +1,4 @@
+import { constants } from "ethers";
 import { BalancerSDK } from "@balancer-labs/sdk";
 import { nativeAsset } from "../networks";
 import { getRpcUrl } from "../utils/rpc";
@@ -9,10 +10,12 @@ import { TokenListService } from "./services/token-list-service";
 import { TokenPriceService } from "./services/token-price-service";
 import { StakingService } from "./services/staking-service";
 import { RewardService } from "./services/reward-service";
-import { constants } from "ethers";
 import { PortfolioLoader } from "./portfolio-loader";
 import { PoolService } from "./services/pool-service";
 import { VolumeService } from "./services/volume-service";
+import { JoinPoolService } from "./services/join-pool-service";
+import { ExitPoolService } from "./services/exit-pool-service";
+import { PriceImpactService } from "./services/price-impact-service";
 
 export class BalancerHelper {
   
@@ -31,6 +34,9 @@ export class BalancerHelper {
     this.stakingService = new StakingService(this.sdk);
     this.rewardService = new RewardService(this.sdk); 
     this.poolService = new PoolService(this.sdk);
+    this.joinService = new JoinPoolService(this.sdk);
+    this.exitService = new ExitPoolService(this.sdk);
+    this.priceImpactService = new PriceImpactService(this.sdk);
   }
 
   async loadApr(pool) {
@@ -51,6 +57,18 @@ export class BalancerHelper {
 
   async swap(swapInfo, web3Provider) {
     return await this.swapService.swap(swapInfo, web3Provider);
+  }
+
+  async joinPool(joinInfo, web3Provider) {
+    return await this.joinService.join(joinInfo, web3Provider);
+  }
+  
+  async exitPool(exitInfo, web3Provider) {
+    return await this.exitService.exit(exitInfo, web3Provider);
+  }
+
+  async priceImpact(info, web3Provider, isJoin) {
+    return await this.priceImpactService.pi(info, web3Provider, isJoin);
   }
 
   async userBalance(user, asset) {
@@ -112,6 +130,10 @@ export class BalancerHelper {
 
   async fetchPools(first = 10, skip = 0) {
     return await this.poolService.fetchPools(first, skip);
+  }
+
+  async findPool(poolId) {
+    return await this.poolService.findPool(poolId);
   }
 
   async findPoolsByToken(token) {

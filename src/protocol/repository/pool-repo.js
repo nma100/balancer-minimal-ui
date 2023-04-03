@@ -9,22 +9,23 @@ export class PoolRepo {
     }
     
     async fetchPools(first, skip) {
-        const query = this.defaultArgs();
+        const query = this.defaultFetchArgs();
         return await this.subgraph({ query, first, skip });
     }
 
     async findPool(poolId) {
-        return await this.pools.find(poolId);
-    }
+        const query = { args: { where: { id: { eq: poolId } } } };
+        return (await this.subgraph({ query }))[0];   
+     }
 
     async findPools(poolIds) {
         const query = { args: { where: { id: { in: poolIds } } } };
         return await this.subgraph({ query });
     }
     
-    async findPoolsByToken(address) {
-        let query = this.defaultArgs();
-        query.args.where.tokensList = { contains: [ address.toLowerCase() ] };
+    async findPoolsByToken(tokenAddress) {
+        let query = this.defaultFetchArgs();
+        query.args.where.tokensList = { contains: [ tokenAddress.toLowerCase() ] };
         return await this.subgraph({ query });
     }
 
@@ -33,7 +34,7 @@ export class PoolRepo {
         return await repo.fetch({ first, skip });    
     }
 
-    defaultArgs() {
+    defaultFetchArgs() {
         const { chainId } = this.config;
         return {
             args: { 

@@ -1,3 +1,4 @@
+import { isLinearish } from "@balancer-labs/sdk";
 import { bn, ZERO } from "./bn";
 
 export function getBptPrice(pool) {
@@ -9,15 +10,13 @@ export function getBptBalanceFiatValue(pool, balance) {
     return getBptPrice(pool).times(balance);
 }
 
-export function getLeafTokens(pool) {
-    let leafTokens = [];
-    for (const poolToken of (pool?.tokens || [])) {
-        if (poolToken.address === pool.address) continue;
-        if (poolToken.token.pool) {
-            leafTokens.push(...getLeafTokens(poolToken.token.pool));
-        } else {
-            leafTokens.push(poolToken);
-        }
+export function getPoolTokens(pool) {
+    let poolTokens; 
+    if (isLinearish(pool.poolType)) {
+        const mainToken = pool.tokens[pool.mainIndex];
+        poolTokens = [ mainToken ];
+    } else {
+        poolTokens = pool.tokens.filter(t => t.address !== pool.address);
     }
-    return leafTokens;
+    return poolTokens;
 }

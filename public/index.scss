@@ -146,9 +146,9 @@ table#pools {
 .reset-search { cursor: pointer; }
 
 
-/* Join pool */
+/* Join/exit pool */
 
-#join-pool {
+#join-pool, #exit-pool {
     .amount-block { 
         width: 50%; 
         padding-right: 0.25rem;

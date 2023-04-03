@@ -119,7 +119,6 @@ it('Generalised join', async () => {
 
 }, TIMEOUT);
 
-
 export const getBalances = async (tokens, sdk, signer) => {
     const balances = [];
     for (let i = 0; i < tokens.length; i++) {

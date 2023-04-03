@@ -7,7 +7,7 @@ import PoolShares from "../../components/PoolShares";
 import PoolIcons from "../../components/PoolIcons";
 import UserBoost from "../../components/UserBoost";
 import { bn } from "../../utils/bn"
-import { usd, openModal, activeInvest } from "../../utils/page";
+import { usd, openModal, activeInvestMenu } from "../../utils/page";
 import { format } from "date-fns";
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
 import { Theme } from "../../theme";
@@ -24,7 +24,7 @@ class Portfolio extends React.Component {
   }
 
   componentDidMount() { 
-    activeInvest(false);
+    activeInvestMenu(false);
   }
 
   handleStake(pool) {

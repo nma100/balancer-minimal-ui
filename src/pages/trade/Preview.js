@@ -7,6 +7,7 @@ import { bnt } from '../../utils/bn';
 import { nf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 import Amounts from './Amounts';
+import Spinner from '../../components/Spinner';
 
 export const PREVIEW_MODAL = 'preview';
 
@@ -14,7 +15,7 @@ const { MaxUint256, AddressZero } = constants;
 
 const Mode = {
   Init: 0,
-  NoBalance: 1,
+  InsufficientBalance: 1,
   Allowance: 2,
   Approve: 3,
   Swap : 4,
@@ -22,7 +23,7 @@ const Mode = {
   Executed : 6,
 }
 
-const MIN_PI = 0.001;
+const MIN_PI = 0.001, PRECISION = 3;
 
 export class Preview extends React.Component {
       
@@ -52,7 +53,7 @@ export class Preview extends React.Component {
     let mode;
 
     if (balanceIn.lt(amountIn)) {
-      mode = Mode.NoBalance;
+      mode = Mode.InsufficientBalance;
     } else if (tokenIn.address === AddressZero) {
       mode = Mode.Swap;
     } else {
@@ -113,8 +114,8 @@ export class Preview extends React.Component {
 
   priceImpact() {
     const { swapInfo } = this.props;
-    const pi = swapInfo?.priceInfo?.priceImpact
-    return pi < MIN_PI ?  `< ${nf(MIN_PI, 3)}%` : `${nf(pi, 3)}%`;
+    const pi = swapInfo?.priceInfo?.priceImpact?.toNumber() || 0;
+    return pi < MIN_PI ? `< ${nf(MIN_PI, PRECISION)}%` : `${nf(pi, PRECISION)}%`;
   }
 
   css() {
@@ -125,14 +126,6 @@ export class Preview extends React.Component {
     const effPriceClass = isDark(theme) ? 'text-light text-opacity-50' : 'text-dark text-opacity-75';
     const btnClass = isDark(theme) ? 'btn btn-secondary btn-lg ' : 'btn btn-light btn-lg border shadow-sm';
     return { contentClass, amountsClass, effPriceClass, btnClass, btnCloseClass };
-  }
-
-  spinner() {
-    return (
-      <div className="spinner-border spinner-border-sm ms-2" role="status">
-        <span className="visually-hidden">Loading...</span>
-      </div>
-    );
   }
 
   render() {
@@ -171,10 +164,10 @@ export class Preview extends React.Component {
                         <>
                           {mode === Mode.Init &&
                             <button type="button" className={btnClass} disabled>
-                              Initialisation {this.spinner()}
+                              Initialisation <Spinner />
                             </button>
                           }
-                          {mode === Mode.NoBalance &&
+                          {mode === Mode.InsufficientBalance &&
                             <button type="button" className={btnClass} disabled>
                               Insufficient {tokens?.tokenIn?.symbol} balance
                             </button>
@@ -186,7 +179,7 @@ export class Preview extends React.Component {
                           }
                           {mode === Mode.Approve &&
                             <button type="button" className={btnClass} disabled>
-                              Approving {tokens?.tokenIn?.symbol} {this.spinner()}
+                              Approving {tokens?.tokenIn?.symbol} <Spinner />
                             </button>
                           }
                           {mode === Mode.Swap &&
@@ -196,7 +189,7 @@ export class Preview extends React.Component {
                           }
                           {mode === Mode.Confirm &&
                             <button type="button" className={btnClass} disabled>
-                              Confirmation {this.spinner()}
+                              Confirmation <Spinner />
                             </button>
                           }
                         </>

@@ -12,7 +12,7 @@ export function blur() {
   document.querySelector('body').style.opacity = 0.75;
 }
 
-export function activeInvest(active = true) {
+export function activeInvestMenu(active = true) {
   document
     .querySelectorAll('.nav-item > .invest')
     .forEach(elem => active 
