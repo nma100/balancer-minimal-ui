@@ -45,7 +45,7 @@ class Invest extends React.Component {
     const { balancer } = this.context;
     const { pools, page } = this.getPoolsData();
     this.setState({ loading: true });
-    const more = await balancer.fetchPools(POOLS_PER_PAGE, (page + 1) * POOLS_PER_PAGE);
+    const more = await balancer.fetchPools(POOLS_PER_PAGE, page * POOLS_PER_PAGE);
     this.setPoolsData(pools.concat(more));
     this.setState({ loading: false });
   }
@@ -62,7 +62,7 @@ class Invest extends React.Component {
     const sessionPools = this.getSession(SESSION_POOL_LIST);
     const poolSearch = this.getSession(SESSION_POOL_SEARCH);
     const pools = sessionPools || contextPools;
-    const page = Math.floor(pools?.length / POOLS_PER_PAGE);
+    const page = pools?.length / POOLS_PER_PAGE;
     return { pools, page, poolSearch };
   }
 

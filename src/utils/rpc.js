@@ -1,4 +1,4 @@
-import { ETHEREUM_ID, POLYGON_ID, ARBITRUM_ID, GOERLI_ID } from "../networks";
+import { ETHEREUM_ID, POLYGON_ID, ARBITRUM_ID, GOERLI_ID, GNOSIS_ID } from "../networks";
 
 const {
   REACT_APP_INFURA,
@@ -9,6 +9,7 @@ const {
 } = process.env;
 
 const LOCAL_RPC = 'http://127.0.0.1:8545';
+const GNOSIS_RPC = 'https://rpc.gnosischain.com';
 
 export function getRpcUrl(chainId) {
   if (NODE_ENV === 'development' 
@@ -17,6 +18,7 @@ export function getRpcUrl(chainId) {
     console.log('Using local RPC', LOCAL_RPC);
     return LOCAL_RPC;
   }
+  if (GNOSIS_ID === chainId) return GNOSIS_RPC;
   try {
     return getInfuraUrl(chainId);
   } catch (error) {

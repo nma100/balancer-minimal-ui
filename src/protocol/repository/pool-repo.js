@@ -1,4 +1,5 @@
-import { POOLS, PoolsSubgraphRepository } from "@balancer-labs/sdk"; 
+import { PoolsSubgraphRepository } from "@balancer-labs/sdk"; 
+import { POOLS } from "../constants/pools";
 
 export class PoolRepo {
   
@@ -41,10 +42,10 @@ export class PoolRepo {
                 orderBy: 'totalLiquidity',
                 orderDirection: 'desc',
                 where: { 
-                    poolType: { not_in: POOLS(chainId).ExcludedPoolTypes},
-                    id: { not_in: POOLS(chainId).BlockList },
-                    totalShares: { gt: 0.01 },
-                } 
+                    poolType: { in: POOLS[chainId].IncludedPoolTypes },
+                    id: { not_in: POOLS[chainId].BlockList },
+                    totalShares: { gt: 0.00001 },
+                }
             }
         };
     }

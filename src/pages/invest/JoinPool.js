@@ -212,7 +212,7 @@ export default function JoinPool() {
     }
 
     const { textClass, linkClass, successClass } = css();
-    
+
     return (
         <div id="join-pool" className="row">
             <div className="col-12 col-lg-7 col-xxl-6">
