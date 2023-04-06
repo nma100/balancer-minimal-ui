@@ -25,7 +25,6 @@ export class PortfolioLoader {
                     this.bag({ stakedAmount: this.total(pools) });
                 }
             });
-
         
       this.stakingService.fetchUnstakedPools(this.account)
         .then(async (pools) => {
@@ -81,5 +80,4 @@ export class PortfolioLoader {
             veBalAmount: undefined,
         });
     }
-
 }

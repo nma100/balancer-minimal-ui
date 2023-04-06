@@ -177,7 +177,6 @@ export default function JoinPool() {
 
     function handleMaxBalance(event, token) {
         event.preventDefault();
-        console.log('handleMaxBalance', token.symbol);
         document.getElementById(token.address).value = bnt(balance(token), PRECISION_5, ROUND_DOWN);
         handleAmountChange(token);
     }

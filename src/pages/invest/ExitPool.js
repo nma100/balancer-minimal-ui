@@ -1,15 +1,17 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import { useContext, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import CryptoIcon from "../../components/CryptoIcon";
 import Spinner from "../../components/Spinner";
 import { transactionUrl } from "../../networks";
 import { isDark } from "../../theme";
-import { ZERO, bn } from "../../utils/bn";
+import { ROUND_DOWN, ROUND_UP, ZERO, bn, bnt } from "../../utils/bn";
 import { activeInvestMenu, usd, weight } from "../../utils/page";
 import { getPoolTokens } from "../../utils/pool";
 import { OutletContext } from "../Layout";
 import { nf } from "../../utils/number";
 import { constants } from "ethers";
+import { isSameAddress } from "@balancer-labs/sdk";
 
 const Mode = {
     Init: 0,
@@ -23,7 +25,7 @@ const Mode = {
 }
 
 const MIN_PI = 0.001;
-const PRECISION = 3;
+const PRECISION_3 = 3, PRECISION_5 = 5;
 
 export default function ExitPool() {
 
@@ -31,6 +33,7 @@ export default function ExitPool() {
     const { state: pool } = useLocation();
     const [ mode, setMode ] = useState(Mode.Init);
     const [ tokens, setTokens ] = useState([]);    
+    const [ balances, setBalances ] = useState([]);
     const [ usdValue, setUsdValue ] = useState(ZERO);
     const [ priceImpact, setPriceImpact ] = useState(0);
     const [ tokensToApprove, setTokensToApprove ] = useState([]);
@@ -45,6 +48,19 @@ export default function ExitPool() {
         setTokens(tokenList);
         setExitInfo(info => { info.pool = pool; return info; });
     }, [pool]);
+
+    useEffect(() => {
+        if (!balancer || !account || !pool || !tokens || tokens.length === 0) return;
+        const fetchBalances = async () => {
+            const userPoolBalance = await balancer.userBalance(account, pool);
+            const userPoolRatio = userPoolBalance.div(bn(pool.totalShares));
+            const userTokensBalances = tokens.map(t => {
+                return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
+            });
+            setBalances(userTokensBalances);
+        }
+        fetchBalances();
+    }, [pool, tokens, balancer, account]);
 
     async function handleAmountChange(token) {
 
@@ -117,6 +133,13 @@ export default function ExitPool() {
         return tokensToApproveArray;
     }
 
+    function handleMaxBalance(event, token) {
+        event.preventDefault();
+        const maxBalance = balance(token);
+        document.getElementById(token.address).value = bnt(maxBalance, PRECISION_5, ROUND_DOWN);
+        handleAmountChange(token);
+    }
+
     async function handleExit() {
         setMode(Mode.Exiting);
 
@@ -159,9 +182,14 @@ export default function ExitPool() {
     }
 
     function priceImpactFormatted() {
-        if (priceImpact === 0) return `${nf(0, PRECISION)}%`
-        else if (priceImpact < MIN_PI)  return `< ${nf(MIN_PI, PRECISION)}%` 
-        else return `${nf(priceImpact, PRECISION)}%`;
+        if (priceImpact === 0) return `${nf(0, PRECISION_3)}%`
+        else if (priceImpact < MIN_PI)  return `< ${nf(MIN_PI, PRECISION_3)}%` 
+        else return `${nf(priceImpact, PRECISION_3)}%`;
+    }
+
+    function balance(token) {
+        const found = balances.find(b => isSameAddress(b.tokenAddress, token.address));
+        return found?.balance || ZERO;
     }
 
     const { textClass, linkClass, successClass } = css();
@@ -190,7 +218,9 @@ export default function ExitPool() {
                                     }
                                 </div>
                                 <div className="text-center small">
-                                    <span>Balance : 0</span> 
+                                    <span>Balance : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> {balance(token)?.gt(0) && ( 
+                                        <><span className="px-1">·</span> <a href="#" onClick={(e) => handleMaxBalance(e, token)} className={linkClass}>Max</a></>
+                                    )}
                                 </div>
                             </div>
                             <div className="amount-block">

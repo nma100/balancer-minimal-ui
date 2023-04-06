@@ -71,17 +71,17 @@ export class BalancerHelper {
     return await this.priceImpactService.pi(info, web3Provider, isJoin);
   }
 
-  async userBalance(user, asset) {
+  async userBalance(user, token) {
     const { provider } = this.sdk;
 
     let balance;
-    if (asset.address === constants.AddressZero) {
+    if (token.address === constants.AddressZero) {
       balance = await provider.getBalance(user);
     } else {
-      balance = await this.ERC20(asset.address, provider).balanceOf(user);
+      balance = await this.ERC20(token.address, provider).balanceOf(user);
     }
 
-    return fromEthersBN(balance, asset.decimals);
+    return fromEthersBN(balance, token.decimals);
   }
 
   async allowance(owner, spender, token) {
@@ -92,6 +92,16 @@ export class BalancerHelper {
       .allowance(owner, spender);
 
     return fromEthersBN(allowance, token.decimals);
+  }
+
+  async totalSupply(token) {
+    const { provider } = this.sdk;
+
+    const totalSupply = await this
+      .ERC20(token.address, provider)
+      .totalSupply();
+
+    return fromEthersBN(totalSupply, token.decimals);
   }
 
   priceInfo(route, kind, tokens) {

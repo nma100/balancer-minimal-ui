@@ -1,7 +1,7 @@
-import { Pools, isSameAddress } from "@balancer-labs/sdk";
+import { Pools } from "@balancer-labs/sdk";
 import { web3Account } from "../../web3-connect";
-import { ZERO, toEthersBN } from "../../utils/bn";
 import { formatUnits } from "ethers/lib/utils";
+import { params } from "../utils/join-exit";
 
 const SLIPPAGE = '100';
 
@@ -18,7 +18,7 @@ export class PriceImpactService {
 
     async joinPi(joinInfo, web3Provider) {
         const { pool } = joinInfo;
-        const { tokens, amounts } = this.params(joinInfo);
+        const { tokens, amounts } = params(joinInfo);
 
         const account = await web3Account(web3Provider);
 
@@ -33,7 +33,7 @@ export class PriceImpactService {
 
     async exitPi(exitInfo, web3Provider) {
         const { pool } = exitInfo;
-        const { tokens, amounts } = this.params(exitInfo);
+        const { tokens, amounts } = params(exitInfo);
 
         const account = await web3Account(web3Provider);
 
@@ -44,17 +44,5 @@ export class PriceImpactService {
 
         const pi = formatUnits(priceImpact);
         return Number(pi) * 100;
-    }
-
-    params(info) {
-        const { pool: { tokens }, params } = info;
-        const t = tokens.map(t => t.address);
-        const a = tokens.map(t => { 
-            const index = params.findIndex(({ token: pt }) => isSameAddress(pt.address, t.address));
-            const value = (index === -1) ? ZERO : params[index].amount;
-            const amount = toEthersBN(value, t.decimals);
-            return formatUnits(amount, 0);
-        });
-        return { tokens: t, amounts: a };
     }
 }

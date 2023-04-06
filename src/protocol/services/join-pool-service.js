@@ -1,7 +1,6 @@
-import { isSameAddress, Pools } from "@balancer-labs/sdk";
-import { formatUnits } from "ethers/lib/utils";
-import { toEthersBN, ZERO } from "../../utils/bn";
+import { Pools } from "@balancer-labs/sdk";
 import { web3Account } from "../../web3-connect";
+import { params } from "../utils/join-exit";
 
 const SLIPPAGE = '100';
 
@@ -13,7 +12,7 @@ export class JoinPoolService {
 
     async join(joinInfo, web3Provider) {
         const { pool } = joinInfo;
-        const { tokens, amounts } = this.params(joinInfo);
+        const { tokens, amounts } = params(joinInfo);
 
         const signer = web3Provider.getSigner();
         const account = await web3Account(web3Provider);
@@ -27,15 +26,4 @@ export class JoinPoolService {
         return await signer.sendTransaction({ to, data });
     }
 
-    params(joinInfo) {
-        const { pool: { tokens }, params } = joinInfo;
-        const t = tokens.map(t => t.address);
-        const a = tokens.map(t => { 
-            const index = params.findIndex(({ token: pt }) => isSameAddress(pt.address, t.address));
-            const value = (index === -1) ? ZERO : params[index].amount;
-            const amount = toEthersBN(value, t.decimals);
-            return formatUnits(amount, 0);
-        });
-        return { tokens: t, amounts: a };
-    }
 }
