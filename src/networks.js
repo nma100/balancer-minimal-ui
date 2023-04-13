@@ -16,14 +16,10 @@ export const NETWORKS = {
 export async function checkChain(chainId, library) {
   let id = `${chainId}`;
   if (!NETWORKS[id]) {
-    id = defaultChainId();
+    id = ETHEREUM_ID;
     await switchChain(id, library);
   }
   return id;
-}
-
-export function defaultChainId() {
-  return process.env.NODE_ENV === 'production' ? ETHEREUM_ID : GOERLI_ID;
 }
 
 export function nativeAsset(chainId) {

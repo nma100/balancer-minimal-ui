@@ -1,6 +1,8 @@
 import WalletConnect from "@walletconnect/web3-provider";
 import Web3Modal from "web3modal";
 
+export const USER_REJECTED = 'ACTION_REJECTED';
+
 const providerOptions = {
     walletconnect: {
         package: WalletConnect, 

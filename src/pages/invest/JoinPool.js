@@ -12,16 +12,20 @@ import { isSameAddress } from "@balancer-labs/sdk";
 import { transactionUrl } from "../../networks";
 import { nf } from "../../utils/number";
 import { constants } from "ethers";
+import { debounce } from "lodash";
+import { USER_REJECTED } from "../../web3-connect";
 
 const Mode = {
     Init: 0,
     ConnectWallet: 1,
-    ApproveTokens: 2,
-    Approving: 3,
-    JoinReady: 4,
-    Joining: 5,
-    JoinSuccess: 6,
-    JoinError: 7,
+    ConfirmTx: 2,
+    InsufficientBalance: 3,
+    ApproveTokens: 4,
+    Approving: 5,
+    JoinReady: 6,
+    Joining: 7,
+    JoinSuccess: 8,
+    JoinError: 9,
 }
 
 const MIN_PI = 0.001;
@@ -37,6 +41,7 @@ export default function JoinPool() {
     const [ balances, setBalances ] = useState([]);
     const [ usdValue, setUsdValue ] = useState(ZERO);
     const [ priceImpact, setPriceImpact ] = useState(0);
+    const [ insufficientBalance, setInsufficientBalance ] = useState([]);
     const [ tokensToApprove, setTokensToApprove ] = useState([]);
     const [ joinInfo, setJoinInfo ] = useState({ pool: undefined, params: [] });
     const [ joinError, setJoinError ] = useState();
@@ -100,12 +105,14 @@ export default function JoinPool() {
 
         if (joinParams.length === 0) {
             setMode(Mode.Init);    
+        } else if (insufficientBalances().length > 0) {
+            setMode(Mode.InsufficientBalance);
+        } else if (!account) {
+            setMode(Mode.ConnectWallet);
+        } else if ((await findTokensToApprove()).length > 0) {
+            setMode(Mode.ApproveTokens);
         } else {
-            if (!account) {
-                setMode(Mode.ConnectWallet);
-            } else {
-                setMode((await findTokensToApprove()).length ? Mode.ApproveTokens : Mode.JoinReady);
-            }
+            setMode(Mode.JoinReady);
         }
 
         updateUsdValue(joinInfo);
@@ -139,22 +146,25 @@ export default function JoinPool() {
         setPriceImpact(pi);
     }
 
-    async function handleJoin() {
-        setMode(Mode.Joining);
+    function handleAddLiquidity() {
 
-        const joinTx = await balancer.joinPool(joinInfo, web3Provider);
-        setTx(joinTx);
+        setMode(Mode.ConfirmTx);
 
-        joinTx.wait()
-            .then(response => {
-                console.log('Join success', response);
-                setMode(Mode.JoinSuccess);
-            })
-            .catch(error => {
-                console.log('Join error', error);
-                setJoinError(error);
+        balancer.joinPool(joinInfo, web3Provider).then(joinTx => {
+            setTx(joinTx);
+            setMode(Mode.Joining);
+            return joinTx.wait();
+        })
+        .then(() => setMode(Mode.JoinSuccess))
+        .catch(error => {
+            if (error.code === USER_REJECTED) {
+                setMode(Mode.JoinReady);
+            } else {
+                console.error('Join error', error);
+                setJoinError(error.reason || error);
                 setMode(Mode.JoinError);
-            });
+            }
+        });
     }
 
     async function handleApprove() {
@@ -163,11 +173,14 @@ export default function JoinPool() {
 
         console.log('handleApprove', tokensToApprove[0].symbol);
 
-        setMode(Mode.Approving);
+        setMode(Mode.ConfirmTx);
 
         const tx = await balancer
             .ERC20(tokensToApprove[0].address, signer)
             .approve(vault, constants.MaxUint256);
+
+        setMode(Mode.Approving);
+        
         await tx.wait();
 
         tokensToApprove.shift();
@@ -179,6 +192,20 @@ export default function JoinPool() {
         event.preventDefault();
         document.getElementById(token.address).value = bnt(balance(token), PRECISION_5, ROUND_DOWN);
         handleAmountChange(token);
+    }
+
+    
+    function insufficientBalances() {
+        let insufficientBalances = [];
+        if (balances?.length > 0) {
+            for (const {amount, token} of joinInfo.params) {
+                const { balance: maxBalance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
+                if (amount.gt(maxBalance)) insufficientBalances.push(token);
+            }
+        }
+        setInsufficientBalance(insufficientBalances);
+        return insufficientBalances;
+
     }
 
     async function findTokensToApprove() {
@@ -242,19 +269,26 @@ export default function JoinPool() {
                                 </div>
                             </div>
                             <div className="amount-block">
-                                <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => handleAmountChange(token)} />
+                                <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 200)} />
                             </div>
                         </div>
                     )}
 
                     <div className="d-flex justify-content-between text-light text-opacity-75 mb-4">
                         <div>Total: {usd(usdValue)}</div>
-                        <div>Price impact : {priceImpactFormatted()}</div>
+                        {account &&
+                            <div>Price impact : {priceImpactFormatted()}</div>
+                        }
                     </div>
 
                     {mode === Mode.Init &&
                         <div className="d-grid">
                             <button type="button" className="btn btn-secondary btn-lg" disabled>Enter amounts</button>
+                        </div>
+                    }
+                    {mode === Mode.InsufficientBalance &&
+                        <div className="d-grid">
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Insufficient {insufficientBalance[0]?.symbol} balance</button>
                         </div>
                     }
                     {mode === Mode.ConnectWallet &&
@@ -274,7 +308,7 @@ export default function JoinPool() {
                     }
                     {mode === Mode.JoinReady &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleJoin}>Add liquidity</button>
+                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleAddLiquidity}>Add liquidity</button>
                         </div>
                     }
                     {mode === Mode.Joining &&
@@ -294,6 +328,11 @@ export default function JoinPool() {
                         <div className="text-center mb-2">
                             <div className={`text-danger fs-4 fw-bold mb-3`}>Error</div>
                             <div>{joinError?.toString()}</div>
+                        </div>
+                    }
+                    {mode === Mode.ConfirmTx &&
+                        <div className="d-grid">
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Confirmation <Spinner /></button>
                         </div>
                     }
                 </div>

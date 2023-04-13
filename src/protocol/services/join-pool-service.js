@@ -17,9 +17,6 @@ export class JoinPoolService {
         const signer = web3Provider.getSigner();
         const account = await web3Account(web3Provider);
 
-        console.log('directJoin', joinInfo);
-        console.log('directJoin', account, tokens, amounts, SLIPPAGE);
-
         const poolWithMethods = Pools.wrap(pool, this.sdk.networkConfig);
         const { to, data } = poolWithMethods.buildJoin(account, tokens, amounts, SLIPPAGE);
 

@@ -12,16 +12,19 @@ import { OutletContext } from "../Layout";
 import { nf } from "../../utils/number";
 import { constants } from "ethers";
 import { isSameAddress } from "@balancer-labs/sdk";
+import { debounce } from "lodash";
+import { USER_REJECTED } from "../../web3-connect";
 
 const Mode = {
     Init: 0,
     ConnectWallet: 1,
-    ApproveTokens: 2,
-    Approving: 3,
-    ExitReady: 4,
-    Exiting: 5,
-    ExitSuccess: 6,
-    ExitError: 7,
+    ConfirmTx: 2,
+    ApproveTokens: 3,
+    Approving: 4,
+    ExitReady: 5,
+    Exiting: 6,
+    ExitSuccess: 7,
+    ExitError: 8,
 }
 
 const MIN_PI = 0.001;
@@ -83,12 +86,12 @@ export default function ExitPool() {
 
         if (exitParams.length === 0) {
             setMode(Mode.Init);    
+        } else if (!account) {
+            setMode(Mode.ConnectWallet);
+        } else if ((await findTokensToApprove()).length > 0) {
+            setMode(Mode.ApproveTokens);
         } else {
-            if (!account) {
-                setMode(Mode.ConnectWallet);
-            } else {
-                setMode((await findTokensToApprove()).length ? Mode.ApproveTokens : Mode.ExitReady);
-            }
+            setMode(Mode.ExitReady);
         }
 
         updateUsdValue(exitInfo);
@@ -127,6 +130,7 @@ export default function ExitPool() {
         let tokensToApproveArray = [];
         for (const { token, amount } of exitInfo.params) {
             const allowance = await balancer.allowance(account, vault, token);
+            console.log(allowance.toString(), amount.toString(), allowance.lt(amount));
             if (allowance.lt(amount)) tokensToApproveArray.push(token);
         }
         setTokensToApprove(tokensToApproveArray);
@@ -140,38 +144,44 @@ export default function ExitPool() {
         handleAmountChange(token);
     }
 
-    async function handleExit() {
-        setMode(Mode.Exiting);
+    function handleExit() {
 
-        const exitTx = await balancer.exitPool(exitInfo, web3Provider);
-        setTx(exitTx);
+        setMode(Mode.ConfirmTx);
 
-        exitTx.wait()
-            .then(response => {
-                console.log('Exit success', response);
-                setMode(Mode.ExitSuccess);
-            })
-            .catch(error => {
-                console.log('Exit error', error);
-                setExitError(error);
+        balancer.exitPool(exitInfo, web3Provider).then(exitTx => {
+            setTx(exitTx);
+            setMode(Mode.Exiting);
+            return exitTx.wait();
+        })
+        .then(() => setMode(Mode.ExitSuccess))
+        .catch(error => {
+            if (error.code === USER_REJECTED) {
+                setMode(Mode.ExitReady);
+            } else {
+                console.error('Exit error', error);
+                setExitError(error.reason || error);
                 setMode(Mode.ExitError);
-            });
+            }
+        });
     }
 
     async function handleApprove() {
         const { vault } = balancer.networkConfig().addresses.contracts;
         const signer = web3Provider.getSigner();
 
-        setMode(Mode.Approving);
+        setMode(Mode.ConfirmTx);
 
         const tx = await balancer
             .ERC20(tokensToApprove[0].address, signer)
             .approve(vault, constants.MaxUint256);
+
+        setMode(Mode.Approving);
+
         await tx.wait();
 
         tokensToApprove.shift();
         setTokensToApprove(tokensToApprove);
-        setMode(tokensToApprove.length > 0 ? Mode.ApproveTokens : Mode.JoinReady);
+        setMode(tokensToApprove.length > 0 ? Mode.ApproveTokens : Mode.ExitReady);
     }
 
     function css() {
@@ -224,14 +234,16 @@ export default function ExitPool() {
                                 </div>
                             </div>
                             <div className="amount-block">
-                                <input id={token.address} className="amount-dark text-end" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => handleAmountChange(token)} />
+                                <input id={token.address} className="amount-dark text-end" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 200)} />
                             </div>
                         </div>
                     )}
 
                     <div className="d-flex justify-content-between text-light text-opacity-75 mb-4">
                         <div>Total: {usd(usdValue)}</div>
-                        <div>Price impact : {priceImpactFormatted()}</div>
+                        {account &&
+                            <div>Price impact : {priceImpactFormatted()}</div>
+                        }
                     </div>
 
                     {mode === Mode.Init &&
@@ -275,7 +287,12 @@ export default function ExitPool() {
                     {mode === Mode.ExitError &&
                         <div className="text-center mb-2">
                             <div className={`text-danger fs-4 fw-bold mb-3`}>Error</div>
-                            <div>{exitError?.toString()}</div>
+                            <pre className="text-danger">{exitError?.toString()}</pre>
+                        </div>
+                    }
+                    {mode === Mode.ConfirmTx &&
+                        <div className="d-grid">
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Confirmation <Spinner /></button>
                         </div>
                     }
                 </div>

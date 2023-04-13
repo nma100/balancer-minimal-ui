@@ -1,13 +1,14 @@
 import React from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { blur, reload, truncateAddress } from "../utils/page";
+import { blur, openModal, reload, truncateAddress } from "../utils/page";
 import { web3Modal, switchChain, web3Account } from "../web3-connect";
-import { NETWORKS, checkChain, defaultChainId, nativeAsset } from "../networks";
+import { ETHEREUM_ID, NETWORKS, checkChain, nativeAsset } from "../networks";
 import { BalancerHelper } from "../protocol/balancer-helper";
 import BalancerUrls from "../protocol/resources/balancer-urls.json";
 import { currentTheme, switchTheme, isDark } from "../theme";
 import { fromEthersBN, ZERO } from "../utils/bn";
 import { ethers } from "ethers";
+import { NetworkSelector, SELECT_NETWORK_MODAL } from "../components/NetworkSelector";
 
 const RELOAD_CHAIN = 'reload-chain';
 export const POOLS_PER_PAGE = 10;
@@ -56,6 +57,23 @@ class Layout extends React.Component {
 
   handleChangeNetwork(e) {
     const chainId = e.target.value;
+    this.processChangeNetwork(chainId);
+  }
+
+  handleToggleTheme() {
+    switchTheme();
+    reload();
+  }
+
+  openNetworkSelector() {
+    openModal(SELECT_NETWORK_MODAL);
+  }
+
+  onNetworkSelect(chainId) {
+    this.processChangeNetwork(chainId);
+  }
+  
+  processChangeNetwork(chainId) {
     sessionStorage.clear();
     if (this.state.account) {
       const { web3Provider } = this.state;
@@ -71,12 +89,7 @@ class Layout extends React.Component {
   }
 
   getChainToReload() {
-    return localStorage.getItem(RELOAD_CHAIN) || defaultChainId();
-  }
-
-  handleToggleTheme() {
-    switchTheme();
-    reload();
+    return localStorage.getItem(RELOAD_CHAIN) || ETHEREUM_ID;
   }
 
   async web3Connect() {
@@ -124,7 +137,6 @@ class Layout extends React.Component {
     const classes = { bodyClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };
     Object.keys(classes).forEach(key => classes[key] = classes[key].join(' '));
     return classes;
-
   }
 
   render() {
@@ -135,6 +147,7 @@ class Layout extends React.Component {
     
     return (
       <>
+        <NetworkSelector onNetworkSelect={this.onNetworkSelect.bind(this)} theme={this.state.theme} />
         <nav className={navbarClass}>
           <div className="container-fluid">
             <a className="navbar-brand d-flex align-items-center" href="/">
@@ -233,17 +246,25 @@ class Layout extends React.Component {
               } shadow`}
             >
               <div id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
-                <select
-                  className="form-select"
-                  onChange={e => this.handleChangeNetwork(e)}
-                  value={this.state.chainId}
-                >
-                  {Object.keys(NETWORKS).map((chainId) => (
-                    <option key={chainId} value={chainId}>
-                      {NETWORKS[chainId].name}
-                    </option>
-                  ))}
-                </select>
+                {!this.state.chainId &&
+                  <button id="network-select" type="button" className="btn btn-outline-light btn-lg">
+                    <div className="d-flex">
+                      <div className="placeholder-glow flex-grow-1">
+                          <span className="placeholder network"></span>
+                      </div>
+                      <div className="chevron"><i className="bi bi-chevron-down"></i></div>
+                    </div>
+                  </button>
+                }
+                {this.state.chainId &&
+                  <button id="network-select" type="button" className="btn btn-outline-light btn-lg" onClick={e => this.openNetworkSelector(e)}>
+                    <div className="d-flex">
+                      <img className="icon" src={`/image/network/${NETWORKS[this.state.chainId].name}.svg`} alt="network"/> 
+                      <div className="flex-grow-1">{NETWORKS[this.state.chainId].name}</div>
+                      <div className="chevron"><i className="bi bi-chevron-down"></i></div>
+                    </div>
+                  </button>
+                }
                 <hr className={`${hrClass} my-4`} />
                 <ul className="nav nav-pills flex-column mb-auto">
                   <li className="nav-item">

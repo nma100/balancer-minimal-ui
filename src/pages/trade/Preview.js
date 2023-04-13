@@ -8,6 +8,7 @@ import { nf } from '../../utils/number';
 import { Result, RESULT_TOAST } from './Result';
 import Amounts from './Amounts';
 import Spinner from '../../components/Spinner';
+import { USER_REJECTED } from '../../web3-connect';
 
 export const PREVIEW_MODAL = 'preview';
 
@@ -87,17 +88,24 @@ export class Preview extends React.Component {
 
     this.setState({ mode: Mode.Swap });
   }
-      
-  async handleSwap() {
+  
+  handleSwap() {
     const { swapInfo } = this.props;
     const { balancer, web3Provider } = this.context;
 
     this.setState({ mode: Mode.Confirm });
 
-    const tx = await balancer.swap(swapInfo, web3Provider);
-    const callback = () => hideModal(PREVIEW_MODAL);
-    
-    this.setState({ mode: Mode.Executed, tx }, callback);
+    balancer.swap(swapInfo, web3Provider)
+      .then(tx => {
+        const callback = () => hideModal(PREVIEW_MODAL);
+        this.setState({ mode: Mode.Executed, tx }, callback);
+      }).catch(error => {
+        if (error.code === USER_REJECTED) {
+          this.setState({ mode: Mode.Swap });
+        } else {
+          throw error;
+        }
+      });
   }
 
   effectivePrice() {

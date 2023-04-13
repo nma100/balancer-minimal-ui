@@ -1,65 +1,64 @@
 /**
  * Mapping of the TokenLists used on each network
  */
- export const TOKEN_LIST_MAP = {
-    '1': {
-      Balancer: {
-        Default:
-          'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/listed.tokenlist.json',
-        Vetted:
-          'https://raw.githubusercontent.com/balancer-labs/assets/master/generated/vetted.tokenlist.json',
-      },
-      External: [
-        'ipns://tokens.uniswap.org',
-        'https://www.gemini.com/uniswap/manifest.json',
-      ],
+export const TOKEN_LIST_MAP = {
+  '1': {
+    Balancer: {
+      Default:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
+      Vetted:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
     },
-    '5': {
-      Balancer: {
-        Default:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/goerli.listed.tokenlist.json',
-        Vetted:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/goerli.vetted.tokenlist.json',
-      },
-      External: [],
+    External: [
+      'ipns://tokens.uniswap.org',
+      'https://www.gemini.com/uniswap/manifest.json',
+    ],
+  },
+  '5': {
+    Balancer: {
+      Default:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
+      Vetted:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
     },
-    '10': {
-      Balancer: {
-        Default: '',
-        Vetted: '',
-      },
-      External: [],
+    External: [],
+  },
+  '10': {
+    Balancer: {
+      Default: '',
+      Vetted: '',
     },
-    '137': {
-      Balancer: {
-        Default:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/polygon.listed.tokenlist.json',
-        Vetted:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/polygon.vetted.tokenlist.json',
-      },
-      External: [
-        'https://unpkg.com/quickswap-default-token-list@1.0.67/build/quickswap-default.tokenlist.json',
-      ],
+    External: [],
+  },
+  '137': {
+    Balancer: {
+      Default:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
+      Vetted:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
     },
-    '42161': {
-      Balancer: {
-        Default:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/arbitrum.listed.tokenlist.json',
-        Vetted:
-          'https://raw.githubusercontent.com/balancer-labs/assets/refactor-for-multichain/generated/arbitrum.vetted.tokenlist.json',
-      },
-      External: [],
+    External: [
+      'https://unpkg.com/quickswap-default-token-list@1.0.67/build/quickswap-default.tokenlist.json',
+    ],
+  },
+  '42161': {
+    Balancer: {
+      Default:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
+      Vetted:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
     },
-    '100': {
-      Balancer: {
-        Default:
-          'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
-        Vetted:
-          'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
-      },
-      External: [
-        'https://unpkg.com/@1hive/default-token-list@latest/build/honeyswap-default.tokenlist.json',
-      ],
+    External: [],
+  },
+  '100': {
+    Balancer: {
+      Default:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/listed-old.tokenlist.json',
+      Vetted:
+        'https://raw.githubusercontent.com/balancer/tokenlists/main/generated/balancer.tokenlist.json',
     },
-  };
-  
+    External: [
+      'https://unpkg.com/@1hive/default-token-list@latest/build/honeyswap-default.tokenlist.json',
+    ],
+  },
+};

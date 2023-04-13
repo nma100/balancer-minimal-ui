@@ -22,6 +22,10 @@ body { overflow-y: scroll; }
     > #sidebar-inner {
         height: calc(100vh - #{$sidebar-pt});
         > select { font-size: #{$sidebar-font-size}; }
+        > #network-select {
+            .icon { width: 1.8rem; height: 1.8rem; }
+            .chevron { width: 1.8rem; }
+        }
         > .nav-pills {
             --bs-nav-link-font-size: #{$sidebar-font-size};
             --bs-nav-pills-link-active-color: #{$bg-color}; 
@@ -53,6 +57,10 @@ body { overflow-y: scroll; }
 
 .spinner { width: 1.5rem; height: 1.5rem; }
 
+#select-network-modal {
+    .icon { width: 1.8rem; height: 1.8rem; }
+}
+
 /* PORTFOLIO */
 
 .amount  { width: 5rem; }
@@ -68,6 +76,7 @@ body { overflow-y: scroll; }
 }
 
 .placeholder-glow {
+    > .network { width: 90%; }
     > .volume { width: 4rem; }
     > .shares { width: 4.5rem; }
     > .apr { width: 4.5rem; }
