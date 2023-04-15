@@ -7,7 +7,7 @@ import { OutletContext } from "../Layout";
 import CryptoIcon from "../../components/CryptoIcon";
 import Spinner from "../../components/Spinner";
 import { isDark } from "../../theme";
-import { bn, bnt, ROUND_UP, ROUND_DOWN, ZERO } from "../../utils/bn";
+import { bn, bnt, ROUND_UP, ROUND_DOWN, ZERO, fromEthersBN } from "../../utils/bn";
 import { isSameAddress } from "@balancer-labs/sdk";
 import { transactionUrl } from "../../networks";
 import { nf } from "../../utils/number";
@@ -39,9 +39,9 @@ export default function JoinPool() {
     const [ mode, setMode ] = useState(Mode.Init);
     const [ tokens, setTokens ] = useState([]);    
     const [ balances, setBalances ] = useState([]);
+    const [ allowances, setAllowances ] = useState([]);
     const [ usdValue, setUsdValue ] = useState(ZERO);
     const [ priceImpact, setPriceImpact ] = useState(0);
-    const [ insufficientBalance, setInsufficientBalance ] = useState([]);
     const [ tokensToApprove, setTokensToApprove ] = useState([]);
     const [ joinInfo, setJoinInfo ] = useState({ pool: undefined, params: [] });
     const [ joinError, setJoinError ] = useState();
@@ -72,8 +72,8 @@ export default function JoinPool() {
     }, [poolFromLocation, poolFromParamId, balancer]);
 
     useEffect(() => {
+        if (!balancer || !account || !tokens || tokens.length === 0) return;
         const fetchBalances = async () => {
-            if (!balancer || !account || !tokens || tokens.length === 0) return;
             const promises = tokens.map(token => balancer.userBalance(account, token));
             const balances = await Promise.all(promises);
             const userBalances = tokens.map((token, index) => {
@@ -81,11 +81,20 @@ export default function JoinPool() {
             });
             setBalances(userBalances);
         }
+        const fetchAllowances = async () => {
+            const { vault } = balancer.networkConfig().addresses.contracts;
+            const promises = tokens.map(token => balancer.allowance(account, vault, token));
+            const allowances = await Promise.all(promises);
+            const vaultAllowances = tokens.map((token, index) => {
+                return { tokenAddress : token.address, allowance: allowances[index] };
+            });
+            setAllowances(vaultAllowances);
+        }
         fetchBalances();
+        fetchAllowances();
     }, [balancer, account, tokens]);
 
     async function handleAmountChange(token) {
-
         const amount = bn(document.getElementById(token.address).value);
         const  { params: joinParams } = joinInfo;
 
@@ -105,11 +114,11 @@ export default function JoinPool() {
 
         if (joinParams.length === 0) {
             setMode(Mode.Init);    
-        } else if (insufficientBalances().length > 0) {
-            setMode(Mode.InsufficientBalance);
         } else if (!account) {
             setMode(Mode.ConnectWallet);
-        } else if ((await findTokensToApprove()).length > 0) {
+        } else if (tokensWithInsufficientBalance().length > 0) {
+            setMode(Mode.InsufficientBalance);
+        } else if (tokensWithInsufficientAllowance().length > 0) {
             setMode(Mode.ApproveTokens);
         } else {
             setMode(Mode.JoinReady);
@@ -135,6 +144,15 @@ export default function JoinPool() {
             ZERO);
         setUsdValue(total);
     }
+
+    async function updateBalances() {
+        const promises = tokens.map(token => balancer.userBalance(account, token));
+        const balances = await Promise.all(promises);
+        const userBalances = tokens.map((token, index) => {
+                return { tokenAddress : token.address, balance: balances[index] };
+        });
+        setBalances(userBalances);
+    }
     
     async function updatePriceImpact(joinInfo) {
         if (joinInfo.params.length === 0) {
@@ -147,44 +165,42 @@ export default function JoinPool() {
     }
 
     function handleAddLiquidity() {
-
         setMode(Mode.ConfirmTx);
 
-        balancer.joinPool(joinInfo, web3Provider).then(joinTx => {
-            setTx(joinTx);
-            setMode(Mode.Joining);
-            return joinTx.wait();
-        })
-        .then(() => setMode(Mode.JoinSuccess))
-        .catch(error => {
-            if (error.code === USER_REJECTED) {
-                setMode(Mode.JoinReady);
-            } else {
-                console.error('Join error', error);
-                setJoinError(error.reason || error);
-                setMode(Mode.JoinError);
-            }
-        });
+        balancer.joinPool(joinInfo, web3Provider)
+            .then(async joinTx => {
+                setTx(joinTx);
+                setMode(Mode.Joining);
+                await joinTx.wait();
+                setMode(Mode.JoinSuccess);
+                updateBalances();
+            })
+            .catch(error => {
+                if (error.code === USER_REJECTED) {
+                    setMode(Mode.JoinReady);
+                } else {
+                    console.error('Join error', error);
+                    setJoinError(error.reason || error);
+                    setMode(Mode.JoinError);
+                }
+            });
     }
 
     async function handleApprove() {
         const { vault } = balancer.networkConfig().addresses.contracts;
+        const { MaxUint256 } = constants;
         const signer = web3Provider.getSigner();
 
-        console.log('handleApprove', tokensToApprove[0].symbol);
-
         setMode(Mode.ConfirmTx);
-
-        const tx = await balancer
-            .ERC20(tokensToApprove[0].address, signer)
-            .approve(vault, constants.MaxUint256);
+        const tx = await balancer.ERC20(tokensToApprove[0].address, signer).approve(vault, MaxUint256);
 
         setMode(Mode.Approving);
-        
         await tx.wait();
 
+        const index = allowances.find(b => isSameAddress(b.tokenAddress, tokensToApprove[0].address));
+        allowances[index].allowance = fromEthersBN(MaxUint256);
+
         tokensToApprove.shift();
-        setTokensToApprove(tokensToApprove);
         setMode(tokensToApprove.length > 0 ? Mode.ApproveTokens : Mode.JoinReady);
     }
 
@@ -193,30 +209,28 @@ export default function JoinPool() {
         document.getElementById(token.address).value = bnt(balance(token), PRECISION_5, ROUND_DOWN);
         handleAmountChange(token);
     }
-
     
-    function insufficientBalances() {
-        let insufficientBalances = [];
-        if (balances?.length > 0) {
+    function tokensWithInsufficientBalance() {
+        let tokens = [];
+        if (balances.length > 0) {
             for (const {amount, token} of joinInfo.params) {
-                const { balance: maxBalance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
-                if (amount.gt(maxBalance)) insufficientBalances.push(token);
+                const { balance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
+                if (amount.gt(balance)) tokens.push(token);
             }
         }
-        setInsufficientBalance(insufficientBalances);
-        return insufficientBalances;
-
+        return tokens;
     }
 
-    async function findTokensToApprove() {
-        const { vault } = balancer.networkConfig().addresses.contracts;
-        let tokensToApproveArray = [];
-        for (const { token, amount } of joinInfo.params) {
-            const allowance = await balancer.allowance(account, vault, token);
-            if (allowance.lt(amount)) tokensToApproveArray.push(token);
+    function tokensWithInsufficientAllowance() {
+        let tokens = [];
+        if (allowances.length > 0) {
+            for (const { token, amount } of joinInfo.params) {
+                const { allowance } = allowances.find(b => isSameAddress(b.tokenAddress, token.address));
+                if (allowance.lt(amount)) tokens.push(token);
+            }
+            setTokensToApprove(tokens);
         }
-        setTokensToApprove(tokensToApproveArray);
-        return tokensToApproveArray;
+        return tokens;
     }
 
     function balance(token) {
@@ -269,7 +283,7 @@ export default function JoinPool() {
                                 </div>
                             </div>
                             <div className="amount-block">
-                                <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 200)} />
+                                <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 100)} />
                             </div>
                         </div>
                     )}
@@ -286,14 +300,14 @@ export default function JoinPool() {
                             <button type="button" className="btn btn-secondary btn-lg" disabled>Enter amounts</button>
                         </div>
                     }
-                    {mode === Mode.InsufficientBalance &&
-                        <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Insufficient {insufficientBalance[0]?.symbol} balance</button>
-                        </div>
-                    }
                     {mode === Mode.ConnectWallet &&
                         <div className="d-grid">
                             <button type="button" className="btn btn-secondary btn-lg" disabled>Connect your wallet</button>
+                        </div>
+                    }                    
+                    {mode === Mode.InsufficientBalance &&
+                        <div className="d-grid">
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Insufficient balance</button>
                         </div>
                     }
                     {mode === Mode.ApproveTokens &&

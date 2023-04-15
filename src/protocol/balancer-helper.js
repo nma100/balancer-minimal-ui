@@ -67,6 +67,10 @@ export class BalancerHelper {
     return await this.exitService.exit(exitInfo, web3Provider);
   }
 
+  async buildExitPoolTx(exitInfo, web3Provider) {
+    return await this.exitService.buildTx(exitInfo, web3Provider);
+  }
+
   async priceImpact(info, web3Provider, isJoin) {
     return await this.priceImpactService.pi(info, web3Provider, isJoin);
   }

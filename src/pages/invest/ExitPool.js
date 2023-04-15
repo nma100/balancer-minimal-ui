@@ -5,7 +5,7 @@ import CryptoIcon from "../../components/CryptoIcon";
 import Spinner from "../../components/Spinner";
 import { transactionUrl } from "../../networks";
 import { isDark } from "../../theme";
-import { ROUND_DOWN, ROUND_UP, ZERO, bn, bnt } from "../../utils/bn";
+import { ROUND_DOWN, ROUND_UP, ZERO, bn, bnt, fromEthersBN } from "../../utils/bn";
 import { activeInvestMenu, usd, weight } from "../../utils/page";
 import { getPoolTokens } from "../../utils/pool";
 import { OutletContext } from "../Layout";
@@ -19,12 +19,13 @@ const Mode = {
     Init: 0,
     ConnectWallet: 1,
     ConfirmTx: 2,
-    ApproveTokens: 3,
-    Approving: 4,
-    ExitReady: 5,
-    Exiting: 6,
-    ExitSuccess: 7,
-    ExitError: 8,
+    InsufficientBptBalance: 3,
+    ApproveBpt: 4,
+    Approving: 5,
+    ExitReady: 6,
+    Exiting: 7,
+    ExitSuccess: 8,
+    ExitError: 9,
 }
 
 const MIN_PI = 0.001;
@@ -36,10 +37,11 @@ export default function ExitPool() {
     const { state: pool } = useLocation();
     const [ mode, setMode ] = useState(Mode.Init);
     const [ tokens, setTokens ] = useState([]);    
-    const [ balances, setBalances ] = useState([]);
+    const [ tokensBalances, setTokensBalances ] = useState([]);
+    const [ bptBalance, setBptBalance ] = useState(ZERO);
+    const [ bptAllowance, setBptAllowance ] = useState(ZERO);
     const [ usdValue, setUsdValue ] = useState(ZERO);
     const [ priceImpact, setPriceImpact ] = useState(0);
-    const [ tokensToApprove, setTokensToApprove ] = useState([]);
     const [ exitInfo, setExitInfo ] = useState({ pool: undefined, params: [] });
     const [ exitError, setExitError ] = useState();
     const [ tx, setTx ] = useState();
@@ -60,13 +62,19 @@ export default function ExitPool() {
             const userTokensBalances = tokens.map(t => {
                 return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
             });
-            setBalances(userTokensBalances);
+            setBptBalance(userPoolBalance);
+            setTokensBalances(userTokensBalances);
+        }
+        const fetchAllowance = async () => {
+            const { vault } = balancer.networkConfig().addresses.contracts;
+            const vaultBptAllowance = await balancer.allowance(account, vault, pool);
+            setBptAllowance(vaultBptAllowance);
         }
         fetchBalances();
+        fetchAllowance();
     }, [pool, tokens, balancer, account]);
 
     async function handleAmountChange(token) {
-
         const amount = bn(document.getElementById(token.address).value);
         const  { params: exitParams } = exitInfo;
 
@@ -88,10 +96,16 @@ export default function ExitPool() {
             setMode(Mode.Init);    
         } else if (!account) {
             setMode(Mode.ConnectWallet);
-        } else if ((await findTokensToApprove()).length > 0) {
-            setMode(Mode.ApproveTokens);
-        } else {
-            setMode(Mode.ExitReady);
+        } else { 
+            const { maxBPTIn } = await balancer.buildExitPoolTx(exitInfo, web3Provider);
+            const neededBpt = fromEthersBN(maxBPTIn);
+            if (bptBalance.lt(neededBpt)) {
+                setMode(Mode.InsufficientBptBalance);
+            } else if (bptAllowance.lt(neededBpt)) {
+                setMode(Mode.ApproveBpt);
+            } else {
+                setMode(Mode.ExitReady);
+            }
         }
 
         updateUsdValue(exitInfo);
@@ -125,16 +139,14 @@ export default function ExitPool() {
         setPriceImpact(pi);
     }
 
-    async function findTokensToApprove() {
-        const { vault } = balancer.networkConfig().addresses.contracts;
-        let tokensToApproveArray = [];
-        for (const { token, amount } of exitInfo.params) {
-            const allowance = await balancer.allowance(account, vault, token);
-            console.log(allowance.toString(), amount.toString(), allowance.lt(amount));
-            if (allowance.lt(amount)) tokensToApproveArray.push(token);
-        }
-        setTokensToApprove(tokensToApproveArray);
-        return tokensToApproveArray;
+    async function updateBalances() {
+        const userPoolBalance = await balancer.userBalance(account, pool);
+        const userPoolRatio = userPoolBalance.div(bn(pool.totalShares));
+        const userTokensBalances = tokens.map(t => {
+            return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
+        });
+        setBptBalance(userPoolBalance);
+        setTokensBalances(userTokensBalances);
     }
 
     function handleMaxBalance(event, token) {
@@ -145,43 +157,43 @@ export default function ExitPool() {
     }
 
     function handleExit() {
-
         setMode(Mode.ConfirmTx);
 
-        balancer.exitPool(exitInfo, web3Provider).then(exitTx => {
-            setTx(exitTx);
-            setMode(Mode.Exiting);
-            return exitTx.wait();
-        })
-        .then(() => setMode(Mode.ExitSuccess))
-        .catch(error => {
-            if (error.code === USER_REJECTED) {
-                setMode(Mode.ExitReady);
-            } else {
-                console.error('Exit error', error);
-                setExitError(error.reason || error);
-                setMode(Mode.ExitError);
-            }
-        });
+        balancer.exitPool(exitInfo, web3Provider)
+            .then(async exitTx => {
+                setTx(exitTx);
+                setMode(Mode.Exiting);
+                await exitTx.wait();
+                setMode(Mode.ExitSuccess);
+                updateBalances();
+            })
+            .catch(error => {
+                if (error.code === USER_REJECTED) {
+                    setMode(Mode.ExitReady);
+                } else {
+                    console.error('Exit error', error);
+                    setExitError(error.reason || error);
+                    setMode(Mode.ExitError);
+                }
+            });
     }
 
-    async function handleApprove() {
+    async function handleApproveBpt() {
         const { vault } = balancer.networkConfig().addresses.contracts;
+        const { MaxUint256} = constants;
         const signer = web3Provider.getSigner();
 
         setMode(Mode.ConfirmTx);
 
         const tx = await balancer
-            .ERC20(tokensToApprove[0].address, signer)
-            .approve(vault, constants.MaxUint256);
+            .ERC20(exitInfo.pool.address, signer)
+            .approve(vault, MaxUint256);
 
         setMode(Mode.Approving);
-
         await tx.wait();
 
-        tokensToApprove.shift();
-        setTokensToApprove(tokensToApprove);
-        setMode(tokensToApprove.length > 0 ? Mode.ApproveTokens : Mode.ExitReady);
+        setBptAllowance(fromEthersBN(MaxUint256));
+        setMode(Mode.ExitReady);
     }
 
     function css() {
@@ -198,7 +210,7 @@ export default function ExitPool() {
     }
 
     function balance(token) {
-        const found = balances.find(b => isSameAddress(b.tokenAddress, token.address));
+        const found = tokensBalances.find(b => isSameAddress(b.tokenAddress, token.address));
         return found?.balance || ZERO;
     }
 
@@ -234,7 +246,7 @@ export default function ExitPool() {
                                 </div>
                             </div>
                             <div className="amount-block">
-                                <input id={token.address} className="amount-dark text-end" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 200)} />
+                                <input id={token.address} className="amount-dark text-end" type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 100)} />
                             </div>
                         </div>
                     )}
@@ -256,14 +268,19 @@ export default function ExitPool() {
                             <button type="button" className="btn btn-secondary btn-lg" disabled>Connect your wallet</button>
                         </div>
                     }
-                    {mode === Mode.ApproveTokens &&
+                    {mode === Mode.InsufficientBptBalance &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleApprove}>Approve {tokensToApprove[0].symbol}</button>
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Insufficient BPT balance</button>
+                        </div>
+                    }
+                    {mode === Mode.ApproveBpt &&
+                        <div className="d-grid">
+                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleApproveBpt}>Approve BPT</button>
                         </div>
                     }
                     {mode === Mode.Approving &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Approving {tokensToApprove[0].symbol} <Spinner /></button>
+                            <button type="button" className="btn btn-secondary btn-lg" disabled>Approving BPT <Spinner /></button>
                         </div>
                     }
                     {mode === Mode.ExitReady &&
