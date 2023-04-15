@@ -127,6 +127,7 @@ class Layout extends React.Component {
   css() {
     const { theme } = this.state;
     const bodyClass = isDark(theme) ? [ 'bg-dark', 'text-light', 'bg-opacity-75' ] : [ 'bg-light',  'text-dark' ];
+    const brandClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
     const hrClass = isDark(theme) ? [ 'text-white', 'text-opacity-75' ] : [];
     const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'border', 'shadow-sm' ]);
     const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'shadow-sm' ]);
@@ -134,7 +135,7 @@ class Layout extends React.Component {
     const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow', 'py-3' ]
       .concat(isDark(theme) ? [ 'bg-dark', 'navbar-dark', 'border-bottom', 'border-light', 'border-opacity-25' ] : [ 'bg-white' ]);
 
-    const classes = { bodyClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };
+    const classes = { bodyClass, brandClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };
     Object.keys(classes).forEach(key => classes[key] = classes[key].join(' '));
     return classes;
   }
@@ -142,7 +143,7 @@ class Layout extends React.Component {
   render() {
     const { theme } = this.state;
     const {
-      btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass,
+      btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass, brandClass,
     } = this.css();
     
     return (
@@ -161,7 +162,7 @@ class Layout extends React.Component {
               <span className="fs-3 fw-semibold pb-1 me-3">Balancer</span>
               <div
                 id="brand-text"
-                className="navbar-text d-none d-lg-block fs-4"
+                className={`navbar-text d-none d-lg-block fs-4 ${brandClass}`}
               >
                 Minimal
               </div>
