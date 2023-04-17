@@ -1,7 +1,7 @@
 # Balancer Minimal UI
 This project is a minimal frontend for the [Balancer V2](https://balancer.fi/) protocol.
 
-See a [demo site](https://balancer-minimal-ui-whve.vercel.app/).
+See the [demo site](https://balancer-minimal-ui-whve.vercel.app/).
 
 ## Run the app in the development mode
 
