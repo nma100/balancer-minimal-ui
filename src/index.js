@@ -17,6 +17,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import * as Bootstrap from 'bootstrap';
 
 export const RoutePath = {
+  Index: '/',
   Portfolio: 'portfolio',
   Trade: 'trade',
   JoinPool: 'join-pool',
@@ -25,7 +26,7 @@ export const RoutePath = {
 
 const router = createHashRouter(
   createRoutesFromElements(
-    <Route path="/" element={<Layout />}>
+    <Route path={RoutePath.Index} element={<Layout />}>
       <Route index element={<Invest />} />
       <Route path={RoutePath.Trade} element={<Trade />} />
       <Route path={RoutePath.Portfolio} element={<Portfolio />} />

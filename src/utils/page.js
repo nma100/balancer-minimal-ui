@@ -1,3 +1,4 @@
+import { RoutePath } from "..";
 import { bnf, bnc } from "../utils/bn";
 import { nf } from "./number";
 import { Modal, Toast } from 'bootstrap';
@@ -5,7 +6,13 @@ import { Modal, Toast } from 'bootstrap';
 export const UNAVAILABLE = 'N/A';
 
 export function reload() {
-  window.location.reload();
+  const { location } = window;
+  const { Index, JoinPool, ExitPool } = RoutePath;
+  if (location.hash.includes(JoinPool) || location.hash.includes(ExitPool)) {
+    location.assign(Index);
+  } else {
+    location.reload();
+  }
 }
 
 export function blur() {

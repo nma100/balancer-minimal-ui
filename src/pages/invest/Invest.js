@@ -107,36 +107,41 @@ class Invest extends React.Component {
 
   css() {
     const isDark = (this.context.theme === Theme.Dark);
+    const heroClass  = isDark ? 'bg-dark bg-gradient' : 'bg-white bg-opacity-75 bg-gradient';
     const textClass  = isDark ? 'text-light' : 'text-dark';
-    return { textClass };
+    const textSearchClass  = isDark ? 'text-light text-opacity-75' : 'text-dark';
+    const btnClass = isDark ? 'btn btn-outline-light' : 'btn btn-light border shadow-sm';
+    const linkClass = isDark ? 'link-light' : 'link-dark';
+    const tableClass = isDark ? 'table table-dark' : 'table bg-white bg-opacity-75';
+    return { textClass, textSearchClass, btnClass, heroClass, tableClass, linkClass };
   }
 
   render() {
-    const { textClass } = this.css();
+    const { textClass, textSearchClass, btnClass, heroClass, tableClass, linkClass } = this.css();
     const poolsData = this.getPoolsData();
     const mode = this.mode();
     return (
       <>
         <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
-        <div className="d-flex justify-content-between align-items-center bg-dark rounded shadow p-4 mb-4">
+        <div className={`d-flex justify-content-between align-items-center flex-wrap rounded shadow p-4 mb-4 ${heroClass}`}>
           <div className="fs-2">Deposit assets and earn yield</div>
-          <div className="d-flex">
+          <div className="d-flex py-3 py-sm-0">
             {poolsData?.poolSearch !== undefined &&
               <div className="d-inline-flex align-items-center bg-light bg-opacity-10 text-nowrap px-2 py-1 rounded me-3">
                 <div className="me-2">{poolsData.poolSearch.symbol}</div>
-                <div className="reset-search text-light text-opacity-75" onClick={() => this.resetSearch()}><i className="bi bi-x-square"></i></div>
+                <div className={`reset-search ${textSearchClass}`} onClick={() => this.resetSearch()}><i className="bi bi-x-square"></i></div>
               </div>
             }
-            <button type="button" className="btn btn-outline-light" onClick={() => openModal(SELECT_TOKEN_MODAL)}>
+            <button type="button" className={btnClass} onClick={() => openModal(SELECT_TOKEN_MODAL)}>
               Search pool <i className="bi bi-search ms-1"></i>
             </button>
           </div>
         </div>
         <div className="table-responsive">
-          <table id="pools" className="table table-dark align-middle m-0">
+          <table id="pools" className={`${tableClass} shadow-sm align-middle m-0`}>
             <thead>
               <tr>
-                <th scope="col" className="d-none d-md-table-cell"></th>
+                <th scope="col" className="d-none d-lg-table-cell"></th>
                 <th scope="col">Composition</th>
                 <th scope="col" className="text-center d-none d-md-table-cell">TVL</th>
                 <th scope="col" className="text-center text-nowrap d-none d-md-table-cell">Volume (24h)</th>
@@ -167,7 +172,7 @@ class Invest extends React.Component {
               <>
                 {(poolsData?.pools || []).map(pool =>
                   <tr key={pool.id}>
-                    <td className="d-none d-md-table-cell ">
+                    <td className="d-none d-lg-table-cell ">
                       <PoolIconsFlex pool={pool} />
                     </td>
                     <td><PoolTokensFlex pool={pool} /></td>
@@ -181,9 +186,9 @@ class Invest extends React.Component {
                       <PoolApr pool={pool} />
                     </td>
                     <td>
-                      <div className="d-flex">
-                        <NavLink className="btn btn-outline-light me-1" to={`/join-pool/${pool.id}`} state={pool}>Deposit</NavLink>
-                        <NavLink className="btn btn-outline-light ms-1" to={`/exit-pool/${pool.id}`} state={pool}>Withdraw</NavLink>
+                      <div className="d-flex flex-wrap flex-sm-nowrap">
+                        <NavLink className={`${btnClass} m-1`} to={`/join-pool/${pool.id}`} state={pool}>Deposit</NavLink>
+                        <NavLink className={`${btnClass} m-1`} to={`/exit-pool/${pool.id}`} state={pool}>Withdraw</NavLink>
                       </div>
                     </td>
                   </tr>
@@ -192,11 +197,11 @@ class Invest extends React.Component {
                   <tr>
                     <td className="text-center py-2" colSpan="6">
                       {this.state.loading ? (
-                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none">
+                        <button type="button" className={`btn btn-link btn-lg ${linkClass} text-decoration-none`}>
                           Loading ...
                         </button>
                       ) : (
-                        <button type="button" className="btn btn-link btn-lg link-light text-decoration-none" onClick={() => this.loadMore()}>
+                        <button type="button" className={`btn btn-link btn-lg ${linkClass} text-decoration-none`} onClick={() => this.loadMore()}>
                           <span className="me-1">Load more</span> <i className="bi bi-chevron-down"></i>
                         </button>
                       )}

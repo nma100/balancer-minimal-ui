@@ -232,8 +232,8 @@ class Trade extends React.Component {
     const isDark = (this.context.theme === Theme.Dark);
     const amountClass = isDark ? 'amount-dark' : 'amount-light';
     const bgClass = isDark ? 'bg-dark' : 'bg-white bg-opacity-75';
-    const textClass = isDark ? 'text-light' : 'text-dark';
     const bgAmClass = isDark ? 'bg-light' : 'bg-dark';
+    const textClass = isDark ? 'text-light' : 'text-dark';
     const linkClass = isDark ? 'link-light' : 'link-dark';
     const arrowClass = isDark ? 'bg-secondary' : 'bg-light shadow';
     const btnClass = isDark ? 'btn-secondary' : 'btn-light border shadow-sm';
@@ -266,9 +266,9 @@ class Trade extends React.Component {
                   </div>
                 </div>
               </div>
-              <div className={`d-flex justify-content-between align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2`}>
-                <div className="amount-block">
-                  <div className="fs-1 mb-1">
+              <div className={`d-flex align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2`}>
+                <div className="amount-block flex-grow-1">
+                  <div className="mb-1">
                     <input id="amount-in" className={amountClass} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(IN)} />
                   </div>
                   <div className={`${textClass} text-opacity-75`}>{usd(usdValueIn)}</div>
@@ -306,9 +306,9 @@ class Trade extends React.Component {
                   <i className="bi bi-arrow-down"></i>
                 </div>
               </div>
-              <div className={`d-flex justify-content-between align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2 mb-3`}>
-                <div className="amount-block">
-                  <div className="fs-1 mb-1">
+              <div className={`d-flex align-items-center ${bgAmClass} bg-opacity-10 rounded px-4 py-2 mb-3`}>
+                <div className="amount-block flex-grow-1">
+                  <div className="mb-1">
                     <input id="amount-out" className={amountClass} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={() => this.handleAmountChange(OUT)} />
                   </div>
                   <div className={`${textClass} text-opacity-75`}>{usd(usdValueOut)}</div>
@@ -316,7 +316,7 @@ class Trade extends React.Component {
                 <div>
                   <div className="select-token d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-2" onClick={() => this.openTokenSelector(OUT)}>
                     {mode === Mode.Init 
-                      ? <span className="fs-5 me-3">Select <span className="d-none d-sm-inline">token</span></span>
+                      ? <span className="fs-5 me-3 text-nowrap">Select <span className="d-none d-sm-inline">token</span></span>
                       : (
                         <>
                           {tokenOut && (

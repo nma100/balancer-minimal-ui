@@ -130,12 +130,13 @@ class Layout extends React.Component {
     const brandClass = isDark(theme) ? [ 'text-light', 'text-opacity-75' ] : [];
     const hrClass = isDark(theme) ? [ 'text-white', 'text-opacity-75' ] : [];
     const btnClass = [ 'btn' ].concat(isDark(theme) ? [ 'btn-dark' ] : [ 'btn-light', 'border', 'shadow-sm' ]);
-    const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'shadow-sm' ]);
+    const btnClassOutline = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light' ] : [ 'btn-light', 'border', 'shadow-sm' ]);
+    const btnClassSelectNet = [ 'btn' ].concat(isDark(theme) ? [ 'btn-outline-light', 'btn-lg' ] : [ 'btn-light',  'btn-lg', 'border', 'shadow-sm' ]);
     const themeIcoClass = [ 'bi' ].concat(isDark(theme) ?  [ 'bi-sun' ] : [ 'bi-moon' ]);
     const navbarClass = [ 'navbar', 'navbar-expand-lg', 'sticky-top', 'bg-gradient', 'shadow', 'py-3' ]
       .concat(isDark(theme) ? [ 'bg-dark', 'navbar-dark', 'border-bottom', 'border-light', 'border-opacity-25' ] : [ 'bg-white' ]);
 
-    const classes = { bodyClass, brandClass, btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass };
+    const classes = { bodyClass, brandClass, btnClass, btnClassOutline, btnClassSelectNet, hrClass, themeIcoClass, navbarClass };
     Object.keys(classes).forEach(key => classes[key] = classes[key].join(' '));
     return classes;
   }
@@ -143,7 +144,7 @@ class Layout extends React.Component {
   render() {
     const { theme } = this.state;
     const {
-      btnClass, btnClassOutline, hrClass, themeIcoClass, navbarClass, brandClass,
+      btnClass, btnClassSelectNet, btnClassOutline, hrClass, themeIcoClass, navbarClass, brandClass,
     } = this.css();
     
     return (
@@ -248,7 +249,7 @@ class Layout extends React.Component {
             >
               <div id="sidebar-inner" className="py-4 px-3 d-flex flex-column">
                 {!this.state.chainId &&
-                  <button id="network-select" type="button" className="btn btn-outline-light btn-lg">
+                  <button id="network-select" type="button" className={btnClassSelectNet}>
                     <div className="d-flex">
                       <div className="placeholder-glow flex-grow-1">
                           <span className="placeholder network"></span>
@@ -258,9 +259,9 @@ class Layout extends React.Component {
                   </button>
                 }
                 {this.state.chainId &&
-                  <button id="network-select" type="button" className="btn btn-outline-light btn-lg" onClick={e => this.openNetworkSelector(e)}>
+                  <button id="network-select" type="button" className={btnClassSelectNet} onClick={e => this.openNetworkSelector(e)}>
                     <div className="d-flex">
-                      <img className="icon" src={`/image/network/${NETWORKS[this.state.chainId].name}.svg`} alt="network"/> 
+                      <img className="icon d-none d-xl-inline" src={`/image/network/${NETWORKS[this.state.chainId].name}.svg`} alt="network"/> 
                       <div className="flex-grow-1">{NETWORKS[this.state.chainId].name}</div>
                       <div className="chevron"><i className="bi bi-chevron-down"></i></div>
                     </div>

@@ -87,8 +87,8 @@ body { overflow-y: scroll; }
 
 #swap {
     .amount-block { 
-        width: 50%; 
         #amount-in, #amount-out { 
+            font-size: $font-size-base * 2.5 !important;
             all: inherit;
             width: 100%;
             -moz-appearance: textfield;
@@ -150,6 +150,8 @@ table#pools {
         font-size: $font-size-base; 
         white-space: nowrap;
     }
+    .btn-invest { margin: 0.15rem; }
+
 }
 
 .reset-search { cursor: pointer; }
@@ -159,9 +161,8 @@ table#pools {
 
 #join-pool, #exit-pool {
     .amount-block { 
-        width: 50%; 
         padding-right: 0.25rem;
-        font-size: $font-size-base * 2.6;
+        font-size: $font-size-base * 2.6 !important;
         input { 
             all: inherit;
             width: 100%;
@@ -173,6 +174,7 @@ table#pools {
             margin: 0;
         }
     }
+
 }
 
 

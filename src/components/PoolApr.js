@@ -100,7 +100,7 @@ export default class PoolApr extends React.Component {
     }
 
     const tooltip = (
-      <a href="#" className="apr-breakdown" data-bs-toggle="tooltip" data-bs-title={breakdown}>
+      <a href="#" className="apr-breakdown" data-bs-toggle="tooltip" data-bs-title={breakdown} onClick={e => e.preventDefault()}>
         {icon}
       </a>
     );

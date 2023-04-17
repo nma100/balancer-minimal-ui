@@ -245,26 +245,30 @@ export default function JoinPool() {
       }
 
     function css() {
+        const bgClass = isDark(theme) ? 'bg-dark' : 'bg-white bg-opacity-75';
+        const bgAmClass = isDark(theme) ? 'bg-light' : 'bg-dark';
         const textClass = isDark(theme) ? 'text-light' : 'text-dark';
+        const textInfoClass = isDark(theme) ? 'text-light text-opacity-75' : 'text-dark text-opacity-75';
         const linkClass = isDark(theme) ? 'link-light' : 'link-dark';
         const successClass = isDark(theme) ? 'success-dark' : 'success-light';
-        return { textClass, linkClass, successClass };
+        const btnClass = isDark(theme) ? 'btn-secondary' : 'btn-light border shadow-sm';
+        const btnCloseClass = isDark(theme) ? 'btn-close-white' : '';
+        return { bgClass, bgAmClass, textClass, textInfoClass, linkClass, successClass, btnClass, btnCloseClass };
     }
 
-    const { textClass, linkClass, successClass } = css();
+    const { bgClass, bgAmClass, textClass, textInfoClass, linkClass, successClass, btnClass, btnCloseClass } = css();
 
     return (
         <div id="join-pool" className="row">
             <div className="col-12 col-lg-7 col-xxl-6">
-                <div className="bg-dark bg-gradient shadow rounded p-3">
-
+                <div className={`${bgClass} bg-gradient shadow rounded p-3`}>
                     <div className="d-flex justify-content-between align-items-center mb-1">
                         <div className="fs-1">Deposit</div>
-                        <NavLink className="btn-close btn-close-white" to="/"></NavLink>
+                        <NavLink className={`btn-close ${btnCloseClass}`}  to="/"></NavLink>
                     </div>
                     <div className={`${textClass} text-opacity-75 fs-5 mb-4`}>{pool?.name}</div>
                     {tokens.map((token, index) =>
-                        <div key={index} className="d-flex justify-content-between bg-light bg-opacity-10 rounded px-4 py-3 mb-3">
+                        <div key={index} className={`d-flex ${bgAmClass} bg-opacity-10 rounded px-4 py-3 mb-3`}>
                             <div>
                                 <div className="d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-3"> 
                                     <CryptoIcon name={token.symbol} cssClass="me-3" />
@@ -282,13 +286,13 @@ export default function JoinPool() {
                                     )}
                                 </div>
                             </div>
-                            <div className="amount-block">
+                            <div className="amount-block flex-grow-1">
                                 <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 100)} />
                             </div>
                         </div>
                     )}
 
-                    <div className="d-flex justify-content-between text-light text-opacity-75 mb-4">
+                    <div className={`d-flex justify-content-between ${textInfoClass}  mb-4`}>
                         <div>Total: {usd(usdValue)}</div>
                         {account &&
                             <div>Price impact : {priceImpactFormatted()}</div>
@@ -297,37 +301,37 @@ export default function JoinPool() {
 
                     {mode === Mode.Init &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Enter amounts</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Enter amounts</button>
                         </div>
                     }
                     {mode === Mode.ConnectWallet &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Connect your wallet</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Connect your wallet</button>
                         </div>
                     }                    
                     {mode === Mode.InsufficientBalance &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Insufficient balance</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Insufficient balance</button>
                         </div>
                     }
                     {mode === Mode.ApproveTokens &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleApprove}>Approve {tokensToApprove[0].symbol}</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleApprove}>Approve {tokensToApprove[0].symbol}</button>
                         </div>
                     }
                     {mode === Mode.Approving &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Approving {tokensToApprove[0].symbol} <Spinner /></button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Approving {tokensToApprove[0].symbol} <Spinner /></button>
                         </div>
                     }
                     {mode === Mode.JoinReady &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" onClick={handleAddLiquidity}>Add liquidity</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleAddLiquidity}>Add liquidity</button>
                         </div>
                     }
                     {mode === Mode.Joining &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Adding liquidity <Spinner /></button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Adding liquidity <Spinner /></button>
                         </div>
                     }
                     {mode === Mode.JoinSuccess &&
@@ -346,7 +350,7 @@ export default function JoinPool() {
                     }
                     {mode === Mode.ConfirmTx &&
                         <div className="d-grid">
-                            <button type="button" className="btn btn-secondary btn-lg" disabled>Confirmation <Spinner /></button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Confirmation <Spinner /></button>
                         </div>
                     }
                 </div>
