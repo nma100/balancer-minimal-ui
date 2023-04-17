@@ -3,7 +3,7 @@ This project is a minimal frontend for the [Balancer V2](https://balancer.fi/) p
 
 See a demo [here](https://balancer-minimal-ui-whve.vercel.app/).
 
-## Runs the app in the development mode
+## Run the app in the development mode
 Install dependencies
 `npm install`
 
