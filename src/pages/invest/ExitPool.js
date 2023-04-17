@@ -237,10 +237,10 @@ export default function ExitPool() {
                                     <CryptoIcon name={token.symbol} cssClass="me-3" />
                                     {token.weight ? (
                                             <>
-                                                <span className="fs-5 me-3">{token.symbol}</span> 
+                                                <span className="fs-5 text-nowrap me-3">{token.symbol}</span> 
                                                 <div className={`${textClass} text-opacity-75 align-self-center`}>{weight(token.weight)}</div>
                                             </>
-                                        ) : <span className="fs-5">{token.symbol}</span> 
+                                        ) : <span className="fs-5 text-nowrap">{token.symbol}</span> 
                                     }
                                 </div>
                                 <div className="text-center small">
