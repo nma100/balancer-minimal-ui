@@ -13,7 +13,7 @@ See the [demo site](https://balancer-minimal-ui-whve.vercel.app/).
 `REACT_APP_ALCHEMY_POLYGON=`  
 `REACT_APP_ALCHEMY_ARBITRUM=`  
 
-3. Runs the development server :  
+3. Run the development server :  
 `npm start`
 
 4. Open [http://localhost:3000](http://localhost:3000/) to view the app in the browser.
@@ -28,7 +28,7 @@ See the [demo site](https://balancer-minimal-ui-whve.vercel.app/).
 `REACT_APP_ALCHEMY_POLYGON=`  
 `REACT_APP_ALCHEMY_ARBITRUM=`  
 
-3. Builds the app for production :  
+3. Build the app for production :  
 `npm run build`
 
 This creates a `build` directory with a production build of your app. Set up your favorite HTTP server so that a visitor to your site is served `index.html`.
