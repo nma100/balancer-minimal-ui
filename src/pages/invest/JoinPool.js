@@ -99,9 +99,9 @@ export default function JoinPool() {
             setMode(Mode.Init);    
         } else if (!account) {
             setMode(Mode.ConnectWallet);
-        } else if (tokensWithInsufficientBalance().length > 0) {
+        } else if (balances.length === 0 || tokensWithInsufficientBalance().length > 0) {
             setMode(Mode.InsufficientBalance);
-        } else if (tokensWithInsufficientAllowance().length > 0) {
+        } else if (allowances.length === 0 || tokensWithInsufficientAllowance().length > 0) {
             setMode(Mode.ApproveTokens);
         } else {
             setMode(Mode.JoinReady);
