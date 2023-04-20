@@ -180,7 +180,7 @@ export default function JoinPool() {
         setMode(Mode.Approving);
         await tx.wait();
 
-        const index = allowances.find(b => isSameAddress(b.tokenAddress, tokensToApprove[0].address));
+        const index = allowances.findIndex(b => isSameAddress(b.tokenAddress, tokensToApprove[0].address));
         allowances[index].allowance = fromEthersBN(MaxUint256);
 
         tokensToApprove.shift();
