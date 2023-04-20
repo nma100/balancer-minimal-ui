@@ -14,6 +14,8 @@ import { constants } from "ethers";
 import { isSameAddress } from "@balancer-labs/sdk";
 import { debounce } from "lodash";
 import { USER_REJECTED } from "../../web3-connect";
+import { SLIPPAGE } from "../../protocol/services/exit-pool-service";
+import { proportionalBalances } from "../../protocol/utils/join-exit";
 
 const Mode = {
     Init: 0,
@@ -29,7 +31,7 @@ const Mode = {
 }
 
 const MIN_PI = 0.001;
-const PRECISION_3 = 3, PRECISION_5 = 5;
+const PRECISION_3 = 3, PRECISION_6 = 6;
 
 export default function ExitPool() {
 
@@ -57,11 +59,7 @@ export default function ExitPool() {
     useEffect(() => {
         if (!balancer || !account || !pool || !tokens || tokens.length === 0) return;
         const fetchBalances = async () => {
-            const userPoolBalance = await balancer.userBalance(account, pool);
-            const userPoolRatio = userPoolBalance.div(bn(pool.totalShares));
-            const userTokensBalances = tokens.map(t => {
-                return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
-            });
+            const { userTokensBalances, userPoolBalance } = await proportionalBalances(balancer, account, pool, SLIPPAGE);
             setBptBalance(userPoolBalance);
             setTokensBalances(userTokensBalances);
         }
@@ -97,8 +95,7 @@ export default function ExitPool() {
         } else if (!account) {
             setMode(Mode.ConnectWallet);
         } else { 
-            const { maxBPTIn } = await balancer.buildExitPoolTx(exitInfo, web3Provider);
-            const neededBpt = fromEthersBN(maxBPTIn);
+            const neededBpt =  await neededBptToExit();
             if (bptBalance.lt(neededBpt)) {
                 setMode(Mode.InsufficientBptBalance);
             } else if (bptAllowance.lt(neededBpt)) {
@@ -110,6 +107,11 @@ export default function ExitPool() {
 
         updateUsdValue(exitInfo);
         updatePriceImpact(exitInfo);
+    }
+
+    async function neededBptToExit() {
+        const { maxBPTIn } = await balancer.buildExitPoolTx(exitInfo, web3Provider);
+        return fromEthersBN(maxBPTIn);
     }
     
     async function updateUsdValue(exitInfo) {
@@ -140,19 +142,15 @@ export default function ExitPool() {
     }
 
     async function updateBalances() {
-        const userPoolBalance = await balancer.userBalance(account, pool);
-        const userPoolRatio = userPoolBalance.div(bn(pool.totalShares));
-        const userTokensBalances = tokens.map(t => {
-            return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
-        });
+        const { userTokensBalances, userPoolBalance } = await proportionalBalances(balancer, account, pool, SLIPPAGE);
         setBptBalance(userPoolBalance);
         setTokensBalances(userTokensBalances);
     }
 
-    function handleMaxBalance(event, token) {
+    function handleProportional(event, token) {
         event.preventDefault();
-        const maxBalance = balance(token);
-        document.getElementById(token.address).value = bnt(maxBalance, PRECISION_5, ROUND_DOWN);
+        const proportionalBalance = balance(token);
+        document.getElementById(token.address).value = bnt(proportionalBalance, PRECISION_6, ROUND_DOWN);
         handleAmountChange(token);
     }
 
@@ -243,9 +241,11 @@ export default function ExitPool() {
                                         ) : <span className="fs-5 text-nowrap">{token.symbol}</span> 
                                     }
                                 </div>
-                                <div className="text-center small">
-                                    <span>Balance : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> {balance(token)?.gt(0) && ( 
-                                        <><span className="px-1">·</span> <a href="#" onClick={(e) => handleMaxBalance(e, token)} className={linkClass}>Max</a></>
+                                <div className="text-center text-nowrap small">
+                                    {balance(token)?.gt(0) ? ( 
+                                        <><span>Proportional : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> <span className="px-1">·</span> <a href="#" onClick={(e) => handleProportional(e, token)} className={linkClass}>Set</a></>
+                                    ) : (
+                                        <span>Balance : 0</span>
                                     )}
                                 </div>
                             </div>
@@ -321,3 +321,4 @@ export default function ExitPool() {
         </div>
     );
 }
+

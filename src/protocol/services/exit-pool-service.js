@@ -2,7 +2,7 @@ import { Pools } from "@balancer-labs/sdk";
 import { web3Account } from "../../web3-connect";
 import { params } from "../utils/join-exit";
 
-const SLIPPAGE = '100';
+export const SLIPPAGE = '100';
 
 export class ExitPoolService {
 

@@ -1,6 +1,7 @@
 import { isSameAddress } from "@balancer-labs/sdk";
-import { ZERO, toEthersBN } from "../../utils/bn";
+import { ZERO, bn, toEthersBN } from "../../utils/bn";
 import { formatUnits } from "ethers/lib/utils";
+import { getPoolTokens } from "../../utils/pool";
 
 
 export function params(joinExitInfo) {
@@ -14,4 +15,15 @@ export function params(joinExitInfo) {
         return formatUnits(amount, 0);
     });
     return { tokens: t, amounts: a };
+}
+
+export async function proportionalBalances(balancer, account, pool, slippage) {
+    const tokens = getPoolTokens(pool);
+    const slippagePercent = Number(slippage) / 10000;
+    const userPoolBalance = await balancer.userBalance(account, pool);
+    const userPoolRatio = userPoolBalance.div(bn(pool.totalShares)).times(1 - slippagePercent);
+    const userTokensBalances = tokens.map(t => {
+        return { tokenAddress: t.address, balance: userPoolRatio.times(bn(t.balance)) };
+    });
+    return { userTokensBalances, userPoolBalance };
 }

@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useContext, useEffect, useState } from "react";
-import { useLocation, NavLink, useParams } from "react-router-dom";
+import { useLocation, NavLink } from "react-router-dom";
 import { activeInvestMenu, usd, weight } from "../../utils/page";
 import { getPoolTokens } from "../../utils/pool";
 import { OutletContext } from "../Layout";
@@ -29,13 +29,12 @@ const Mode = {
 }
 
 const MIN_PI = 0.001;
-const PRECISION_3 = 3, PRECISION_5 = 5;
+const PRECISION_3 = 3, PRECISION_6 = 6;
 
 export default function JoinPool() {
 
     const { account, chainId, balancer, web3Provider, theme } = useContext(OutletContext);
-    const { state: poolFromLocation } = useLocation();
-    const { poolId: poolFromParamId } = useParams();
+    const { state: pool } = useLocation();
     const [ mode, setMode ] = useState(Mode.Init);
     const [ tokens, setTokens ] = useState([]);    
     const [ balances, setBalances ] = useState([]);
@@ -45,31 +44,15 @@ export default function JoinPool() {
     const [ tokensToApprove, setTokensToApprove ] = useState([]);
     const [ joinInfo, setJoinInfo ] = useState({ pool: undefined, params: [] });
     const [ joinError, setJoinError ] = useState();
-    const [ pool, setPool ] = useState();
     const [ tx, setTx ] = useState();
 
     useEffect(activeInvestMenu, []);
 
     useEffect(() => {
-        if (poolFromLocation) {
-            const tokenList = getPoolTokens(poolFromLocation);
-            setTokens(tokenList);
-            setPool(poolFromLocation);
-            setJoinInfo(info => { info.pool = poolFromLocation; return info; });
-        } else { 
-            if (balancer) {
-                const fetchPoolFromParam = async () => await balancer.findPool(poolFromParamId);
-                fetchPoolFromParam().then(poolFromParam => {
-                    if (poolFromParam) {
-                        const tokenList = getPoolTokens(poolFromParam);
-                        setTokens(tokenList);
-                        setPool(poolFromParam);
-                        setJoinInfo(info => { info.pool = poolFromParam; return info; });
-                    }
-                });
-            }
-        }
-    }, [poolFromLocation, poolFromParamId, balancer]);
+        const tokenList = getPoolTokens(pool);
+        setTokens(tokenList);
+        setJoinInfo(info => { info.pool = pool; return info; });
+    }, [pool]);
 
     useEffect(() => {
         if (!balancer || !account || !tokens || tokens.length === 0) return;
@@ -206,7 +189,7 @@ export default function JoinPool() {
 
     function handleMaxBalance(event, token) {
         event.preventDefault();
-        document.getElementById(token.address).value = bnt(balance(token), PRECISION_5, ROUND_DOWN);
+        document.getElementById(token.address).value = bnt(balance(token), PRECISION_6, ROUND_DOWN);
         handleAmountChange(token);
     }
     
@@ -280,7 +263,7 @@ export default function JoinPool() {
                                         ) : <span className="fs-5 text-nowrap">{token.symbol}</span> 
                                     }
                                 </div>
-                                <div className="text-center small">
+                                <div className="text-center text-nowrap small">
                                     <span>Balance : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> {balance(token)?.gt(0) && ( 
                                         <><span className="px-1">·</span> <a href="#" onClick={(e) => handleMaxBalance(e, token)} className={linkClass}>Max</a></>
                                     )}
