@@ -99,9 +99,9 @@ export default function JoinPool() {
             setMode(Mode.Init);    
         } else if (!account) {
             setMode(Mode.ConnectWallet);
-        } else if (balances.length === 0 || tokensWithInsufficientBalance().length > 0) {
+        } else if (tokensWithInsufficientBalance().length > 0) {
             setMode(Mode.InsufficientBalance);
-        } else if (allowances.length === 0 || tokensWithInsufficientAllowance().length > 0) {
+        } else if (tokensWithInsufficientAllowance().length > 0) {
             setMode(Mode.ApproveTokens);
         } else {
             setMode(Mode.JoinReady);
@@ -195,7 +195,9 @@ export default function JoinPool() {
     
     function tokensWithInsufficientBalance() {
         let tokens = [];
-        if (balances.length > 0) {
+        if (balances.length === 0) {
+            tokens = joinInfo.params.map(p => p.token);
+        } else {
             for (const {amount, token} of joinInfo.params) {
                 const { balance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
                 if (amount.gt(balance)) tokens.push(token);
@@ -206,13 +208,15 @@ export default function JoinPool() {
 
     function tokensWithInsufficientAllowance() {
         let tokens = [];
-        if (allowances.length > 0) {
+        if (allowances.length === 0) {
+            tokens = joinInfo.params.map(p => p.token);
+        } else {
             for (const { token, amount } of joinInfo.params) {
                 const { allowance } = allowances.find(b => isSameAddress(b.tokenAddress, token.address));
                 if (allowance.lt(amount)) tokens.push(token);
             }
-            setTokensToApprove(tokens);
         }
+        setTokensToApprove(tokens);
         return tokens;
     }
 
