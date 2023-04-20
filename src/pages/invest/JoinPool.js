@@ -99,9 +99,9 @@ export default function JoinPool() {
             setMode(Mode.Init);    
         } else if (!account) {
             setMode(Mode.ConnectWallet);
-        } else if (tokensWithInsufficientBalance().length > 0) {
+        } else if (isTokensWithInsufficientBalance()) {
             setMode(Mode.InsufficientBalance);
-        } else if (tokensWithInsufficientAllowance().length > 0) {
+        } else if (isTokensWithInsufficientAllowance()) {
             setMode(Mode.ApproveTokens);
         } else {
             setMode(Mode.JoinReady);
@@ -192,32 +192,26 @@ export default function JoinPool() {
         document.getElementById(token.address).value = bnt(balance(token), PRECISION_6, ROUND_DOWN);
         handleAmountChange(token);
     }
-    
-    function tokensWithInsufficientBalance() {
-        let tokens = [];
-        if (balances.length === 0) {
-            tokens = joinInfo.params.map(p => p.token);
-        } else {
-            for (const {amount, token} of joinInfo.params) {
-                const { balance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
-                if (amount.gt(balance)) tokens.push(token);
-            }
+
+    function isTokensWithInsufficientBalance() {
+        if (balances.length === 0) return true;
+        const tokens = [];
+        for (const {amount, token} of joinInfo.params) {
+            const { balance } = balances.find(b => isSameAddress(b.tokenAddress, token.address));
+            if (amount.gt(balance)) tokens.push(token);
         }
-        return tokens;
+        return tokens.length > 0;
     }
 
-    function tokensWithInsufficientAllowance() {
-        let tokens = [];
-        if (allowances.length === 0) {
-            tokens = joinInfo.params.map(p => p.token);
-        } else {
-            for (const { token, amount } of joinInfo.params) {
-                const { allowance } = allowances.find(b => isSameAddress(b.tokenAddress, token.address));
-                if (allowance.lt(amount)) tokens.push(token);
-            }
+    function isTokensWithInsufficientAllowance() {
+        if (allowances.length === 0) return true;
+        const tokens = [];
+        for (const { token, amount } of joinInfo.params) {
+            const { allowance } = allowances.find(b => isSameAddress(b.tokenAddress, token.address));
+            if (allowance.lt(amount)) tokens.push(token);
         }
         setTokensToApprove(tokens);
-        return tokens;
+        return tokens.length > 0;
     }
 
     function balance(token) {
@@ -303,12 +297,12 @@ export default function JoinPool() {
                     }
                     {mode === Mode.ApproveTokens &&
                         <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleApprove}>Approve {tokensToApprove[0].symbol}</button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleApprove}>Approve {tokensToApprove[0]?.symbol}</button>
                         </div>
                     }
                     {mode === Mode.Approving &&
                         <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Approving {tokensToApprove[0].symbol} <Spinner /></button>
+                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Approving {tokensToApprove[0]?.symbol} <Spinner /></button>
                         </div>
                     }
                     {mode === Mode.JoinReady &&
