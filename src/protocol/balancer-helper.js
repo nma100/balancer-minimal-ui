@@ -154,11 +154,11 @@ export class BalancerHelper {
     return await this.poolService.findPoolsByToken(token);
   }
 
-  async fetchTokens() {
+  async fetchTokens(excludeNativeCoin = false) {
     const nativeCoin = nativeAsset(this.chainId);
     const approved = this.tokenListService.approvedTokens();
     let tokens = TokenListService.reduce(await approved, this.chainId);
-    tokens.unshift(nativeCoin);
+    if (!excludeNativeCoin) tokens.unshift(nativeCoin);
     return tokens;
   }
 

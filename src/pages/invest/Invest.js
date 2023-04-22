@@ -122,7 +122,7 @@ class Invest extends React.Component {
     const mode = this.mode();
     return (
       <>
-        <TokenSelector onTokenSelect={this.searchPools.bind(this)} />
+        <TokenSelector onTokenSelect={this.searchPools.bind(this)} excludeNativeCoin="true" />
         <div className={`d-flex justify-content-between align-items-center flex-wrap rounded shadow p-4 mb-4 ${heroClass}`}>
           <div className="fs-2">Deposit assets and earn yield</div>
           <div className="d-flex py-3 py-sm-0">

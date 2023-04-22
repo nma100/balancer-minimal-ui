@@ -38,7 +38,8 @@ export class TokenSelector extends React.Component {
 
   async onShow() {
     const { balancer } = this.context;
-    const tokens = await balancer.fetchTokens();
+    const excludeNativeCoin = (this.props.excludeNativeCoin === 'true');
+    const tokens = await balancer.fetchTokens(excludeNativeCoin);
     this.setState({ allTokens: tokens, displayedTokens: tokens });
   }
 
