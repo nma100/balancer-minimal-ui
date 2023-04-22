@@ -5,8 +5,8 @@ import { getPoolTokens } from "../../utils/pool";
 
 
 export function params(joinExitInfo) {
-    const { pool: { tokens }, params } = joinExitInfo;
-    const tokensNoBpt = tokens.filter(t => !isSameAddress(t.address, joinExitInfo.pool.address))
+    const { pool: { tokens: poolTokens }, params } = joinExitInfo;
+    const tokensNoBpt = poolTokens.filter(t => !isSameAddress(t.address, joinExitInfo.pool.address))
     const t = tokensNoBpt.map(t => t.address);
     const a = tokensNoBpt.map(t => { 
         const index = params.findIndex(({ token: pt }) => isSameAddress(pt.address, t.address));
