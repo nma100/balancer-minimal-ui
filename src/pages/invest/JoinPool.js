@@ -167,6 +167,7 @@ export default function JoinPool() {
                 await joinTx.wait();
                 setMode(Mode.JoinSuccess);
                 updateBalances();
+                updateAllowances();
             })
             .catch(error => {
                 if (error.code === USER_REJECTED) {
