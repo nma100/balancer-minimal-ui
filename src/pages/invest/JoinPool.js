@@ -137,6 +137,16 @@ export default function JoinPool() {
         setBalances(userBalances);
     }
     
+    async function updateAllowances() {
+        const { vault } = balancer.networkConfig().addresses.contracts;
+        const promises = tokens.map(token => balancer.allowance(account, vault, token));
+        const allowances = await Promise.all(promises);
+        const vaultAllowances = tokens.map((token, index) => {
+            return { tokenAddress : token.address, allowance: allowances[index] };
+        });
+        setAllowances(vaultAllowances);
+    }
+    
     async function updatePriceImpact(joinInfo) {
         if (joinInfo.params.length === 0) {
             setPriceImpact(0);
@@ -180,8 +190,7 @@ export default function JoinPool() {
         setMode(Mode.Approving);
         await tx.wait();
 
-        const index = allowances.findIndex(b => isSameAddress(b.tokenAddress, tokensToApprove[0].address));
-        allowances[index].allowance = fromEthersBN(MaxUint256);
+        updateAllowances();
 
         tokensToApprove.shift();
         setMode(tokensToApprove.length > 0 ? Mode.ApproveTokens : Mode.JoinReady);
