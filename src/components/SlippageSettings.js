@@ -1,10 +1,11 @@
 import React from 'react';
-import { isDark } from '../../theme';
-import { hideModal } from '../../utils/page';
-import { OutletContext } from '../Layout';
-export const SETTINGS_MODAL = 'settings';
+import { isDark } from '../theme';
+import { hideModal } from '../utils/page';
+import { OutletContext } from '../pages/Layout';
 
-export class Settings extends React.Component {
+export const SLIPPAGE_MODAL = 'slippage-settings';
+
+export class SlippageSettings extends React.Component {
       
   static contextType = OutletContext;
 
@@ -14,7 +15,7 @@ export class Settings extends React.Component {
   }
 
   componentDidMount() { 
-    const modal = document.getElementById(SETTINGS_MODAL);
+    const modal = document.getElementById(SLIPPAGE_MODAL);
     modal.addEventListener('show.bs.modal', this.onShow.bind(this));
   }
   
@@ -29,7 +30,7 @@ export class Settings extends React.Component {
     if (0 < maxSlippage && maxSlippage <= 10000) {
       this.props.settingsInfo.onSave({ maxSlippage });
     }
-    hideModal(SETTINGS_MODAL);
+    hideModal(SLIPPAGE_MODAL);
   }
 
   css() {
@@ -42,7 +43,7 @@ export class Settings extends React.Component {
   render() {
     const { contentClass, btnClass } = this.css();
     return ( 
-      <div id={SETTINGS_MODAL} className="modal" tabIndex="-1">
+      <div id={SLIPPAGE_MODAL} className="modal" tabIndex="-1">
           <div className="modal-dialog modal-sm modal-dialog-centered">
               <div className={`modal-content ${contentClass}`}>
                   <div className="modal-body">

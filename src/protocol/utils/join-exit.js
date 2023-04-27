@@ -19,7 +19,7 @@ export function params(joinExitInfo) {
 
 export async function proportionalBalances(balancer, account, pool, slippage) {
     const tokens = getPoolTokens(pool);
-    const slippagePercent = Number(slippage) / 10000;
+    const slippagePercent = slippage / 10000;
     const userPoolBalance = await balancer.userBalance(account, pool);
     const userPoolRatio = userPoolBalance.div(bn(pool.totalShares)).times(1 - slippagePercent);
     const userTokensBalances = tokens.map(t => {

@@ -3,8 +3,6 @@ import { web3Account } from "../../web3-connect";
 import { formatUnits } from "ethers/lib/utils";
 import { params } from "../utils/join-exit";
 
-const SLIPPAGE = '100';
-
 export class PriceImpactService {
   
     constructor(sdk) {
@@ -19,11 +17,12 @@ export class PriceImpactService {
     async joinPi(joinInfo, web3Provider) {
         const { pool } = joinInfo;
         const { tokens, amounts } = params(joinInfo);
+        const slippage = String(joinInfo.maxSlippage);
 
         const account = await web3Account(web3Provider);
 
         const poolWithMethods = Pools.wrap(pool, this.sdk.networkConfig);
-        const { expectedBPTOut } = poolWithMethods.buildJoin(account, tokens, amounts, SLIPPAGE);
+        const { expectedBPTOut } = poolWithMethods.buildJoin(account, tokens, amounts, slippage);
 
         const pi_ = await poolWithMethods.calcPriceImpact(amounts, expectedBPTOut, true);
         const pi = formatUnits(pi_);
@@ -34,12 +33,13 @@ export class PriceImpactService {
     async exitPi(exitInfo, web3Provider) {
         const { pool } = exitInfo;
         const { tokens, amounts } = params(exitInfo);
+        const slippage = String(exitInfo.maxSlippage);
 
         const account = await web3Account(web3Provider);
 
         const poolWithMethods = Pools.wrap(pool, this.sdk.networkConfig);
         const { priceImpact } = poolWithMethods.buildExitExactTokensOut(
-            account, tokens, amounts, SLIPPAGE
+            account, tokens, amounts, slippage
         );
 
         const pi = formatUnits(priceImpact);

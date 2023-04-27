@@ -9,6 +9,7 @@ import { SELECT_TOKEN_MODAL, TokenSelector } from '../../components/TokenSelecto
 import { Theme } from '../../theme';
 import { openModal } from '../../utils/page';
 import { OutletContext, POOLS_PER_PAGE } from '../Layout';
+import { RoutePath } from '../..';
 
 const SESSION_POOL_LIST = 'pool-list';
 const SESSION_POOL_SCROLL = 'pool-scroll';
@@ -187,8 +188,8 @@ class Invest extends React.Component {
                     </td>
                     <td>
                       <div className="d-flex flex-wrap flex-sm-nowrap">
-                        <NavLink className={`${btnClass} m-1`} to={`/join-pool/${pool.id}`} state={pool}>Deposit</NavLink>
-                        <NavLink className={`${btnClass} m-1`} to={`/exit-pool/${pool.id}`} state={pool}>Withdraw</NavLink>
+                        <NavLink className={`${btnClass} m-1`} to={`/${RoutePath.JoinPool}/${pool.id}`} state={pool}>Deposit</NavLink>
+                        <NavLink className={`${btnClass} m-1`} to={`/${RoutePath.ExitPool}/${pool.id}`} state={pool}>Withdraw</NavLink>
                       </div>
                     </td>
                   </tr>

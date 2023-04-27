@@ -6,6 +6,8 @@ import { GaugeShareRepo } from "../repository/gauge-share-repo";
 import { PoolRepo } from "../repository/pool-repo";
 import { PoolShareRepo } from "../repository/pool-share-repo";
 import { LiquidityService } from "./liquidity-service";
+import { POOLS as POOLS_CONST } from "../constants/pools";
+
 
 export class StakingService {
   
@@ -80,11 +82,12 @@ export class StakingService {
         return POOLS(this.chainId).IdsMap.veBAL;
     }
 
-    stakablePoolIds() {
-        return POOLS(this.chainId).Stakable.AllowList;
-    }
-
     excludedPoolTypes() {
         return POOLS(this.chainId).ExcludedPoolTypes;
+    }
+    
+    stakablePoolIds() {
+      const { VotingGaugePools, AllowList } = POOLS_CONST[this.chainId].Stakable;
+      return VotingGaugePools.concat(AllowList);
     }
 }

@@ -1,19 +1,20 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useContext, useEffect, useState } from "react";
 import { useLocation, NavLink } from "react-router-dom";
-import { activeInvestMenu, usd, weight } from "../../utils/page";
+import { activeInvestMenu, openModal, usd, weight } from "../../utils/page";
 import { getPoolTokens } from "../../utils/pool";
 import { OutletContext } from "../Layout";
 import CryptoIcon from "../../components/CryptoIcon";
 import Spinner from "../../components/Spinner";
 import { isDark } from "../../theme";
-import { bn, bnt, ROUND_UP, ROUND_DOWN, ZERO, fromEthersBN } from "../../utils/bn";
+import { bn, bnt, ROUND_UP, ROUND_DOWN, ZERO } from "../../utils/bn";
 import { isSameAddress } from "@balancer-labs/sdk";
 import { transactionUrl } from "../../networks";
 import { nf } from "../../utils/number";
 import { constants } from "ethers";
 import { debounce } from "lodash";
 import { USER_REJECTED } from "../../web3-connect";
+import { SLIPPAGE_MODAL, SlippageSettings } from "../../components/SlippageSettings";
 
 const Mode = {
     Init: 0,
@@ -29,6 +30,7 @@ const Mode = {
 }
 
 const MIN_PI = 0.001;
+const MAX_SLIPPAGE = 100;
 const PRECISION_3 = 3, PRECISION_6 = 6;
 
 export default function JoinPool() {
@@ -42,7 +44,8 @@ export default function JoinPool() {
     const [ usdValue, setUsdValue ] = useState(ZERO);
     const [ priceImpact, setPriceImpact ] = useState(0);
     const [ tokensToApprove, setTokensToApprove ] = useState([]);
-    const [ joinInfo, setJoinInfo ] = useState({ pool: undefined, params: [] });
+    const [ maxSlippage, setMaxSlippage ] = useState(MAX_SLIPPAGE);
+    const [ joinInfo, setJoinInfo ] = useState({ pool: undefined, params: [], maxSlippage: MAX_SLIPPAGE });
     const [ joinError, setJoinError ] = useState();
     const [ tx, setTx ] = useState();
 
@@ -202,6 +205,12 @@ export default function JoinPool() {
         document.getElementById(token.address).value = bnt(balance(token), PRECISION_6, ROUND_DOWN);
         handleAmountChange(token);
     }
+    
+    function onSaveSettings(settings) {
+        const { maxSlippage } = settings;
+        joinInfo.maxSlippage = maxSlippage;
+        setMaxSlippage(maxSlippage);
+    }
 
     function isTokensWithInsufficientBalance() {
         if (balances.length === 0) return true;
@@ -233,7 +242,11 @@ export default function JoinPool() {
         if (priceImpact === 0) return `${nf(0, PRECISION_3)}%`
         else if (priceImpact < MIN_PI)  return `< ${nf(MIN_PI, PRECISION_3)}%` 
         else return `${nf(priceImpact, PRECISION_3)}%`;
-      }
+    }
+
+    function slippageFormatted() {
+        return `${nf(maxSlippage / 100)}%`;
+    }
 
     function css() {
         const bgClass = isDark(theme) ? 'bg-dark' : 'bg-white bg-opacity-75';
@@ -250,102 +263,112 @@ export default function JoinPool() {
     const { bgClass, bgAmClass, textClass, textInfoClass, linkClass, successClass, btnClass, btnCloseClass } = css();
 
     return (
-        <div id="join-pool" className="row">
-            <div className="col-12 col-lg-7 col-xxl-6">
-                <div className={`${bgClass} bg-gradient shadow rounded p-3`}>
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                        <div className="fs-1">Deposit</div>
-                        <NavLink className={`btn-close ${btnCloseClass}`}  to="/"></NavLink>
-                    </div>
-                    <div className={`${textClass} text-opacity-75 fs-5 mb-4`}>{pool?.name}</div>
-                    {tokens.map((token, index) =>
-                        <div key={index} className={`d-flex ${bgAmClass} bg-opacity-10 rounded px-4 py-3 mb-3`}>
-                            <div>
-                                <div className="d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-3"> 
-                                    <CryptoIcon name={token.symbol} cssClass="me-3" />
-                                    {token.weight ? (
-                                            <>
-                                                <span className="fs-5 text-nowrap me-3">{token.symbol}</span> 
-                                                <div className={`${textClass} text-opacity-75 align-self-center`}>{weight(token.weight)}</div>
-                                            </>
-                                        ) : <span className="fs-5 text-nowrap">{token.symbol}</span> 
-                                    }
-                                </div>
-                                <div className="text-center text-nowrap small">
-                                    <span>Balance : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> {balance(token)?.gt(0) && ( 
-                                        <><span className="px-1">·</span> <a href="#" onClick={(e) => handleMaxBalance(e, token)} className={linkClass}>Max</a></>
-                                    )}
-                                </div>
+        <>
+            <SlippageSettings settingsInfo={{ maxSlippage: joinInfo.maxSlippage, onSave: onSaveSettings }} />
+            <div id="join-pool" className="row">
+                <div className="col-12 col-lg-7 col-xxl-6">
+                    <div className={`${bgClass} bg-gradient shadow rounded p-3`}>
+                        <div className="d-flex align-items-center mb-1">
+                            <div className="fs-1 me-auto">Deposit</div>
+                            <div id="settings" className="fs-5 me-2" onClick={() => openModal(SLIPPAGE_MODAL)}>
+                                <i className="bi bi-gear"></i>
                             </div>
-                            <div className="amount-block flex-grow-1">
-                                <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 100)} />
-                            </div>
+                            <NavLink className={`btn-close ${btnCloseClass}`}  to="/"></NavLink>
                         </div>
-                    )}
+                        <div className={`${textClass} text-opacity-75 fs-5 mb-4`}>{pool?.name}</div>
+                        {tokens.map((token, index) =>
+                            <div key={index} className={`d-flex ${bgAmClass} bg-opacity-10 rounded px-4 py-3 mb-3`}>
+                                <div>
+                                    <div className="d-flex bg-light bg-opacity-10 rounded-5 shadow px-3 py-2 mb-3"> 
+                                        <CryptoIcon name={token.symbol} cssClass="me-3" />
+                                        {token.weight ? (
+                                                <>
+                                                    <span className="fs-5 text-nowrap me-3">{token.symbol}</span> 
+                                                    <div className={`${textClass} text-opacity-75 align-self-center`}>{weight(token.weight)}</div>
+                                                </>
+                                            ) : <span className="fs-5 text-nowrap">{token.symbol}</span> 
+                                        }
+                                    </div>
+                                    <div className="text-center text-nowrap small">
+                                        <span>Balance : {bnt(balance(token), PRECISION_3, ROUND_UP)}</span> {balance(token)?.gt(0) && ( 
+                                            <><span className="px-1">·</span> <a href="#" onClick={(e) => handleMaxBalance(e, token)} className={linkClass}>Max</a></>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="amount-block flex-grow-1">
+                                    <input id={token.address} className={`${textClass} text-end`} type="number" autoComplete="off" placeholder="0" min="0" step="any" onChange={debounce(() => handleAmountChange(token), 100)} />
+                                </div>
+                            </div>
+                        )}
 
-                    <div className={`d-flex justify-content-between ${textInfoClass}  mb-4`}>
-                        <div>Total: {usd(usdValue)}</div>
-                        {account &&
-                            <div>Price impact : {priceImpactFormatted()}</div>
+                        <div className={`d-flex ${textInfoClass}  mb-4`}>
+                            <div className="me-auto">Total: {usd(usdValue)}</div>
+                            <div>Max. slippage : { slippageFormatted() }</div>
+                            {account && (
+                                <>
+                                    <i className="bi bi-dot mx-2"></i>
+                                    <div>Price impact : {priceImpactFormatted()}</div>
+                                </>
+                            )}
+                        </div>
+
+                        {mode === Mode.Init &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Enter amounts</button>
+                            </div>
+                        }
+                        {mode === Mode.ConnectWallet &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Connect your wallet</button>
+                            </div>
+                        }                    
+                        {mode === Mode.InsufficientBalance &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Insufficient balance</button>
+                            </div>
+                        }
+                        {mode === Mode.ApproveTokens &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleApprove}>Approve {tokensToApprove[0]?.symbol}</button>
+                            </div>
+                        }
+                        {mode === Mode.Approving &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Approving {tokensToApprove[0]?.symbol} <Spinner /></button>
+                            </div>
+                        }
+                        {mode === Mode.JoinReady &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleAddLiquidity}>Add liquidity</button>
+                            </div>
+                        }
+                        {mode === Mode.Joining &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Adding liquidity <Spinner /></button>
+                            </div>
+                        }
+                        {mode === Mode.JoinSuccess &&
+                            <div className="text-center mb-2">
+                                <div className={`${successClass} fs-4 fw-bold mb-3`}>Success !</div>
+                                <a href={transactionUrl(chainId, tx.hash)} className={`${linkClass} text-decoration-none`} target="_blank" rel="noreferrer" >
+                                    Transaction <i className="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </div>
+                        }
+                        {mode === Mode.JoinError &&
+                            <div className="text-center mb-2">
+                                <div className={`text-danger fs-4 fw-bold mb-3`}>Error</div>
+                                <div>{joinError?.toString()}</div>
+                            </div>
+                        }
+                        {mode === Mode.ConfirmTx &&
+                            <div className="d-grid">
+                                <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Confirmation <Spinner /></button>
+                            </div>
                         }
                     </div>
-
-                    {mode === Mode.Init &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Enter amounts</button>
-                        </div>
-                    }
-                    {mode === Mode.ConnectWallet &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Connect your wallet</button>
-                        </div>
-                    }                    
-                    {mode === Mode.InsufficientBalance &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Insufficient balance</button>
-                        </div>
-                    }
-                    {mode === Mode.ApproveTokens &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleApprove}>Approve {tokensToApprove[0]?.symbol}</button>
-                        </div>
-                    }
-                    {mode === Mode.Approving &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Approving {tokensToApprove[0]?.symbol} <Spinner /></button>
-                        </div>
-                    }
-                    {mode === Mode.JoinReady &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} onClick={handleAddLiquidity}>Add liquidity</button>
-                        </div>
-                    }
-                    {mode === Mode.Joining &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Adding liquidity <Spinner /></button>
-                        </div>
-                    }
-                    {mode === Mode.JoinSuccess &&
-                        <div className="text-center mb-2">
-                            <div className={`${successClass} fs-4 fw-bold mb-3`}>Success !</div>
-                            <a href={transactionUrl(chainId, tx.hash)} className={`${linkClass} text-decoration-none`} target="_blank" rel="noreferrer" >
-                                Transaction <i className="bi bi-box-arrow-up-right"></i>
-                            </a>
-                        </div>
-                    }
-                    {mode === Mode.JoinError &&
-                        <div className="text-center mb-2">
-                            <div className={`text-danger fs-4 fw-bold mb-3`}>Error</div>
-                            <div>{joinError?.toString()}</div>
-                        </div>
-                    }
-                    {mode === Mode.ConfirmTx &&
-                        <div className="d-grid">
-                            <button type="button" className={`btn ${btnClass} btn-lg`} disabled>Confirmation <Spinner /></button>
-                        </div>
-                    }
                 </div>
             </div>
-        </div>
+        </>
     );
 }

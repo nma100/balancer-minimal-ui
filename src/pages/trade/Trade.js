@@ -3,7 +3,7 @@ import React from 'react';
 import CryptoIcon from '../../components/CryptoIcon';
 import { TokenSelector, SELECT_TOKEN_MODAL } from '../../components/TokenSelector';
 import { Preview, PREVIEW_MODAL } from './Preview';
-import { Settings, SETTINGS_MODAL } from './Settings';
+import { SlippageSettings, SLIPPAGE_MODAL } from '../../components/SlippageSettings';
 import { OutletContext } from '../Layout';
 import { usd, openModal, activeInvestMenu } from '../../utils/page';
 import { bn, bnt, fromEthersBN, ROUND_DOWN, ROUND_UP, ZERO } from '../../utils/bn';
@@ -69,7 +69,7 @@ class Trade extends React.Component {
         maxSlippage: this.state.maxSlippage,
         onSave: this.onSaveSettings.bind(this),
     }
-    const callback = () => openModal(SETTINGS_MODAL);
+    const callback = () => openModal(SLIPPAGE_MODAL);
     this.setState({ settingsInfo }, callback);
   }
 
@@ -250,7 +250,7 @@ class Trade extends React.Component {
     return (
       <>
         <TokenSelector onTokenSelect={this.onTokenSelect.bind(this)} />
-        <Settings settingsInfo={settingsInfo} />
+        <SlippageSettings settingsInfo={settingsInfo} />
         <Preview swapInfo={swapInfo} />
         <div id="swap" className="row">
           <div className="col-12 col-lg-8 col-xxl-6">

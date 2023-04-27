@@ -11,8 +11,10 @@ import { usd, openModal, activeInvestMenu } from "../../utils/page";
 import { format } from "date-fns";
 import { StakingModal, STAKING_MODAL } from "./StakingModal";
 import { Theme } from "../../theme";
+import { RoutePath } from "../..";
 
 const LOCKDATE_FORMAT = 'd MMM yyyy';
+const STAKE_BUTTON = 'btn-stake';
 
 class Portfolio extends React.Component {
 
@@ -34,6 +36,11 @@ class Portfolio extends React.Component {
     modal.dataset.poolBpt = pool.bpt;
     modal.dataset.poolShares = pool.shares;
     openModal(STAKING_MODAL);
+  }
+
+  handleLinkWithdraw(pool, e) {
+    if (e.target.className.includes(STAKE_BUTTON)) return;
+    window.location.assign(`/#/${RoutePath.ExitPool}/${pool.id}`);
   }
 
   css() {
@@ -124,7 +131,7 @@ class Portfolio extends React.Component {
         <div id="unstaked-pools" className="mb-5">
           <h4 className="mb-3">Unstaked pools</h4>
           <div className="table-responsive">
-            <table className={`${tableClass} shadow-sm align-middle`}>
+            <table className={`${tableClass} table-hover shadow-sm align-middle`}>
               <thead>
                 <tr>
                   <th scope="col" className="d-none d-md-table-cell"></th>
@@ -152,7 +159,7 @@ class Portfolio extends React.Component {
                           :
                           <>
                             {unstakedPools.map(pool =>
-                              <tr key={pool.id}>
+                              <tr key={pool.id} style={{ cursor: 'pointer' }} onClick={e => this.handleLinkWithdraw(pool, e)}>
                                 <td className="d-none d-md-table-cell px-3">
                                   <PoolIcons pool={pool} />
                                 </td>
@@ -163,7 +170,7 @@ class Portfolio extends React.Component {
                                 </td>
                                 <td className="text-center">
                                   {balancer.stakablePoolIds().includes(pool.id) ?
-                                    <button type="button" className={`${btnClass} btn-sm`} onClick={() => this.handleStake(pool)}>Stake</button>
+                                    <button type="button" className={`${STAKE_BUTTON} ${btnClass} btn-sm`} onClick={() => this.handleStake(pool)}>Stake</button>
                                     : <>—</> 
                                   }
                                 </td>
